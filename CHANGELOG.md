@@ -50,6 +50,10 @@ installed as a pair.
   Geometry Collections built from Static Meshes, and uniform, Voronoi and
   planar fracturing with grout, surface noise and island splitting. Fracture
   again to add a cluster level; the response reports the bones per level.
+  Clustering shapes what breaks apart together — automatic clustering by
+  count, fraction, size or grid, plus clustering, merging, magnet-growing and
+  deleting bones by index — and convex hulls can be rebuilt or simplified for
+  the collision the solver actually uses.
 - **`blueprint_debug`** — breakpoints, watched pins, and the debug object their
   values are read from. Watch values are live during PIE without halting
   anything, which is the part an agent can actually use; halting itself needs a

@@ -23,9 +23,9 @@ PHYSICS & DESTRUCTION
 ---------------------
 - Chaos: destruction fields, Chaos Vehicles and Chaos Cloth are not exposed
   (Geometry Collections and fracturing are, via chaos_ops).
-- Geometry Collections: no clustering tools (auto-cluster, cluster magnet), no
-  convex-hull or collision authoring, and no per-bone damage thresholds beyond
-  set_property on the asset.
+- Geometry Collections: no per-bone damage thresholds beyond set_property on
+  the asset, no embedded geometry, and no auto-UV or material assignment for
+  the interior faces a fracture creates.
 - Physics on actors/components is only reachable as properties (physics_asset_ops
   covers ragdoll bodies and constraints).
 
@@ -157,10 +157,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Clustering and convex-hull tools for Geometry Collections
-2. Editor UI automation (clicking, dragging, opening asset editors)
-3. Chaos Vehicles, Chaos Cloth and destruction fields
-4. Source-control changelists, shelving, diff and history
+1. Editor UI automation (clicking, dragging, opening asset editors)
+2. Chaos Vehicles, Chaos Cloth and destruction fields
+3. Source-control changelists, shelving, diff and history
+4. Interior materials and UVs for fractured geometry
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -222,3 +222,6 @@ CLOSED
 2026-09-04 — visual_log_ops: the Visual Logger as data — record a play
   session and query the engine's own UE_VLOG entries by actor, category or
   game time, with their log lines, status blocks and shapes.
+2026-09-04 — chaos_ops: clustering and convex hulls — list bones, cluster
+  them automatically or by hand, merge, magnet-grow and delete them, and
+  rebuild or simplify the convex collision the solver uses.

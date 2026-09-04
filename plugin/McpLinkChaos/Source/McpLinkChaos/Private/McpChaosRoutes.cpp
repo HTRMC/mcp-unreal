@@ -18,7 +18,11 @@
 #include "Dom/JsonValue.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInterface.h"
+#include "FractureEngineClustering.h"
+#include "FractureEngineConvex.h"
+#include "FractureEngineEdit.h"
 #include "FractureEngineFracturing.h"
+#include "GeometryCollection/GeometryCollectionConvexUtility.h"
 #include "GeometryCollection/GeometryCollectionAlgo.h"
 #include "GeometryCollection/GeometryCollectionConversion.h"
 #include "GeometryCollection/GeometryCollectionObject.h"
@@ -72,6 +76,11 @@ namespace McpLink
 			Data->SetNumberField(TEXT("vertex_count"),
 				Geometry->NumElements(FGeometryCollection::VerticesGroup));
 			Data->SetNumberField(TEXT("material_count"), Collection->Materials.Num());
+			// The hulls the solver collides with. A fracture leaves the count
+			// stale until generate_convex rebuilds it, and simplify_convex
+			// keeps the count while cutting each hull's faces.
+			Data->SetNumberField(TEXT("convex_hull_count"),
+				Geometry->NumElements(FGeometryCollection::ConvexGroup));
 
 			// Level 0 is the whole object; each fracture adds a level of children.
 			int32 MaxLevel = 0;
@@ -94,6 +103,53 @@ namespace McpLink
 				Counts.Add(MakeShared<FJsonValueNumber>(Count));
 			}
 			Data->SetArrayField(TEXT("bones_per_level"), Counts);
+		}
+
+		/// Bone indices from "bones". Unlike a fracture selection this is a
+		/// plain array, because the clustering entry points take one.
+		TArray<int32> ReadBones(const TSharedRef<FJsonObject>& Body, const FGeometryCollection& Geometry)
+		{
+			TArray<int32> Bones;
+			const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
+			if (!Body->TryGetArrayField(TEXT("bones"), Values))
+			{
+				return Bones;
+			}
+			const int32 Num = Geometry.NumElements(FGeometryCollection::TransformGroup);
+			for (const TSharedPtr<FJsonValue>& Value : *Values)
+			{
+				const int32 Index = static_cast<int32>(Value->AsNumber());
+				if (Index >= 0 && Index < Num)
+				{
+					Bones.Add(Index);
+				}
+			}
+			return Bones;
+		}
+
+		bool ReadClusterMethod(const FString& Name, EFractureEngineClusterSizeMethod& OutMethod)
+		{
+			if (Name.IsEmpty() || Name == TEXT("by_number"))
+			{
+				OutMethod = EFractureEngineClusterSizeMethod::ByNumber;
+			}
+			else if (Name == TEXT("by_fraction"))
+			{
+				OutMethod = EFractureEngineClusterSizeMethod::ByFractionOfInput;
+			}
+			else if (Name == TEXT("by_size"))
+			{
+				OutMethod = EFractureEngineClusterSizeMethod::BySize;
+			}
+			else if (Name == TEXT("by_grid"))
+			{
+				OutMethod = EFractureEngineClusterSizeMethod::ByGrid;
+			}
+			else
+			{
+				return false;
+			}
+			return true;
 		}
 
 		/// Everything the Fracture mode's FGeometryCollectionEdit scope does when
@@ -264,6 +320,67 @@ namespace McpLink
 							Material != nullptr ? Material->GetPathName() : FString()));
 					}
 					Data->SetArrayField(TEXT("materials"), Materials);
+					Data->SetBoolField(TEXT("has_convex_hulls"),
+						FGeometryCollectionConvexUtility::HasConvexHullData(
+							Collection->GetGeometryCollection().Get()));
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("bones"))
+				{
+					TSharedPtr<const FGeometryCollection> Geometry =
+						Collection->GetGeometryCollection();
+					if (!Geometry.IsValid())
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError,
+							TEXT("no_collection_data"), TEXT("this asset holds no collection data"));
+						return;
+					}
+					const int32 Num = Geometry->NumElements(FGeometryCollection::TransformGroup);
+					const int32 Max = FMath::Clamp(IntOr(Body, TEXT("max_results"), 200), 1, 5000);
+					const int32 LevelFilter = IntOr(Body, TEXT("level"), -1);
+					const bool bLeavesOnly = BoolOr(Body, TEXT("leaves_only"), false);
+					const TManagedArray<int32>* Levels =
+						Geometry->HasAttribute(TEXT("Level"), FGeometryCollection::TransformGroup)
+							? &Geometry->GetAttribute<int32>(
+								  TEXT("Level"), FGeometryCollection::TransformGroup)
+							: nullptr;
+
+					TArray<TSharedPtr<FJsonValue>> Items;
+					int32 Matched = 0;
+					for (int32 Index = 0; Index < Num; ++Index)
+					{
+						const int32 Level = Levels != nullptr ? (*Levels)[Index] : 0;
+						const bool bLeaf = Geometry->Children[Index].IsEmpty();
+						if (LevelFilter >= 0 && Level != LevelFilter)
+						{
+							continue;
+						}
+						if (bLeavesOnly && !bLeaf)
+						{
+							continue;
+						}
+						++Matched;
+						if (Items.Num() >= Max)
+						{
+							continue;
+						}
+						const TSharedRef<FJsonObject> Item = MakeShared<FJsonObject>();
+						Item->SetNumberField(TEXT("index"), Index);
+						Item->SetStringField(TEXT("name"), Geometry->BoneName[Index]);
+						Item->SetNumberField(TEXT("level"), Level);
+						Item->SetNumberField(TEXT("parent"), Geometry->Parent[Index]);
+						Item->SetNumberField(TEXT("children"), Geometry->Children[Index].Num());
+						Item->SetBoolField(TEXT("leaf"), bLeaf);
+						Items.Add(MakeShared<FJsonValueObject>(Item));
+					}
+
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("collection"), Collection->GetPathName());
+					Data->SetNumberField(TEXT("matched"), Matched);
+					Data->SetNumberField(TEXT("returned"), Items.Num());
+					Data->SetArrayField(TEXT("bones"), Items);
 					Responder->Ok(Data);
 					return;
 				}
@@ -283,6 +400,144 @@ namespace McpLink
 					return;
 				}
 
+				const bool bAutoCluster = Operation == TEXT("auto_cluster");
+				const bool bCluster = Operation == TEXT("cluster");
+				const bool bMerge = Operation == TEXT("merge_clusters");
+				const bool bMagnet = Operation == TEXT("cluster_magnet");
+				const bool bDelete = Operation == TEXT("delete_bones");
+				const bool bConvex = Operation == TEXT("generate_convex");
+				const bool bSimplify = Operation == TEXT("simplify_convex");
+				if (bAutoCluster || bCluster || bMerge || bMagnet || bDelete || bConvex || bSimplify)
+				{
+					TSharedPtr<FGeometryCollection> Geometry = Collection->GetGeometryCollection();
+					if (!Geometry.IsValid())
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError,
+							TEXT("no_collection_data"), TEXT("this asset holds no collection data"));
+						return;
+					}
+					TArray<int32> Bones = ReadBones(Body, *Geometry);
+
+					const FScopedTransaction Transaction(
+						NSLOCTEXT("McpLink", "ClusterGeometryCollection", "McpLink Cluster"));
+					Collection->Modify();
+
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+
+					if (bAutoCluster)
+					{
+						FString MethodName;
+						Body->TryGetStringField(TEXT("method"), MethodName);
+						EFractureEngineClusterSizeMethod Method;
+						if (!ReadClusterMethod(MethodName.ToLower(), Method))
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest,
+								TEXT("bad_method"),
+								FString::Printf(
+									TEXT("'%s' is not a cluster method — use by_number, ")
+									TEXT("by_fraction, by_size or by_grid"),
+									*MethodName));
+							return;
+						}
+						// The mode clusters the children of one bone; index 0 is
+						// the root, which is what "cluster the whole thing" means.
+						const int32 ClusterIndex = IntOr(Body, TEXT("cluster_index"), 0);
+						FFractureEngineClustering::AutoCluster(*Geometry, ClusterIndex, Method,
+							static_cast<uint32>(FMath::Max(1, IntOr(Body, TEXT("site_count"), 4))),
+							static_cast<float>(DoubleOr(Body, TEXT("site_fraction"), 0.25)),
+							static_cast<float>(DoubleOr(Body, TEXT("site_size"), 200.0)),
+							BoolOr(Body, TEXT("enforce_connectivity"), true),
+							BoolOr(Body, TEXT("avoid_isolated"), true),
+							BoolOr(Body, TEXT("enforce_site_parameters"), true),
+							FMath::Max(1, IntOr(Body, TEXT("grid_x"), 2)),
+							FMath::Max(1, IntOr(Body, TEXT("grid_y"), 2)),
+							FMath::Max(1, IntOr(Body, TEXT("grid_z"), 2)));
+						Data->SetNumberField(TEXT("cluster_index"), ClusterIndex);
+					}
+					else if (bCluster || bMerge || bMagnet)
+					{
+						if (Bones.IsEmpty())
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest,
+								TEXT("no_bones"),
+								TEXT("'bones' is required — indices from chaos_ops bones"));
+							return;
+						}
+						const bool bChanged = bCluster
+							? FFractureEngineClustering::ClusterSelected(*Geometry, Bones)
+							: bMerge
+								? FFractureEngineClustering::MergeSelectedClusters(*Geometry, Bones)
+								: FFractureEngineClustering::ClusterMagnet(*Geometry, Bones,
+									  FMath::Max(1, IntOr(Body, TEXT("iterations"), 1)));
+						if (!bChanged)
+						{
+							Responder->Error(EHttpServerResponseCodes::Conflict,
+								TEXT("nothing_changed"),
+								TEXT("nothing to do for that selection — clustering skips the root ")
+								TEXT("and needs at least two siblings under one parent, and merging ")
+								TEXT("needs bones that share one"));
+							return;
+						}
+						TArray<TSharedPtr<FJsonValue>> Result;
+						for (int32 Index : Bones)
+						{
+							Result.Add(MakeShared<FJsonValueNumber>(Index));
+						}
+						Data->SetArrayField(TEXT("selection"), Result);
+					}
+					else if (bDelete)
+					{
+						if (Bones.IsEmpty())
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest,
+								TEXT("no_bones"),
+								TEXT("'bones' is required — indices from chaos_ops bones"));
+							return;
+						}
+						// Deletes each bone and everything under it.
+						FFractureEngineEdit::DeleteBranch(*Geometry, Bones);
+					}
+					else if (bConvex)
+					{
+						FGeometryCollectionConvexUtility::CreateNonOverlappingConvexHullData(
+							Geometry.Get(),
+							DoubleOr(Body, TEXT("fraction_allow_remove"), 0.3),
+							DoubleOr(Body, TEXT("simplification_distance"), 0.0),
+							DoubleOr(Body, TEXT("can_exceed_fraction"), 0.5));
+					}
+					else
+					{
+						UE::FractureEngine::Convex::FSimplifyHullSettings Settings;
+						Settings.ErrorTolerance =
+							DoubleOr(Body, TEXT("error_tolerance"), 5.0);
+						const int32 TargetTriangles = IntOr(Body, TEXT("target_triangles"), 0);
+						if (TargetTriangles > 0)
+						{
+							Settings.bUseTargetTriangleCount = true;
+							Settings.TargetTriangleCount = TargetTriangles;
+						}
+						if (!UE::FractureEngine::Convex::SimplifyConvexHulls(*Geometry, Settings,
+								!Bones.IsEmpty(), Bones))
+						{
+							Responder->Error(EHttpServerResponseCodes::Conflict,
+								TEXT("no_convex_hulls"),
+								TEXT("this collection has no convex hulls to simplify — ")
+								TEXT("generate_convex builds them"));
+							return;
+						}
+					}
+
+					FinalizeCollection(Collection);
+					Data->SetStringField(TEXT("collection"), Collection->GetPathName());
+					AddStructureFields(Data, Collection);
+					Data->SetBoolField(TEXT("has_convex_hulls"),
+						FGeometryCollectionConvexUtility::HasConvexHullData(Geometry.Get()));
+					Data->SetStringField(TEXT("message"),
+						TEXT("collection updated — save to keep it"));
+					Responder->Ok(Data);
+					return;
+				}
+
 				const bool bUniform = Operation == TEXT("fracture_uniform");
 				const bool bVoronoi = Operation == TEXT("fracture_voronoi");
 				const bool bPlanar = Operation == TEXT("fracture_planar");
@@ -290,8 +545,10 @@ namespace McpLink
 				{
 					Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_operation"),
 						FString::Printf(
-							TEXT("unknown operation '%s' — use create, info, fracture_uniform, ")
-							TEXT("fracture_voronoi, fracture_planar or save"),
+							TEXT("unknown operation '%s' — use create, info, bones, fracture_uniform, ")
+							TEXT("fracture_voronoi, fracture_planar, auto_cluster, cluster, ")
+							TEXT("merge_clusters, cluster_magnet, delete_bones, generate_convex, ")
+							TEXT("simplify_convex or save"),
 							*Operation));
 					return;
 				}

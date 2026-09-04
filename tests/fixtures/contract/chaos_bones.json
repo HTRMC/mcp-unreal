@@ -1,0 +1,86 @@
+{
+  "name": "chaos_bones",
+  "description": "a fractured collection's bones with their cluster level, parent and child count",
+  "route": "/api/chaos/ops",
+  "tool": "chaos_ops",
+  "request": {
+    "operation": "bones",
+    "collection": "/Game/Destruction/GC_McpWall",
+    "level": 1
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "collection": "/Game/Destruction/GC_McpWall.GC_McpWall",
+      "matched": 8,
+      "returned": 8,
+      "bones": [
+        {
+          "index": 1,
+          "name": "Cube_0",
+          "level": 1,
+          "parent": 0,
+          "children": 2,
+          "leaf": false
+        },
+        {
+          "index": 2,
+          "name": "Cube_1",
+          "level": 1,
+          "parent": 0,
+          "children": 3,
+          "leaf": false
+        },
+        {
+          "index": 3,
+          "name": "Cube_2",
+          "level": 1,
+          "parent": 0,
+          "children": 3,
+          "leaf": false
+        },
+        {
+          "index": 4,
+          "name": "Cube_3",
+          "level": 1,
+          "parent": 0,
+          "children": 2,
+          "leaf": false
+        },
+        {
+          "index": 5,
+          "name": "Cube_4",
+          "level": 1,
+          "parent": 0,
+          "children": 2,
+          "leaf": false
+        },
+        {
+          "index": 6,
+          "name": "Cube_5",
+          "level": 1,
+          "parent": 0,
+          "children": 2,
+          "leaf": false
+        },
+        {
+          "index": 7,
+          "name": "Cube_6",
+          "level": 1,
+          "parent": 0,
+          "children": 3,
+          "leaf": false
+        },
+        {
+          "index": 8,
+          "name": "Cube_7",
+          "level": 1,
+          "parent": 0,
+          "children": 3,
+          "leaf": false
+        }
+      ]
+    }
+  }
+}

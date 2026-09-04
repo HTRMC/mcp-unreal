@@ -21,8 +21,81 @@ pub enum ChaosOp {
         /// Static Mesh asset paths, combined into one collection.
         source_meshes: Vec<String>,
     },
-    /// Bone, geometry and vertex counts, the cluster levels, and the materials.
+    /// Bone, geometry and vertex counts, the cluster levels, the materials, and
+    /// whether convex collision hulls exist.
     Info { collection: String },
+    /// The individual bones, so the clustering operations have indices to take:
+    /// each with its name, cluster level, parent and child count.
+    Bones {
+        collection: String,
+        /// Only bones at this cluster level (0 is the root).
+        level: Option<i32>,
+        /// Only bones with no children — the pieces that actually break off.
+        leaves_only: Option<bool>,
+        max_results: Option<i32>,
+    },
+    /// Group a bone's children into clusters automatically — the Fracture
+    /// mode's Auto Cluster. A cluster level is what the solver breaks apart
+    /// one stage at a time.
+    AutoCluster {
+        collection: String,
+        /// "by_number" (default), "by_fraction", "by_size" or "by_grid".
+        method: Option<String>,
+        /// Whose children to cluster; 0 (the root) clusters the whole thing.
+        cluster_index: Option<i32>,
+        /// by_number: how many clusters.
+        site_count: Option<i32>,
+        /// by_fraction: clusters as a fraction of the bone count.
+        site_fraction: Option<f64>,
+        /// by_size: approximate cluster size in cm.
+        site_size: Option<f64>,
+        /// Only cluster pieces that actually touch (default true).
+        enforce_connectivity: Option<bool>,
+        avoid_isolated: Option<bool>,
+        /// by_grid: cells along each axis.
+        grid_x: Option<i32>,
+        grid_y: Option<i32>,
+        grid_z: Option<i32>,
+    },
+    /// Put the named bones under one new cluster.
+    Cluster {
+        collection: String,
+        /// Bone indices from `bones`.
+        bones: Vec<i32>,
+    },
+    /// Merge the named clusters into one.
+    MergeClusters { collection: String, bones: Vec<i32> },
+    /// Pull neighbouring pieces into the named clusters, out to `iterations`
+    /// rings of neighbours.
+    ClusterMagnet {
+        collection: String,
+        bones: Vec<i32>,
+        /// Default 1.
+        iterations: Option<i32>,
+    },
+    /// Delete bones and everything under them.
+    DeleteBones { collection: String, bones: Vec<i32> },
+    /// Build the non-overlapping convex hulls the solver collides with. A
+    /// collection without them falls back to much coarser collision.
+    GenerateConvex {
+        collection: String,
+        /// How much of a hull may be cut away to remove overlap (default 0.3).
+        fraction_allow_remove: Option<f64>,
+        /// Merge vertices closer than this, in cm. 0 (default) keeps them all.
+        simplification_distance: Option<f64>,
+        /// How far a cluster hull may exceed the volume under it (default 0.5).
+        can_exceed_fraction: Option<f64>,
+    },
+    /// Simplify existing hulls — fewer faces, cheaper collision.
+    SimplifyConvex {
+        collection: String,
+        /// Restrict to these bones; all of them when omitted.
+        bones: Option<Vec<i32>>,
+        /// Allowed deviation in cm (default 5).
+        error_tolerance: Option<f64>,
+        /// Simplify to this triangle count instead of by tolerance.
+        target_triangles: Option<i32>,
+    },
     /// Scatter Voronoi sites through the selected bones and cut along them —
     /// the Fracture mode's Uniform tool, and the usual first fracture.
     FractureUniform {
@@ -86,7 +159,7 @@ pub enum ChaosOp {
 #[tool_router(router = chaos_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
-        description = "Chaos destruction: build a Geometry Collection from Static Meshes and fracture it. Each fracture splits the selected bones into children, so fracturing twice gives a two-level cluster — which is what the solver breaks apart at runtime. Uniform scatters Voronoi sites for you, Voronoi takes sites you place, and Planar slices with random planes; all three take grout, noise and an island split. Place the result with spawn_actor on GeometryCollectionActor and point its component's RestCollection at the asset. Needs the McpLinkChaos plugin."
+        description = "Chaos destruction: build a Geometry Collection from Static Meshes, fracture it, cluster the pieces and give them convex collision. Each fracture splits the selected bones into children, so fracturing twice gives a two-level cluster — which is what the solver breaks apart at runtime. Uniform scatters Voronoi sites for you, Voronoi takes sites you place, and Planar slices with random planes; all three take grout, noise and an island split. Clustering decides what breaks apart together and in what order: auto_cluster groups a bone's children by count, fraction, size or a grid, and cluster / merge_clusters / cluster_magnet shape it by hand from the indices `bones` reports. generate_convex builds the hulls the solver actually collides with. Place the result with spawn_actor on GeometryCollectionActor and point its component's RestCollection at the asset. Needs the McpLinkChaos plugin."
     )]
     async fn chaos_ops(
         &self,

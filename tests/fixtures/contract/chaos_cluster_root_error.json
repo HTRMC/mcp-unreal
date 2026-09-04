@@ -1,0 +1,21 @@
+{
+  "name": "chaos_cluster_root_error",
+  "description": "the root bone cannot be clustered",
+  "route": "/api/chaos/ops",
+  "tool": "chaos_ops",
+  "request": {
+    "operation": "cluster",
+    "collection": "/Game/Destruction/GC_McpWall",
+    "bones": [
+      0
+    ]
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "nothing_changed",
+      "message": "nothing to do for that selection — clustering skips the root and needs at least two siblings under one parent, and merging needs bones that share one"
+    }
+  }
+}
