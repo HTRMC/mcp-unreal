@@ -1,0 +1,25 @@
+{
+  "name": "chaos_too_few_sites_error",
+  "description": "a Voronoi fracture needs at least two sites",
+  "route": "/api/chaos/ops",
+  "tool": "chaos_ops",
+  "request": {
+    "operation": "fracture_voronoi",
+    "collection": "/Game/Destruction/GC_McpWall",
+    "sites": [
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "too_few_sites",
+      "message": "'sites' needs at least two [x, y, z] points in the collection's local space — each site becomes one piece. fracture_uniform scatters them for you"
+    }
+  }
+}

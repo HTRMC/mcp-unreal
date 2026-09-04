@@ -38,6 +38,10 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`chaos_ops`** (new `McpLinkChaos` interop plugin) — Chaos destruction:
+  Geometry Collections built from Static Meshes, and uniform, Voronoi and
+  planar fracturing with grout, surface noise and island splitting. Fracture
+  again to add a cluster level; the response reports the bones per level.
 - **`blueprint_debug`** — breakpoints, watched pins, and the debug object their
   values are read from. Watch values are live during PIE without halting
   anything, which is the part an agent can actually use; halting itself needs a

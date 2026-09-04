@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (85 tools, 69 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (86 tools, 70 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -21,8 +21,11 @@ ANIMATION & CHARACTERS
 
 PHYSICS & DESTRUCTION
 ---------------------
-- Chaos: Geometry Collections, fracturing, destruction fields, Chaos Vehicles,
-  Chaos Cloth — none.
+- Chaos: destruction fields, Chaos Vehicles and Chaos Cloth are not exposed
+  (Geometry Collections and fracturing are, via chaos_ops).
+- Geometry Collections: no clustering tools (auto-cluster, cluster magnet), no
+  convex-hull or collision authoring, and no per-bone damage thresholds beyond
+  set_property on the asset.
 - Physics on actors/components is only reachable as properties (physics_asset_ops
   covers ragdoll bodies and constraints).
 
@@ -148,10 +151,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Chaos destruction (Geometry Collections, fracturing)
-2. Texture authoring from raw pixels
-3. Translation editing (archive entries, PO import/export)
-4. Gameplay Debugger / Visual Logger
+1. Texture authoring from raw pixels
+2. Translation editing (archive entries, PO import/export)
+3. Gameplay Debugger / Visual Logger
+4. Clustering and convex-hull tools for Geometry Collections
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -201,3 +204,6 @@ CLOSED
   debug object, with live watch values read from a running PIE instance
   without halting. Halting itself stays out of reach over HTTP, for the
   reason recorded under EDITOR WORKFLOW.
+2026-09-04 — chaos_ops: Chaos destruction — Geometry Collections built from
+  Static Meshes, and uniform, Voronoi and planar fracturing with grout,
+  surface noise and island splitting, one cluster level per fracture.

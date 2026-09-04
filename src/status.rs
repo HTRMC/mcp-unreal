@@ -105,6 +105,7 @@ impl UnrealMcp {
             for (prefix, feature) in [
                 ("/api/audio/metasound", "metasounds"),
                 ("/api/render/movie", "movie_render_queue"),
+                ("/api/chaos/", "chaos_destruction"),
                 ("/api/niagara/", "niagara"),
                 ("/api/gas/", "gameplay_abilities"),
                 ("/api/pcg/", "pcg"),

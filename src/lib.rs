@@ -61,6 +61,7 @@ impl UnrealMcp {
                 + Self::animation_router()
                 + Self::content_router()
                 + Self::introspect_router()
+                + Self::chaos_router()
                 + Self::metasound_router()
                 + Self::movie_render_router()
                 + Self::niagara_router()

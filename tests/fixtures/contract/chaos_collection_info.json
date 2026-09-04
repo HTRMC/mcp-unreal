@@ -1,0 +1,30 @@
+{
+  "name": "chaos_collection_info",
+  "description": "a fractured Geometry Collection's bone counts and cluster levels",
+  "route": "/api/chaos/ops",
+  "tool": "chaos_ops",
+  "request": {
+    "operation": "info",
+    "collection": "/Game/Destruction/GC_McpWall"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "collection": "/Game/Destruction/GC_McpWall.GC_McpWall",
+      "bone_count": 29,
+      "geometry_count": 29,
+      "vertex_count": 71759,
+      "material_count": 1,
+      "max_level": 2,
+      "bones_per_level": [
+        1,
+        8,
+        20
+      ],
+      "materials": [
+        "/Engine/EngineMaterials/WorldGridMaterial.WorldGridMaterial"
+      ]
+    }
+  }
+}

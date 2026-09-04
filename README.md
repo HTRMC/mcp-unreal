@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (85)
+## Tools (86)
 
 | Area | Tools |
 |---|---|
@@ -50,7 +50,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Introspection | `subsystem_query`, `ui_query` |
 | Engine API | `lookup_class`, `search_api` |
 | Project config | `project_ops`, `config_ops`, `cook_project`, `package_project`, `code_ops` |
-| Interop plugins | `niagara_ops`, `niagara_author`, `metasound_ops`, `movie_render`, `gas_ops`, `pcg_ops`, `python_exec` (need McpLinkNiagara / McpLinkMetaSound / McpLinkMovieRender / McpLinkGAS / McpLinkPCG / McpLinkPython enabled) |
+| Interop plugins | `niagara_ops`, `niagara_author`, `metasound_ops`, `movie_render`, `chaos_ops`, `gas_ops`, `pcg_ops`, `python_exec` (need McpLinkNiagara / McpLinkMetaSound / McpLinkMovieRender / McpLinkChaos / McpLinkGAS / McpLinkPCG / McpLinkPython enabled) |
 
 Headless tools work with no editor open. Editor tools need the Unreal Editor running with McpLink enabled — call `status` to see what is currently available.
 
@@ -153,14 +153,15 @@ Times cross the wire as display-rate frames or as seconds, interchangeably, and 
 
 `code_ops` scaffolds C++ without the editor. `create_class` writes the header and source from the engine's *own* class templates (`Engine/Content/Editor/Templates`), so the output matches what the editor's New C++ Class wizard would have produced; the base class can be any reflected class in the installed engine, since its header and ancestry come from the same class index `lookup_class` uses. `create_module` writes a module's `Build.cs`, implementation and folders, then registers it in the `.uproject` and the build targets — the `.uproject` is spliced, not reserialised, so the diff is the new entry and nothing else. Both leave compiling to `generate_project_files` and `build_project`.
 
-### Interop plugins: Niagara, MetaSounds, Movie Render Queue, Gameplay Abilities, PCG
+### Interop plugins: Niagara, MetaSounds, Movie Render Queue, Chaos, Gameplay Abilities, PCG
 
-Optional sibling plugins add route groups for engine systems a project may or may not use; `status` lists `niagara`, `metasounds`, `movie_render_queue`, `gameplay_abilities` and `pcg` in `features` when they are loaded.
+Optional sibling plugins add route groups for engine systems a project may or may not use; `status` lists `niagara`, `metasounds`, `movie_render_queue`, `chaos_destruction`, `gameplay_abilities` and `pcg` in `features` when they are loaded.
 
 - `niagara_ops` lists systems (engine templates under `/Niagara`), reads emitters and user parameters, spawns systems at a location or attached to an actor, sets typed user parameters on live components, and pauses/activates/destroys them. Spawning needs a rendering editor (Niagara refuses under `-nullrhi`); the tool says so. A freshly loaded system compiles for a few seconds first — `system_ready` tells you when it is actually running.
 - `niagara_author` builds systems rather than just driving them: create system and emitter assets, add/remove/rename/enable emitters, read the full stack (every emitter's four script stacks with their ordered modules and typed inputs, plus renderers), add and remove modules anywhere in a stack, set literal module input values, and add or remove renderers. `compile` reports each script's status and the actual compile errors — run it after authoring, since that is what surfaces a broken stack. (`ready_to_run` is always false under `-nullrhi`; `compiled` and `errors` are the signal.)
 - `metasound_ops` authors MetaSounds. `create` makes a Source or Patch with its interface already wired; `list_node_classes` reports what the project has registered; then add nodes, connect them to each other and to the graph's own inputs and outputs, add the graph inputs the game will drive, and set literal defaults on unconnected pins. Everything goes through the engine's builder API, which is the only path that keeps the document, the frontend registry and the editor graph in step. `sound_cue_ops` remains the tool for the older Sound Cue graph.
 - `movie_render` finishes the cinematic pipeline `sequence_ops` starts: create a render config (a render pass plus an output type — a config missing either produces no files), tune it with `set_property` on the reported setting paths (output directory, resolution, frame range, codec), then render a sequence on a map and poll for progress. The render runs through PIE, so it needs a windowed editor.
+- `chaos_ops` is destruction: build a Geometry Collection from Static Meshes, then fracture it. Each fracture splits the selected bones into children, so fracturing twice gives the two-level cluster the solver breaks apart at runtime, and `info` reports the bones per level. `fracture_uniform` scatters Voronoi sites for you, `fracture_voronoi` takes sites you place, and `fracture_planar` slices with random planes; all three take grout, surface noise and an island split. Place the result with `spawn_actor` on `GeometryCollectionActor` and point the component's `RestCollection` at the asset.
 - `gas_ops` reads an actor's attribute sets (current and base), granted abilities, active effects and owned tags, grants and activates abilities, applies and removes gameplay effects, sets attribute base values and adds loose tags.
 - `pcg_ops` authors PCG graphs (create, add nodes from any of the ~200 settings classes, connect pins, save), attaches components to actors, sets graph, seed and parameters, generates asynchronously and reports the result. Per-node options are ordinary properties on the reported `settings_path`, so `set_property` edits them.
 
