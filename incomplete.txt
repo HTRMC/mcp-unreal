@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (76 tools, 59 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (77 tools, 60 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -78,10 +78,11 @@ WORLD BUILDING
 
 AUDIO
 -----
-- MetaSounds: no support at all. Only Sound Cues are authored.
 - No audio modulation. No submix effect-chain authoring (asset + properties
   only).
 - No playback verification or audio capture — you cannot "hear" the game.
+- MetaSound presets, pages and variables are not exposed (graphs, nodes,
+  connections and interface members are).
 
 
 EDITOR WORKFLOW
@@ -135,11 +136,11 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. MetaSounds
-2. EQS / State Trees
-3. Movie Render Queue (rendering a sequence to disk)
-4. Render targets / texture creation / thumbnails
-5. Material Functions and Material Layers
+1. EQS / State Trees
+2. Movie Render Queue (rendering a sequence to disk)
+3. Render targets / texture creation / thumbnails
+4. Material Functions and Material Layers
+5. Localization
 
 
 CLOSED
@@ -165,3 +166,6 @@ CLOSED
   reference_ops: provider-agnostic source control, Data Validation, Map Check,
   compile-all-Blueprints, gameplay tags in the project ini, Curve asset keys,
   and the reference viewer / size map as data.
+2026-09-04 — metasound_ops: MetaSound Source and Patch authoring — create,
+  node classes, add/remove nodes, connections to nodes and to the graph
+  interface, graph inputs and outputs, and literal input defaults.

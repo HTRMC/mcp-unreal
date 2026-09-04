@@ -49,6 +49,14 @@
 		{
 			"Name": "McpLinkPython",
 			"Enabled": true
+		},
+		{
+			"Name": "McpLinkMetaSound",
+			"Enabled": true
+		},
+		{
+			"Name": "Metasound",
+			"Enabled": true
 		}
 	]
 }

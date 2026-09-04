@@ -27,6 +27,12 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`metasound_ops`** (new `McpLinkMetaSound` interop plugin) — MetaSound
+  authoring: create a Source or Patch, discover the registered node classes,
+  add and remove nodes, connect them to each other and to the graph interface,
+  add graph inputs and outputs, and set literal input defaults. Built on the
+  engine's own builder API, the only path that keeps the document, the frontend
+  registry and the editor graph in step.
 - **`source_control_ops` / `validate_ops` / `gameplay_tag_ops` / `curve_ops` /
   `reference_ops`** (new `McpLinkWorkflow` module) — the editor's own
   housekeeping. Source control through whichever provider the project uses;

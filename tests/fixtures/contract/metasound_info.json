@@ -1,0 +1,171 @@
+{
+  "name": "metasound_info",
+  "description": "a MetaSound Source graph: nodes, their vertices, and the graph's own inputs and outputs",
+  "route": "/api/audio/metasound",
+  "tool": "metasound_ops",
+  "request": {
+    "operation": "info",
+    "metasound": "/Game/Audio/MS_McpBeep"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "metasound": "/Game/Audio/MS_McpBeep.MS_McpBeep",
+      "class": "MetaSoundSource",
+      "node_count": 6,
+      "nodes": [
+        {
+          "id": "CD6ABDB34FE073C1E108029A358649B2",
+          "name": "UE.Source.OnPlay",
+          "class": "Input.Trigger",
+          "inputs": [
+            {
+              "name": "UE.Source.OnPlay",
+              "type": "Trigger"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "UE.Source.OnPlay",
+              "type": "Trigger"
+            }
+          ]
+        },
+        {
+          "id": "85171C994D935750ACCDACAEB576C700",
+          "name": "UE.Source.OneShot.OnFinished",
+          "class": "Output.Trigger",
+          "inputs": [
+            {
+              "name": "UE.Source.OneShot.OnFinished",
+              "type": "Trigger"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "UE.Source.OneShot.OnFinished",
+              "type": "Trigger"
+            }
+          ]
+        },
+        {
+          "id": "A652120B4F50D216CD73D99A1F951A01",
+          "name": "UE.OutputFormat.Mono.Audio:0",
+          "class": "Output.Audio",
+          "inputs": [
+            {
+              "name": "UE.OutputFormat.Mono.Audio:0",
+              "type": "Audio"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "UE.OutputFormat.Mono.Audio:0",
+              "type": "Audio"
+            }
+          ]
+        },
+        {
+          "id": "D8E90A424C0EBB7AB9087CA28B740084",
+          "name": "Input",
+          "class": "UE.Input.Template",
+          "inputs": [
+            {
+              "name": "Value",
+              "type": "Trigger"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "Value",
+              "type": "Trigger"
+            }
+          ]
+        },
+        {
+          "id": "5A4D22A24EBCD982EF9CDA99100FB952",
+          "name": "Sine",
+          "class": "UE.Sine.Audio",
+          "inputs": [
+            {
+              "name": "Enabled",
+              "type": "Bool"
+            },
+            {
+              "name": "Bi Polar",
+              "type": "Bool"
+            },
+            {
+              "name": "Frequency",
+              "type": "Float"
+            },
+            {
+              "name": "Modulation",
+              "type": "Audio"
+            },
+            {
+              "name": "Sync",
+              "type": "Trigger"
+            },
+            {
+              "name": "Phase Offset",
+              "type": "Float"
+            },
+            {
+              "name": "Glide",
+              "type": "Float"
+            },
+            {
+              "name": "Type",
+              "type": "Enum:SineGenerationType"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "Audio",
+              "type": "Audio"
+            }
+          ]
+        },
+        {
+          "id": "ACC794A347F657EC53DF3D8007C3546E",
+          "name": "Pitch",
+          "class": "Input.Float",
+          "inputs": [
+            {
+              "name": "Pitch",
+              "type": "Float"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "Pitch",
+              "type": "Float"
+            }
+          ]
+        }
+      ],
+      "graph_inputs": [
+        {
+          "name": "UE.Source.OnPlay",
+          "type": "Trigger"
+        },
+        {
+          "name": "Pitch",
+          "type": "Float"
+        }
+      ],
+      "graph_outputs": [
+        {
+          "name": "UE.Source.OneShot.OnFinished",
+          "type": "Trigger"
+        },
+        {
+          "name": "UE.OutputFormat.Mono.Audio:0",
+          "type": "Audio"
+        }
+      ]
+    }
+  }
+}

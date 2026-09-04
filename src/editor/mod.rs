@@ -12,6 +12,7 @@ pub mod gas;
 pub mod introspect;
 pub mod levels;
 pub mod material_graph;
+pub mod metasound;
 pub mod mesh;
 pub mod niagara;
 pub mod object;
