@@ -226,12 +226,16 @@ Not included: a RealtimeMesh interop — the plugin is third-party and not part 
 **2. Install the server.** Download the `mcp-unreal` archive for your platform from the same release and unzip it anywhere, then register it with your MCP client:
 
 ```powershell
-claude mcp add mcp-unreal -- C:\Tools\mcp-unreal\mcp-unreal.exe
+claude mcp add mcp-unreal -- "C:\Tools\mcp-unreal\mcp-unreal.exe"
 ```
+
+**Quote the path.** In a POSIX shell — Git Bash, WSL, the Bash tool — an unquoted `\` is an escape character, so the backslashes are eaten and the entry is silently recorded as `C:Toolsmcp-unrealmcp-unreal.exe`. Forward slashes work everywhere and dodge the problem entirely. Confirm what was actually recorded with `claude mcp get mcp-unreal`.
 
 Or copy `.mcp.json.example` to `.mcp.json` and edit the paths.
 
 **3. Check it.** Open your project in the Unreal Editor and call `status` — it reports the detected engine, the project, whether the plugin is reachable and what is currently available.
+
+If `status` says the engine root is a *fallback guess*, discovery found no install: it looks in the Epic Launcher's manifest and the conventional locations (including drive roots, so `D:\UE_5.8` is found), but a source build or an install somewhere else needs `UE_ENGINE_ROOT` set to the folder containing `Engine/`. `engine_installs_found` lists everything discovery did see.
 
 | Env var | Default | Meaning |
 |---|---|---|

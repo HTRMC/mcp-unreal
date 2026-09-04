@@ -19,6 +19,11 @@ pub struct ProjectStatus {
 pub struct StatusOutput {
     pub server_version: String,
     pub engine_root: String,
+    /// Whether `engine_root` was pinned, discovered, or is only a fallback
+    /// guess because no install was found.
+    pub engine_root_source: String,
+    /// Every UE install discovery could find, best match first.
+    pub engine_installs_found: Vec<String>,
     pub engine_version: Option<String>,
     pub editor_cmd_found: bool,
     pub project: Option<ProjectStatus>,
@@ -48,6 +53,39 @@ impl UnrealMcp {
 
         let editor_cmd_found = cfg.editor_cmd.exists();
         let engine_version = engine_version(&cfg.engine_root);
+        let installs = crate::config::discover_engine_roots();
+
+        // A fallback root is a guess. Left unlabelled it reads as a detection,
+        // and every headless tool then fails against a path that was never
+        // there — so say what was searched and how to pin it.
+        match cfg.engine_root_source {
+            crate::config::EngineRootSource::Fallback => hints.push(format!(
+                "no UE install found — {} is a fallback guess, not a detected install. \
+                 Searched: {}. Set UE_ENGINE_ROOT to the folder containing Engine/ \
+                 (a source build or an install outside these locations needs this)",
+                cfg.engine_root.display(),
+                crate::config::engine_search_locations().join(", "),
+            )),
+            crate::config::EngineRootSource::Pinned if !editor_cmd_found => hints.push(format!(
+                "UE_ENGINE_ROOT points at {}, which does not look like an engine root \
+                 (no Engine/Binaries/…/UnrealEditor-Cmd). It should be the folder \
+                 containing Engine/, not the Engine/ folder itself{}",
+                cfg.engine_root.display(),
+                if installs.is_empty() {
+                    String::new()
+                } else {
+                    format!(
+                        " — discovery did find {}",
+                        installs
+                            .iter()
+                            .map(|p| p.display().to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                },
+            )),
+            _ => {}
+        }
 
         // McpLink's C++ targets one engine version; say so up front rather than
         // letting a mismatch surface as a compile or route error later.
@@ -132,6 +170,11 @@ impl UnrealMcp {
         Ok(Json(StatusOutput {
             server_version: env!("CARGO_PKG_VERSION").to_string(),
             engine_root: cfg.engine_root.display().to_string(),
+            engine_root_source: cfg.engine_root_source.as_str().to_string(),
+            engine_installs_found: installs
+                .iter()
+                .map(|p| p.display().to_string())
+                .collect(),
             engine_version,
             editor_cmd_found,
             project: cfg.project.as_ref().map(|p| ProjectStatus {

@@ -14,11 +14,36 @@ pub struct ProjectInfo {
     pub name: String,
 }
 
+/// How `engine_root` was arrived at. A fallback is a guess, not a find, and
+/// saying so is the difference between "your engine is somewhere else" and a
+/// confusing "file not found" from every headless tool in turn.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EngineRootSource {
+    /// `UE_ENGINE_ROOT` was set explicitly.
+    Pinned,
+    /// Found in the launcher manifest or a conventional install location.
+    Discovered,
+    /// Nothing was found anywhere; this is a placeholder so that messages can
+    /// name a plausible path rather than an empty one.
+    Fallback,
+}
+
+impl EngineRootSource {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Pinned => "pinned (UE_ENGINE_ROOT)",
+            Self::Discovered => "discovered",
+            Self::Fallback => "fallback guess — nothing was found",
+        }
+    }
+}
+
 /// Server configuration. Loading never fails: missing pieces are detected at
 /// tool-call time so the server always starts and can explain what to fix.
 #[derive(Debug, Clone)]
 pub struct Config {
     pub engine_root: PathBuf,
+    pub engine_root_source: EngineRootSource,
     pub editor_cmd: PathBuf,
     pub build_bat: PathBuf,
     pub clean_bat: PathBuf,
@@ -30,7 +55,7 @@ pub struct Config {
 
 impl Config {
     pub fn load() -> Self {
-        let engine_root = detect_engine_root();
+        let (engine_root, engine_root_source) = detect_engine_root();
         let editor_cmd = env::var_os("UE_EDITOR_PATH")
             .map(PathBuf::from)
             .unwrap_or_else(|| editor_cmd_path(&engine_root));
@@ -62,6 +87,7 @@ impl Config {
 
         Self {
             engine_root,
+            engine_root_source,
             editor_cmd,
             build_bat,
             clean_bat,
@@ -78,14 +104,29 @@ impl Config {
     }
 }
 
-fn detect_engine_root() -> PathBuf {
+fn detect_engine_root() -> (PathBuf, EngineRootSource) {
     if let Some(root) = env::var_os("UE_ENGINE_ROOT") {
-        return PathBuf::from(root);
+        return (PathBuf::from(root), EngineRootSource::Pinned);
     }
-    discover_engine_roots()
-        .into_iter()
-        .next()
-        .unwrap_or_else(fallback_engine_root)
+    match discover_engine_roots().into_iter().next() {
+        Some(root) => (root, EngineRootSource::Discovered),
+        None => (fallback_engine_root(), EngineRootSource::Fallback),
+    }
+}
+
+/// The places discovery looks, for an error message that can say where it
+/// searched instead of only that it failed. Installs outside all of these — a
+/// source build, or a launcher install moved by hand — are exactly the case
+/// `UE_ENGINE_ROOT` exists for.
+pub fn engine_search_locations() -> Vec<String> {
+    let mut out = Vec::new();
+    if let Some(manifest) = launcher_manifest_path() {
+        out.push(format!("the Epic launcher manifest ({})", manifest.display()));
+    }
+    for path in conventional_install_dirs() {
+        out.push(path.display().to_string());
+    }
+    out
 }
 
 /// Every UE install we can find, best match first: the version McpLink targets,
@@ -209,17 +250,21 @@ pub(crate) fn parse_launcher_manifest(text: &str) -> Vec<PathBuf> {
         .unwrap_or_default()
 }
 
-fn conventional_installs() -> Vec<PathBuf> {
+/// Folders worth looking in. Each is treated as an engine root if it is one
+/// (a source build) and otherwise scanned for `UE_*` subdirectories. Drive
+/// roots are included because moving an install off `Program Files` — to
+/// `D:\UE_5.8`, say — is common enough that not finding it looks like a bug.
+fn conventional_install_dirs() -> Vec<PathBuf> {
     let mut out = Vec::new();
     if cfg!(windows) {
         for drive in ['C', 'D', 'E'] {
-            out.extend(engine_dirs_in(&PathBuf::from(format!(
-                r"{drive}:\Program Files\Epic Games"
-            ))));
+            out.push(PathBuf::from(format!(r"{drive}:\Program Files\Epic Games")));
+            out.push(PathBuf::from(format!(r"{drive}:\Epic Games")));
+            out.push(PathBuf::from(format!(r"{drive}:\")));
         }
     } else if cfg!(target_os = "macos") {
-        out.extend(engine_dirs_in(Path::new("/Users/Shared/Epic Games")));
-        out.extend(engine_dirs_in(Path::new("/Applications/Epic Games")));
+        out.push(PathBuf::from("/Users/Shared/Epic Games"));
+        out.push(PathBuf::from("/Applications/Epic Games"));
     } else {
         for path in [
             "/opt/UnrealEngine",
@@ -230,7 +275,19 @@ fn conventional_installs() -> Vec<PathBuf> {
         }
         if let Some(home) = dirs::home_dir() {
             out.push(home.join("UnrealEngine"));
-            out.extend(engine_dirs_in(&home.join("Epic Games")));
+            out.push(home.join("Epic Games"));
+        }
+    }
+    out
+}
+
+fn conventional_installs() -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    for dir in conventional_install_dirs() {
+        if is_engine_root(&dir) {
+            out.push(dir);
+        } else {
+            out.extend(engine_dirs_in(&dir));
         }
     }
     out
@@ -329,6 +386,7 @@ mod tests {
     fn editor_target_derived_from_project_name() {
         let cfg = Config {
             engine_root: PathBuf::new(),
+            engine_root_source: EngineRootSource::Fallback,
             editor_cmd: PathBuf::new(),
             build_bat: PathBuf::new(),
             clean_bat: PathBuf::new(),

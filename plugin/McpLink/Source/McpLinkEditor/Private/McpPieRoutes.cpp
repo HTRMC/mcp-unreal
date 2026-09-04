@@ -59,10 +59,17 @@ namespace McpLink
 						return;
 					}
 					*bDone = true;
+					// Remove() destroys this very lambda: FDelegateBase::Unbind
+					// runs the delegate instance's destructor immediately, even
+					// mid-broadcast — only the invocation list's compaction is
+					// deferred. So anything used after it must be a local copy,
+					// or it reads the captures out of freed storage.
+					const TSharedRef<FMcpResponder> LocalResponder = Responder;
+					const bool bLocalExpectedActive = bExpectedActive;
 					DelegatePtr->Remove(*Handle);
 					const TSharedRef<FJsonObject> Data = PieStatusJson();
-					Data->SetBoolField(TEXT("pie_active"), bExpectedActive);
-					Responder->Ok(Data);
+					Data->SetBoolField(TEXT("pie_active"), bLocalExpectedActive);
+					LocalResponder->Ok(Data);
 				});
 
 			float Elapsed = 0.0f;

@@ -34,8 +34,16 @@ namespace McpLink
 			bool bDone = false;
 		};
 
+		/// Request is taken **by value**, and that is load-bearing. This runs
+		/// inside OnScreenshotCaptured's broadcast, and unbinding our own
+		/// delegate below destroys the bound lambda immediately —
+		/// FDelegateBase::Unbind runs the instance's destructor there and then,
+		/// only the invocation-list compaction is deferred while broadcasting.
+		/// The lambda owns a TSharedRef<FCaptureRequest>, so a reference
+		/// parameter would alias storage that Remove() has just freed and every
+		/// line after it would be a use-after-free.
 		void FinishCapture(
-			const TSharedRef<FCaptureRequest>& Request, int32 Width, int32 Height, const TArray<FColor>& Pixels)
+			TSharedRef<FCaptureRequest> Request, int32 Width, int32 Height, const TArray<FColor>& Pixels)
 		{
 			if (Request->bDone)
 			{

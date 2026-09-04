@@ -12,6 +12,26 @@ installed as a pair.
 
 ### Fixed
 
+- **Use-after-free when a one-shot delegate unbound itself.** A multicast
+  delegate's `Remove()` destroys the bound lambda *immediately*, even when
+  called from inside that delegate's own broadcast — `FDelegateBase::Unbind`
+  runs the instance's destructor there and then, and only the invocation
+  list's compaction is deferred. Both `pie_control`'s wait-for-PIE handler and
+  `capture_viewport`'s screenshot handler unbound themselves and then went on
+  using their own captures, which by that point lived in freed storage. The
+  crash surfaced as an access violation at `0xffffffffffffffff` inside
+  `FMcpResponder::Send`, which made it look like the responder had been freed;
+  the responder was fine, the `TSharedRef` pointing at it was not. Whether it
+  faulted depended on whether the allocator had reused the memory yet, so a
+  PIE restart — which churns allocations — is where it showed up. The captures
+  are now taken by value or copied to locals before the unbind.
+- Engine discovery also looks in `<drive>:\Epic Games` and at drive roots, so
+  an install moved out of `Program Files` (`D:\UE_5.8`) is found. When nothing
+  is found at all, `status` now says the engine root is a *fallback guess*
+  rather than reporting it like a detection, lists everywhere it searched, and
+  reports `engine_root_source` plus `engine_installs_found` so a wrong root is
+  visible immediately instead of surfacing as a file-not-found from every
+  headless tool in turn.
 - Every route handler now runs with `GIsRunningUnattendedScript` set. Editor
   code that prompts — asset rename when class defaults or soft references point
   at the asset, save prompts, "are you sure" — took the modal path, which
