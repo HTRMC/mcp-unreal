@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (86)
+## Tools (87)
 
 | Area | Tools |
 |---|---|
@@ -43,7 +43,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Play | `pie_control`, `player_control`, **`input_inject`** |
 | Blueprints | `blueprint_query`, `blueprint_modify`, `blueprint_debug`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
 | Animation | `anim_asset_ops`, `anim_notify_ops`, `skeleton_ops`, `skeletal_mesh_ops`, `physics_asset_ops` |
-| Content | `material_ops`, `material_graph`, `material_function`, `material_layers`, `render_ops`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
+| Content | `material_ops`, `material_graph`, `material_function`, `material_layers`, `render_ops`, `texture_info`, `texture_ops`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
 | World building | `landscape_ops`, `foliage_ops`, `sublevel_ops`, `world_partition_ops`, `level_instance_ops` |
 | AI | `blackboard_ops`, `behavior_tree_ops`, `state_tree_ops`, `nav_ops` |
 | Editor workflow | `source_control_ops`, `validate_ops`, `gameplay_tag_ops`, `curve_ops`, `reference_ops`, `localization_ops` |
@@ -106,6 +106,8 @@ Times cross the wire as display-rate frames or as seconds, interchangeably, and 
 ### Asset lifecycle
 
 `asset_ops` is the content browser as an API. `create` makes an empty asset of any class that has a "create new" factory — Data Assets, Curve assets, Curve Tables, String Tables, User-Defined Structs and Enums — and `factory_properties` configures the factory first (a Blueprint's `ParentClass`, a Data Asset's `DataAssetClass`). `import` runs the automated importer on files from disk (FBX, glTF, OBJ, images, audio, CSV) with no dialog, and `reimport` re-runs one from its recorded source or a new file. `rename`, `move`, `duplicate` and `delete` go through `IAssetTools` so every reference is fixed up, and `fixup_redirectors` clears the redirectors a rename leaves behind. Folders, metadata tags, `export` and `save` / `save_all` round it out.
+
+`texture_ops` authors a texture's bytes with no source file involved: create a Texture2D from base64 BGRA8 pixels or a solid fill, read a rectangle back, write one, or flood-fill one. Masks, gradients, palettes and lookup tables have no file to import, and `asset_ops import` covers the ones that do. Everything works on the editor *source* data, so an edit survives recompression; regions are capped at 256x256 per call, so a large texture is painted in tiles — or drawn in one shot with a material through `render_ops`.
 
 ### Editor workflow
 

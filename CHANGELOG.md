@@ -38,6 +38,10 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`texture_ops`** — import-free texture authoring: create a Texture2D from
+  base64 BGRA8 pixels or a solid fill, and read, write or flood-fill a
+  rectangle of an existing one. Masks, gradients, palettes and lookup tables
+  have no file to import, and until now nothing could make them.
 - **`chaos_ops`** (new `McpLinkChaos` interop plugin) — Chaos destruction:
   Geometry Collections built from Static Meshes, and uniform, Voronoi and
   planar fracturing with grout, surface noise and island splitting. Fracture

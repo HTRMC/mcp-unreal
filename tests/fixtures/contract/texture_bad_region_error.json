@@ -1,0 +1,22 @@
+{
+  "name": "texture_bad_region_error",
+  "description": "a region that does not fit the texture is a 400",
+  "route": "/api/textures/ops",
+  "tool": "texture_ops",
+  "request": {
+    "operation": "read_pixels",
+    "texture": "/Game/Textures/T_McpCheck",
+    "x": 7,
+    "y": 7,
+    "width": 4,
+    "height": 4
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "bad_region",
+      "message": "region 4x4 at (7, 7) does not fit in a 8x8 texture"
+    }
+  }
+}

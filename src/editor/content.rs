@@ -176,6 +176,61 @@ pub struct TextureInfoInput {
     pub texture: String,
 }
 
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum TextureOp {
+    /// New Texture2D from raw pixels — no source file involved. Masks,
+    /// gradients, palettes and lookup tables have no file to import.
+    Create {
+        /// e.g. /Game/Textures/T_Mask.
+        path: String,
+        width: i32,
+        height: i32,
+        /// base64 BGRA8: four bytes per pixel, rows top to bottom, exactly
+        /// width * height * 4 bytes. Omit for a solid `fill`.
+        pixels: Option<String>,
+        /// [r, g, b, a] 0-255 to fill with when `pixels` is omitted. Default
+        /// opaque black.
+        fill: Option<Vec<i32>>,
+        /// Default true. Turn it off for data — masks, gradients, lookup
+        /// tables — where sRGB silently skews the values.
+        srgb: Option<bool>,
+        /// e.g. "TC_Default", "TC_Masks", "TC_Grayscale", "TC_HDR".
+        compression: Option<String>,
+    },
+    /// Read a rectangle back as base64 BGRA8. At most 256x256 per call.
+    ReadPixels {
+        texture: String,
+        x: Option<i32>,
+        y: Option<i32>,
+        /// Defaults to the rest of the row / column.
+        width: Option<i32>,
+        height: Option<i32>,
+    },
+    /// Write a rectangle of base64 BGRA8 into the texture's source data.
+    WritePixels {
+        texture: String,
+        /// base64 BGRA8, exactly width * height * 4 bytes.
+        pixels: String,
+        x: Option<i32>,
+        y: Option<i32>,
+        width: Option<i32>,
+        height: Option<i32>,
+    },
+    /// Fill a rectangle with one colour.
+    Fill {
+        texture: String,
+        /// [r, g, b, a] 0-255. Default opaque black.
+        color: Option<Vec<i32>>,
+        x: Option<i32>,
+        y: Option<i32>,
+        width: Option<i32>,
+        height: Option<i32>,
+    },
+    Save { texture: String },
+}
+
 #[tool_router(router = content_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
@@ -337,6 +392,18 @@ impl UnrealMcp {
             }),
         };
         self.call_plugin("/api/ism/ops", body).await.map(Json)
+    }
+
+    #[tool(
+        description = "Author a Texture2D's pixels directly: create one from base64 BGRA8 bytes or a solid fill, read a rectangle back, write a rectangle, or flood-fill one, then save. This is the import-free half — asset_ops import handles files on disk, and render_ops draws a whole texture with a material. Everything works on the editor source data, so the result survives recompression; regions are capped at 256x256 per call, so paint large textures in tiles."
+    )]
+    async fn texture_ops(
+        &self,
+        Parameters(op): Parameters<TextureOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/textures/ops", body).await.map(Json)
     }
 
     #[tool(description = "Get a texture asset's dimensions, pixel format and sRGB/LOD settings.")]

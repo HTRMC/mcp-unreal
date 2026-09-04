@@ -1,0 +1,27 @@
+{
+  "name": "texture_read_pixels",
+  "description": "a rectangle of a texture's source pixels as base64 BGRA8",
+  "route": "/api/textures/ops",
+  "tool": "texture_ops",
+  "request": {
+    "operation": "read_pixels",
+    "texture": "/Game/Textures/T_McpCheck",
+    "x": 0,
+    "y": 0,
+    "width": 2,
+    "height": 1
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "texture": "/Game/Textures/T_McpCheck.T_McpCheck",
+      "x": 0,
+      "y": 0,
+      "width": 2,
+      "height": 1,
+      "format": "BGRA8",
+      "pixels": "/////wAAAP8="
+    }
+  }
+}

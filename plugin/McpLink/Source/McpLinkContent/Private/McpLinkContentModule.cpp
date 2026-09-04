@@ -7,6 +7,7 @@ namespace McpLink
 	void RegisterMaterialGraphRoutes(FMcpLinkCoreModule& Core);
 	void RegisterMaterialFunctionRoutes(FMcpLinkCoreModule& Core);
 	void RegisterMaterialLayerRoutes(FMcpLinkCoreModule& Core);
+	void RegisterTextureRoutes(FMcpLinkCoreModule& Core);
 	void RegisterRenderRoutes(FMcpLinkCoreModule& Core);
 	void RegisterDataRoutes(FMcpLinkCoreModule& Core);
 	void RegisterInputAssetRoutes(FMcpLinkCoreModule& Core);
@@ -26,6 +27,7 @@ public:
 		McpLink::RegisterMaterialGraphRoutes(Core);
 		McpLink::RegisterMaterialFunctionRoutes(Core);
 		McpLink::RegisterMaterialLayerRoutes(Core);
+		McpLink::RegisterTextureRoutes(Core);
 		McpLink::RegisterRenderRoutes(Core);
 		McpLink::RegisterDataRoutes(Core);
 		McpLink::RegisterInputAssetRoutes(Core);

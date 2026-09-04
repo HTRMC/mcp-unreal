@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (86 tools, 70 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (87 tools, 71 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -45,9 +45,9 @@ MATERIALS & TEXTURES
 - No Material Layer *parameters*: a stack is edited whole, and the per-layer
   parameter overrides the material instance editor exposes are not surfaced.
 - Substrate materials have no dedicated tooling.
-- Textures: no import-free authoring from raw pixels, and no pixel writes to an
-  existing texture (render targets bake into one instead). Compression/LOD
-  settings only via set_property.
+- Textures: pixel reads and writes are BGRA8 only, one 256x256 region per call,
+  and there is no mip-level addressing. Compression/LOD settings only via
+  set_property. No texture arrays, volume textures or cube maps.
 - No vertex painting. No decal-specific tooling.
 
 
@@ -151,10 +151,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Texture authoring from raw pixels
-2. Translation editing (archive entries, PO import/export)
-3. Gameplay Debugger / Visual Logger
-4. Clustering and convex-hull tools for Geometry Collections
+1. Translation editing (archive entries, PO import/export)
+2. Gameplay Debugger / Visual Logger
+3. Clustering and convex-hull tools for Geometry Collections
+4. Editor UI automation (clicking, dragging, opening asset editors)
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -207,3 +207,6 @@ CLOSED
 2026-09-04 — chaos_ops: Chaos destruction — Geometry Collections built from
   Static Meshes, and uniform, Voronoi and planar fracturing with grout,
   surface noise and island splitting, one cluster level per fracture.
+2026-09-04 — texture_ops: import-free texture authoring — create a Texture2D
+  from raw BGRA8 pixels or a fill colour, and read, write or flood-fill a
+  region of an existing one.
