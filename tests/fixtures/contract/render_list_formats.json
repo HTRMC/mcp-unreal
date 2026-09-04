@@ -1,0 +1,28 @@
+{
+  "name": "render_list_formats",
+  "description": "the render target pixel formats create_render_target accepts",
+  "route": "/api/content/render",
+  "tool": "render_ops",
+  "request": {
+    "operation": "list_formats"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "formats": [
+        "RTF_R8",
+        "RTF_RG8",
+        "RTF_RGBA8",
+        "RTF_RGBA8_SRGB",
+        "RTF_R16f",
+        "RTF_RG16f",
+        "RTF_RGBA16f",
+        "RTF_R32f",
+        "RTF_RG32f",
+        "RTF_RGBA32f",
+        "RTF_RGB10A2"
+      ]
+    }
+  }
+}

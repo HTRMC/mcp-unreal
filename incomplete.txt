@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (79 tools, 62 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (81 tools, 64 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -31,18 +31,18 @@ RENDERING & CINEMATICS OUTPUT
 -----------------------------
 - Movie Render Queue / Movie Render Graph: you can author a Level Sequence but
   cannot render it to video or an image sequence.
-- No render targets, DrawMaterialToRenderTarget, scene-capture helpers, or
-  asset thumbnail generation.
+- No scene-capture helpers (SceneCapture2D actors are properties only).
 - capture_viewport is one JPEG from a windowed editor — no headless capture, no
   video, no viewport-layout control.
 
 
 MATERIALS & TEXTURES
 --------------------
-- Material Functions and Material Layers: material_graph only edits UMaterial
-  graphs. No function assets, no layer stacks or blends.
-- Textures are read-only (texture_info): no creation, no pixel writes, no render
-  targets. Compression/LOD settings only via set_property.
+- Material Layers and layer blends: material_function covers Material
+  Functions, not the layer stack.
+- Textures: no import-free authoring from raw pixels, and no pixel writes to an
+  existing texture (render targets bake into one instead). Compression/LOD
+  settings only via set_property.
 - No vertex painting. No decal-specific tooling.
 
 
@@ -141,9 +141,9 @@ LARGEST COHERENT HOLES
 If picking next work:
 
 1. Movie Render Queue (rendering a sequence to disk)
-2. Render targets / texture creation / thumbnails
-3. Material Functions and Material Layers
-4. Localization
+2. Localization
+3. Material Layers and layer blends
+4. Blueprint debugging (breakpoints, stepping, watch values)
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -178,3 +178,6 @@ CLOSED
   queries (projection, pathing, reachability, raycasts, random points).
   spawn_actor now builds a volume's brush, so a Nav Mesh Bounds Volume placed
   through it produces a real nav mesh rather than an empty one.
+2026-09-04 — render_ops, material_function: render targets (create, clear,
+  draw a material, read pixels, export, bake to Texture2D), asset thumbnail
+  rendering, and Material Function authoring.

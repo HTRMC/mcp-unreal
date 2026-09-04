@@ -1,6 +1,6 @@
-// McpLinkContent: asset authoring routes — materials, textures, data tables,
-// Enhanced Input assets, instanced-static-mesh components, Level Sequences and
-// Sound Cues.
+// McpLinkContent: asset authoring routes — materials and material functions,
+// render targets, textures and thumbnails, data tables, Enhanced Input assets,
+// instanced-static-mesh components, Level Sequences and Sound Cues.
 
 using UnrealBuildTool;
 
@@ -27,6 +27,9 @@ public class McpLinkContent : ModuleRules
 			"AssetRegistry",
 			"AssetTools",
 			"MaterialEditor",
+			"ImageWrapper",
+			"RenderCore",
+			"RHI",
 			"AudioEditor",
 			"StaticMeshEditor",
 			"EnhancedInput",

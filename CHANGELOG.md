@@ -27,6 +27,9 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`render_ops` / `material_function`** — render targets (create, clear,
+  draw a material into, read pixels, export to PNG/EXR/HDR, bake to a
+  Texture2D), asset thumbnail rendering, and Material Function authoring.
 - **`state_tree_ops` / `nav_ops`** — State Tree authoring (states,
   transitions, tasks, conditions, evaluators, and a compile report) and
   navigation queries against the built nav mesh (point projection, pathing with

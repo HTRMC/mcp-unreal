@@ -1,0 +1,18 @@
+{
+  "name": "material_function_not_found_error",
+  "description": "a missing Material Function is a 404",
+  "route": "/api/materials/function",
+  "tool": "material_function",
+  "request": {
+    "operation": "info",
+    "function": "/Game/Materials/MF_Missing"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "function_not_found",
+      "message": "no Material Function at '/Game/Materials/MF_Missing' — material_function create makes one"
+    }
+  }
+}

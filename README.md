@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (79)
+## Tools (81)
 
 | Area | Tools |
 |---|---|
@@ -43,7 +43,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Play | `pie_control`, `player_control`, **`input_inject`** |
 | Blueprints | `blueprint_query`, `blueprint_modify`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
 | Animation | `anim_asset_ops`, `anim_notify_ops`, `skeleton_ops`, `skeletal_mesh_ops`, `physics_asset_ops` |
-| Content | `material_ops`, `material_graph`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
+| Content | `material_ops`, `material_graph`, `material_function`, `render_ops`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
 | World building | `landscape_ops`, `foliage_ops`, `sublevel_ops`, `world_partition_ops`, `level_instance_ops` |
 | AI | `blackboard_ops`, `behavior_tree_ops`, `state_tree_ops`, `nav_ops` |
 | Editor workflow | `source_control_ops`, `validate_ops`, `gameplay_tag_ops`, `curve_ops`, `reference_ops` |
@@ -186,6 +186,12 @@ Optional sibling plugins add route groups for engine systems a project may or ma
 `material_graph` edits a material's node graph: add expressions (constants, parameters, texture samples, math), connect them to each other and to the material inputs (BaseColor, Roughness, Normal, ...), inspect, auto-layout and recompile with error reporting; unnamed channel-mask outputs are picked by index. `material_ops` creates materials and instances and reads/writes instance parameters (validated against the parameter list — UE 5.8's `UMaterialEditingLibrary::SetMaterialInstance*ParameterValue` helpers always return `false`, so their return value is deliberately ignored). `data_table_ops` creates tables for any `FTableRowBase` struct and edits rows with partial updates or CSV import. `input_asset_ops` authors Input Actions and Mapping Contexts. `ism_ops` scatters instanced meshes in bulk.
 
 Character movement tuning needs no dedicated tool: `get_property`/`set_property` on the pawn's `CharacterMovement` component already covers `MaxWalkSpeed`, `JumpZVelocity`, etc.
+
+### Render targets, textures and Material Functions
+
+`render_ops` is the other direction from `capture_viewport`: create a Render Target 2D, clear it, draw a material across it (procedural masks, gradients, noise), read a pixel back to check the result, export it to PNG/EXR/HDR, or bake it into a Texture2D asset — overwriting an existing one in place, which keeps everything referencing it. It also renders an asset's thumbnail, to a PNG file or into the asset's package where the content browser shows it. All of it needs a windowed editor; under `-nullrhi` there is no RHI to draw with, and the tool says so rather than returning black.
+
+`material_function` authors the reusable sub-graphs a material calls into: create the asset, add expressions (FunctionInput and FunctionOutput are its parameters and results), wire them, lay the graph out, then update to recompile the function and every material using it.
 
 ### Introspection
 

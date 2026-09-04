@@ -1,0 +1,18 @@
+{
+  "name": "render_target_not_found_error",
+  "description": "a missing render target is a 404 naming the tool that makes one",
+  "route": "/api/content/render",
+  "tool": "render_ops",
+  "request": {
+    "operation": "info",
+    "render_target": "/Game/RT/RT_Missing"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "render_target_not_found",
+      "message": "no Render Target 2D at '/Game/RT/RT_Missing' — render_ops create_render_target makes one"
+    }
+  }
+}

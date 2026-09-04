@@ -1,0 +1,56 @@
+{
+  "name": "material_function_info",
+  "description": "a material function's expressions with their pins",
+  "route": "/api/materials/function",
+  "tool": "material_function",
+  "request": {
+    "operation": "info",
+    "function": "/Game/Materials/MF_McpTint"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "function": "/Game/Materials/MF_McpTint.MF_McpTint",
+      "description": "Multiplies a colour by a scalar",
+      "exposed_to_library": true,
+      "expression_count": 4,
+      "expressions": [
+        {
+          "name": "MaterialExpressionFunctionInput_0",
+          "class": "FunctionInput",
+          "path": "/Game/Materials/MF_McpTint.MF_McpTint:MaterialExpressionFunctionInput_0",
+          "x": -260,
+          "y": 162,
+          "input_name": "Colour",
+          "sort_priority": 0
+        },
+        {
+          "name": "MaterialExpressionFunctionInput_1",
+          "class": "FunctionInput",
+          "path": "/Game/Materials/MF_McpTint.MF_McpTint:MaterialExpressionFunctionInput_1",
+          "x": -260,
+          "y": 0,
+          "input_name": "Amount",
+          "sort_priority": 0
+        },
+        {
+          "name": "MaterialExpressionMultiply_0",
+          "class": "Multiply",
+          "path": "/Game/Materials/MF_McpTint.MF_McpTint:MaterialExpressionMultiply_0",
+          "x": -200,
+          "y": 0
+        },
+        {
+          "name": "MaterialExpressionFunctionOutput_0",
+          "class": "FunctionOutput",
+          "path": "/Game/Materials/MF_McpTint.MF_McpTint:MaterialExpressionFunctionOutput_0",
+          "x": 0,
+          "y": 0,
+          "output_name": "Result",
+          "sort_priority": 0
+        }
+      ]
+    }
+  }
+}

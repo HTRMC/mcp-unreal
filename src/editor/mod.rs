@@ -20,6 +20,7 @@ pub mod object;
 pub mod pcg;
 pub mod perf;
 pub mod play;
+pub mod render;
 pub mod python;
 pub mod sequences;
 pub mod user_types;
