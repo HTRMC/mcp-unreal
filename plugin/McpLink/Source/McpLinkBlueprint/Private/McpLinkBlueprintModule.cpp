@@ -7,6 +7,7 @@ namespace McpLink
 	void RegisterAnimBlueprintRoutes(FMcpLinkCoreModule& Core);
 	void RegisterWidgetBlueprintRoutes(FMcpLinkCoreModule& Core);
 	void RegisterUserTypeRoutes(FMcpLinkCoreModule& Core);
+	void RegisterBlueprintDebugRoutes(FMcpLinkCoreModule& Core);
 }
 
 class FMcpLinkBlueprintModule : public IModuleInterface
@@ -19,6 +20,7 @@ public:
 		McpLink::RegisterAnimBlueprintRoutes(Core);
 		McpLink::RegisterWidgetBlueprintRoutes(Core);
 		McpLink::RegisterUserTypeRoutes(Core);
+		McpLink::RegisterBlueprintDebugRoutes(Core);
 	}
 };
 

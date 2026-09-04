@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (84)
+## Tools (85)
 
 | Area | Tools |
 |---|---|
@@ -41,7 +41,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Levels & assets | `level_ops`, `search_assets`, `get_asset_info`, `asset_ops` |
 | Editor | `run_console_command`, `get_output_log`, `capture_viewport`, `build_level`, `perf_ops`, `trace_ops` |
 | Play | `pie_control`, `player_control`, **`input_inject`** |
-| Blueprints | `blueprint_query`, `blueprint_modify`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
+| Blueprints | `blueprint_query`, `blueprint_modify`, `blueprint_debug`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
 | Animation | `anim_asset_ops`, `anim_notify_ops`, `skeleton_ops`, `skeletal_mesh_ops`, `physics_asset_ops` |
 | Content | `material_ops`, `material_graph`, `material_function`, `material_layers`, `render_ops`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
 | World building | `landscape_ops`, `foliage_ops`, `sublevel_ops`, `world_partition_ops`, `level_instance_ops` |
@@ -70,6 +70,8 @@ search_api   {"pattern": "InjectInputForAction", "module": "EnhancedInput"}
 Structure is editable too: components on the construction-script tree, function parameters and return values (the return node is created on demand), local variables, interfaces, event dispatchers with their signatures, the parent class, and variable types including containers (`array<int>`, `set<name>`, `map<name,float>`), structs, enums and soft references.
 
 Connections go through the graph schema, so type-incompatible links are refused with a reason rather than silently corrupting the graph. Every edit is undo-able in the editor.
+
+`blueprint_debug` covers breakpoints, watched pins and the instance their values are read from. Watches are the part that works unattended: during PIE a watched pin backed by a class property reports its live value, with nothing stopped — `list_watches` after each step of a scripted play session is a running trace of the Blueprint's state. Breakpoints can be set, listed, enabled and cleared, but *halting* needs a windowed editor with a human at it. A breakpoint that hits enters Slate's own debugging loop, which ticks Slate and nothing else until the debugger's Resume; `FTSTicker` stops, and the HTTP server ticks on `FTSTicker`, so McpLink cannot answer — including the request that would step or resume. Headlessly there is no debugger UI either, so a hit would hang the editor for good, and arming one there is refused with that explanation.
 
 ### Animation Blueprints
 

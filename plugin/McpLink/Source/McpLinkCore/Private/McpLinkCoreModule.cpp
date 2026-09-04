@@ -11,6 +11,8 @@
 #include "McpJson.h"
 #include "McpLogCapture.h"
 #include "McpResponder.h"
+#include "Misc/CoreMisc.h"
+#include "Misc/ScopeExit.h"
 #include "Misc/App.h"
 #include "Misc/EngineVersion.h"
 
@@ -213,6 +215,15 @@ void FMcpLinkCoreModule::BindRoute(const FString& Path, McpLink::FMcpHandler Han
 						TEXT("request body is not valid JSON"));
 					return true;
 				}
+				// Nobody is going to click a dialog. FMessageDialog and friends
+				// only skip the modal when the process is unattended, and a
+				// modal here blocks the game thread forever: the responder
+				// never fires, and the request that would cancel it cannot be
+				// served either, because the HTTP server ticks on this thread.
+				// Editor code that prompts (asset rename with referencers, save
+				// prompts, "are you sure") then takes its default answer, so an
+				// operation is refused rather than hanging the editor.
+				TGuardValue<bool> Unattended(GIsRunningUnattendedScript, true);
 				Handler(Body.ToSharedRef(), Responder);
 				return true;
 			}));

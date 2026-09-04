@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (84 tools, 68 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (85 tools, 69 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -96,8 +96,11 @@ EDITOR WORKFLOW
 - The editor UI is read-only: ui_query inspects Slate/UMG trees but nothing
   clicks a button, drags a widget, or opens an asset editor. Input injection is
   PIE-only, not editor-UI.
-- Debugging: no Blueprint breakpoints, stepping or watch values. No Gameplay
-  Debugger, Visual Logger, or network profiler.
+- Blueprint stepping and inspection *while halted* are impossible over this
+  transport: a breakpoint hit enters Slate's debugging loop, which stops
+  ticking the HTTP server, so the request that would step or resume can never
+  arrive. Breakpoints, watches and live watch values during PIE are covered.
+- No Gameplay Debugger, Visual Logger, or network profiler.
 - Localization gather/compile run as commandlets (a separate editor process),
   so they cannot be driven from inside a running editor session.
 - No translation editing: the .archive entries themselves are not exposed, and
@@ -145,10 +148,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Blueprint debugging (breakpoints, stepping, watch values)
-2. Chaos destruction (Geometry Collections, fracturing)
-3. Texture authoring from raw pixels
-4. Translation editing (archive entries, PO import/export)
+1. Chaos destruction (Geometry Collections, fracturing)
+2. Texture authoring from raw pixels
+3. Translation editing (archive entries, PO import/export)
+4. Gameplay Debugger / Visual Logger
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -194,3 +197,7 @@ CLOSED
 2026-09-04 — material_layers: Material Layers and layer blends — the two
   function assets, and the layer stack on a material or overridden per
   instance (add, replace, reorder, rename, hide, remove).
+2026-09-04 — blueprint_debug: Blueprint breakpoints, watched pins and the
+  debug object, with live watch values read from a running PIE instance
+  without halting. Halting itself stays out of reach over HTTP, for the
+  reason recorded under EDITOR WORKFLOW.

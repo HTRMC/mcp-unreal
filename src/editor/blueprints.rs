@@ -274,6 +274,78 @@ pub enum BlueprintModify {
     },
 }
 
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum BlueprintDebugOp {
+    /// What the debugger knows about this Blueprint: breakpoints and watches
+    /// set, whether it has compiled debug data, whether PIE is running, which
+    /// instance values are read from, and whether this editor can halt at all.
+    Status { blueprint: String },
+    ListBreakpoints { blueprint: String },
+    /// Put a breakpoint on a node. Refused with `enabled` when the editor
+    /// cannot render: a halt suspends the HTTP server too, so nothing could
+    /// resume it. Set it disabled to arm it for a windowed session.
+    SetBreakpoint {
+        blueprint: String,
+        /// Graph name or slash path; the first event graph when omitted.
+        graph: Option<String>,
+        /// Node GUID from blueprint_query get_graph.
+        node: String,
+        /// Default true.
+        enabled: Option<bool>,
+        /// Enable it headlessly anyway, accepting that a hit wedges the editor.
+        force: Option<bool>,
+    },
+    SetBreakpointEnabled {
+        blueprint: String,
+        graph: Option<String>,
+        node: String,
+        enabled: bool,
+        force: Option<bool>,
+    },
+    RemoveBreakpoint {
+        blueprint: String,
+        graph: Option<String>,
+        node: String,
+    },
+    ClearBreakpoints { blueprint: String },
+    /// Every watched pin with its current value, or why it has none.
+    ListWatches {
+        blueprint: String,
+        /// Read values from this instance instead of the selected one.
+        object: Option<String>,
+    },
+    /// Watch a pin. Values are readable while PIE runs, without halting, for
+    /// any pin the compiler kept a class property for.
+    AddWatch {
+        blueprint: String,
+        graph: Option<String>,
+        node: String,
+        /// Pin name from blueprint_query get_graph.
+        pin: String,
+        object: Option<String>,
+    },
+    /// One watched pin's current value.
+    ReadWatch {
+        blueprint: String,
+        graph: Option<String>,
+        node: String,
+        pin: String,
+        object: Option<String>,
+    },
+    RemoveWatch {
+        blueprint: String,
+        graph: Option<String>,
+        node: String,
+        pin: String,
+    },
+    ClearWatches { blueprint: String },
+    /// Pick the instance watch values are read from — during PIE, the path
+    /// find_actors reports for the spawned actor.
+    SetDebugObject { blueprint: String, object: String },
+}
+
 #[tool_router(router = blueprint_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
@@ -314,6 +386,18 @@ impl UnrealMcp {
         self.call_plugin("/api/blueprints/modify", blueprint_modify_body(op))
             .await
             .map(Json)
+    }
+
+    #[tool(
+        description = "Blueprint debugging: breakpoints, watched pins, and the instance their values are read from. Watches are the part that works unattended — during PIE a watched pin backed by a class property reports its live value without stopping anything. Breakpoints can be set, listed, enabled and cleared, but halting needs a windowed editor: a hit enters Slate's own debugging loop, which stops ticking the HTTP server, so nothing could step or resume over this connection, and a headless editor would hang for good. Enabling one is refused there for that reason."
+    )]
+    async fn blueprint_debug(
+        &self,
+        Parameters(op): Parameters<BlueprintDebugOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/blueprints/debug", body).await.map(Json)
     }
 }
 

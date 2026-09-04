@@ -10,6 +10,17 @@ installed as a pair.
 
 ## [Unreleased]
 
+### Fixed
+
+- Every route handler now runs with `GIsRunningUnattendedScript` set. Editor
+  code that prompts — asset rename when class defaults or soft references point
+  at the asset, save prompts, "are you sure" — took the modal path, which
+  blocks the game thread forever: the responder never fires, and the request
+  that would cancel it cannot be served either, because the HTTP server ticks
+  on that same thread. A prompt now takes its default answer, so the operation
+  is declined and reported instead of wedging the editor. `asset_ops rename`
+  says so explicitly when that is why it failed.
+
 ### Added
 
 - **`niagara_author`** — Niagara authoring, not just driving: create system and
@@ -27,6 +38,10 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`blueprint_debug`** — breakpoints, watched pins, and the debug object their
+  values are read from. Watch values are live during PIE without halting
+  anything, which is the part an agent can actually use; halting itself needs a
+  windowed editor, and the tool says why rather than hanging.
 - **`material_layers`** — Material Layers and layer blends: create the two
   function assets (seeded with the inputs and output the Material Editor would
   add on first open), then build the stack on a Material or override it per

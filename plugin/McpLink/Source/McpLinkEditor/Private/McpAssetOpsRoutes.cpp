@@ -426,8 +426,13 @@ namespace McpLink
 					if (!GetAssetTools().RenameAssets(Renames))
 					{
 						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("rename_failed"),
-							TEXT("the rename was rejected — the destination name may be taken, or an asset ")
-							TEXT("is checked out by someone else"));
+							TEXT("the rename was rejected. The destination name may be taken, an asset ")
+							TEXT("may be checked out by someone else, or the asset registry may still ")
+							TEXT("be scanning (the log says which). It is also rejected when the engine ")
+							TEXT("wants to warn that class defaults or soft references point at the ")
+							TEXT("asset: that is a confirmation prompt, and a request has nobody to ")
+							TEXT("answer it, so McpLink takes the safe default and declines. Such a ")
+							TEXT("rename has to happen in a windowed editor"));
 						return;
 					}
 

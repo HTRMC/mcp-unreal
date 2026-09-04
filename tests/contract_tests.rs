@@ -99,6 +99,7 @@ fn wire_body(fixture: &Fixture) -> Option<Value> {
         "set_property" => object::set_property_body(&from_json(&fixture.name, req)),
         "input_inject" => play::input_body(from_json(&fixture.name, req)),
         "blueprint_modify" => blueprints::blueprint_modify_body(from_json(&fixture.name, req)),
+        "blueprint_debug" => to_json::<blueprints::BlueprintDebugOp>(&fixture.name, req),
         "widget_blueprint_modify" => {
             to_json::<widget_blueprints::WidgetBlueprintModify>(&fixture.name, req)
         }
