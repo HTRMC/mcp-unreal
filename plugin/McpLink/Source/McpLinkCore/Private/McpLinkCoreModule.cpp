@@ -11,6 +11,7 @@
 #include "McpJson.h"
 #include "McpLogCapture.h"
 #include "McpResponder.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Misc/CoreMisc.h"
 #include "Misc/ScopeExit.h"
 #include "Misc/App.h"
@@ -171,11 +172,63 @@ void FMcpLinkCoreModule::StartHttpServer()
 	PendingRoutes.Empty();
 
 	HttpModule.StartAllListeners();
+
+	// Keep answering while execution is halted on a Blueprint breakpoint. See
+	// PumpWhileHalted: without this the resume request cannot be delivered,
+	// because the thing that would deliver it is what the halt stopped.
+	HttpTicker = &HttpModule;
+	if (FSlateApplication::IsInitialized())
+	{
+		PreTickHandle = FSlateApplication::Get().OnPreTick().AddRaw(this, &FMcpLinkCoreModule::PumpWhileHalted);
+	}
+
 	UE_LOG(LogMcpLink, Display, TEXT("McpLink %s listening on http://127.0.0.1:%u"), MCPLINK_VERSION, Port);
+}
+
+bool FMcpLinkCoreModule::IsHaltedAtBreakpoint()
+{
+#if WITH_EDITORONLY_DATA
+	return GIntraFrameDebuggingGameThread;
+#else
+	return false;
+#endif
+}
+
+bool FMcpLinkCoreModule::IsServableWhileHalted(const FString& Path)
+{
+	return Path == TEXT("/api/blueprints/debug")
+		|| Path == TEXT("/api/status")
+		|| Path == TEXT("/api/editor/output_log");
+}
+
+// A Blueprint breakpoint parks the game thread in
+// FSlateApplication::EnterDebuggingMode — a nested loop that keeps ticking
+// Slate but never returns to FEngineLoop, so FTSTicker stops running. The HTTP
+// server ticks on FTSTicker, which means a halted editor stops reading its
+// socket entirely: the request that would resume execution cannot arrive,
+// because delivering it is what the halt suspended. That is the deadlock.
+//
+// The loop does call FSlateApplication::Tick every iteration, though, and this
+// fires from it. Ticking the HTTP server here is all it takes to make a halted
+// editor answerable — the debugger's own toolbar is reachable the same way.
+void FMcpLinkCoreModule::PumpWhileHalted(float DeltaTime)
+{
+	if (HttpTicker == nullptr || bDispatching || !IsHaltedAtBreakpoint())
+	{
+		return;
+	}
+	HttpTicker->Tick(DeltaTime);
 }
 
 void FMcpLinkCoreModule::StopHttpServer()
 {
+	if (PreTickHandle.IsValid() && FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().OnPreTick().Remove(PreTickHandle);
+	}
+	PreTickHandle.Reset();
+	HttpTicker = nullptr;
+
 	if (Router.IsValid())
 	{
 		for (const FHttpRouteHandle& Handle : RouteHandles)
@@ -200,7 +253,7 @@ void FMcpLinkCoreModule::BindRoute(const FString& Path, McpLink::FMcpHandler Han
 		FHttpPath(Path),
 		Verbs,
 		FHttpRequestHandler::CreateLambda(
-			[Handler = MoveTemp(Handler), Path](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete) -> bool
+			[this, Handler = MoveTemp(Handler), Path](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete) -> bool
 			{
 				// FHttpServerModule ticks on the game thread; every handler
 				// relies on that for GEditor/UWorld access.
@@ -215,6 +268,21 @@ void FMcpLinkCoreModule::BindRoute(const FString& Path, McpLink::FMcpHandler Han
 						TEXT("request body is not valid JSON"));
 					return true;
 				}
+				// While halted this request arrived from PumpWhileHalted, which
+				// means the call stack still holds a paused Blueprint. Only the
+				// routes that exist to inspect and end that state are safe to
+				// run; anything else would re-enter the engine mid-frame.
+				if (IsHaltedAtBreakpoint() && !IsServableWhileHalted(Path))
+				{
+					Responder->Error(
+						EHttpServerResponseCodes::Conflict,
+						TEXT("halted_at_breakpoint"),
+						TEXT("execution is halted on a Blueprint breakpoint — only blueprint_debug, "
+							 "status and output_log are served until it resumes. Use blueprint_debug "
+							 "with operation 'resume', 'step_over', 'step_into' or 'step_out'"));
+					return true;
+				}
+				TGuardValue<bool> InDispatch(bDispatching, true);
 				// Nobody is going to click a dialog. FMessageDialog and friends
 				// only skip the modal when the process is unattended, and a
 				// modal here blocks the game thread forever: the responder

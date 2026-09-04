@@ -43,6 +43,19 @@ installed as a pair.
 
 ### Added
 
+- **Blueprint stepping.** `blueprint_debug` gained `halt_status`, `resume`,
+  `step_into`, `step_over`, `step_out` and `abort`, so a breakpoint is now
+  something an agent can actually drive rather than only set. A halt parks the
+  game thread in Slate's intra-frame debugging loop, which never returns to
+  `FEngineLoop` — `FTSTicker` stops, and the HTTP server ticks on it, so the
+  request that would resume execution could not be delivered. That loop does
+  keep ticking Slate, so the server is now pumped from
+  `FSlateApplication::OnPreTick` and a halted editor stays answerable. It works
+  headless as well, so arming a breakpoint is no longer refused there and the
+  `force` flag is gone. While halted only `blueprint_debug`, `status` and
+  `output_log` are served; anything else is refused, because it would be
+  re-entering the engine from inside a paused Blueprint's call stack.
+
 - **`niagara_author`** — Niagara authoring, not just driving: create system and
   emitter assets, add/remove/rename/enable emitters, read the whole stack
   (every emitter's emitter-spawn/update and particle-spawn/update module lists
@@ -81,8 +94,7 @@ installed as a pair.
   them into an atlas.
 - **`blueprint_debug`** — breakpoints, watched pins, and the debug object their
   values are read from. Watch values are live during PIE without halting
-  anything, which is the part an agent can actually use; halting itself needs a
-  windowed editor, and the tool says why rather than hanging.
+  anything; halting and stepping are covered under Blueprint stepping above.
 - **`material_layers`** — Material Layers and layer blends: create the two
   function assets (seeded with the inputs and output the Material Editor would
   add on first open), then build the stack on a Material or override it per

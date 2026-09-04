@@ -1,16 +1,18 @@
 // Blueprint debugging: breakpoints, watched pins, and the debug object their
 // values are read from.
 //
-// What is here is everything that happens *outside* a halt. Stepping and
-// inspecting while stopped on a breakpoint are not, and cannot be over this
-// transport: when a breakpoint hits, FKismetDebugUtilities calls
-// FSlateApplication::EnterDebuggingMode, a nested loop that ticks Slate and
-// nothing else until the debugger UI's Resume sets bRequestLeaveDebugMode.
-// FTSTicker does not run inside it, and FHttpServerModule ticks on FTSTicker,
-// so McpLink stops answering the moment execution halts — including the
-// request that would resume it. In an editor that cannot render there is no
-// debugger UI either, so an armed breakpoint that hits wedges the editor
-// permanently. That is why enabling one is refused headlessly.
+// Halting works too. When a breakpoint hits, FKismetDebugUtilities calls
+// FSlateApplication::EnterDebuggingMode, a nested loop that never returns to
+// FEngineLoop — so FTSTicker stops running, and with it the HTTP server, which
+// used to mean the request that would resume execution could not be delivered.
+// The loop does keep ticking Slate, though, so McpLinkCore pumps the HTTP
+// server from FSlateApplication::OnPreTick while halted; see PumpWhileHalted.
+// Only this route, status and output_log are served in that state, because any
+// other handler would be re-entering the engine from inside a paused
+// Blueprint's call stack.
+//
+// resume, step_into, step_over, step_out and abort name no Blueprint: like the
+// debugger toolbar they act on whatever is currently stopped.
 //
 // Watched pin values are still readable while PIE runs *without* halting, for
 // any pin backed by a class property (variable gets, and node outputs the
@@ -24,6 +26,8 @@
 #include "EdGraph/EdGraphNode.h"
 #include "EdGraph/EdGraphPin.h"
 #include "Editor.h"
+#include "Editor/UnrealEdEngine.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Engine/Blueprint.h"
 #include "Kismet2/Breakpoint.h"
 #include "Kismet2/KismetDebugUtilities.h"
@@ -35,6 +39,7 @@
 #include "McpResolve.h"
 #include "McpResponder.h"
 #include "Misc/App.h"
+#include "UnrealEdGlobals.h"
 
 namespace McpLink
 {
@@ -146,6 +151,94 @@ namespace McpLink
 				Object != nullptr ? Object->GetPathName() : FString());
 			Data->SetStringField(TEXT("debug_object_path_hint"), Blueprint->GetObjectPathToDebug());
 		}
+
+		bool IsHaltControl(const FString& Operation)
+		{
+			return Operation == TEXT("resume")
+				|| Operation == TEXT("step_into")
+				|| Operation == TEXT("step_over")
+				|| Operation == TEXT("step_out")
+				|| Operation == TEXT("abort");
+		}
+
+		/// The Blueprint debugger toolbar's own sequence, which is all these
+		/// are: ask FKismetDebugUtilities for the step kind, unpause the PIE
+		/// worlds, then tell Slate to leave its debugging loop. Passing "we are
+		/// stopping again shortly" to LeaveDebuggingMode is what keeps the
+		/// mouse out of the game viewport between steps.
+		void HandleHaltControl(const FString& Operation, const TSharedRef<FMcpResponder>& Responder)
+		{
+			const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+			const bool bHalted = FMcpLinkCoreModule::IsHaltedAtBreakpoint();
+			Data->SetBoolField(TEXT("halted"), bHalted);
+			Data->SetBoolField(TEXT("single_stepping"), FKismetDebugUtilities::IsSingleStepping());
+			if (const UEdGraphNode* Node = FKismetDebugUtilities::GetCurrentInstruction())
+			{
+				Data->SetObjectField(TEXT("halted_at"), NodeSiteToJson(Node));
+			}
+			if (const UEdGraphNode* Node = FKismetDebugUtilities::GetMostRecentBreakpointHit())
+			{
+				Data->SetObjectField(TEXT("breakpoint_hit"), NodeSiteToJson(Node));
+			}
+			if (const UWorld* World = FKismetDebugUtilities::GetCurrentDebuggingWorld())
+			{
+				Data->SetStringField(TEXT("debugging_world"), World->GetPathName());
+			}
+
+			if (Operation == TEXT("halt_status"))
+			{
+				Data->SetStringField(TEXT("message"), bHalted
+					? TEXT("halted — resume, step_into, step_over, step_out or abort to continue")
+					: TEXT("not halted"));
+				Responder->Ok(Data);
+				return;
+			}
+
+			if (!bHalted)
+			{
+				Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("not_halted"),
+					TEXT("execution is not halted on a breakpoint, so there is nothing to resume "
+						 "or step — halt_status reports whether it is"));
+				return;
+			}
+
+			if (Operation == TEXT("step_into"))
+			{
+				FKismetDebugUtilities::RequestSingleStepIn();
+			}
+			else if (Operation == TEXT("step_over"))
+			{
+				FKismetDebugUtilities::RequestStepOver();
+			}
+			else if (Operation == TEXT("step_out"))
+			{
+				FKismetDebugUtilities::RequestStepOut();
+			}
+			else if (Operation == TEXT("abort"))
+			{
+				FKismetDebugUtilities::RequestAbortingExecution();
+			}
+
+			if (GUnrealEd != nullptr)
+			{
+				GUnrealEd->SetPIEWorldsPaused(false);
+			}
+			const bool bResuming = !FKismetDebugUtilities::IsSingleStepping();
+			// Only sets a flag: the nested loop finishes its iteration and
+			// unwinds, so this response is written once the editor is running
+			// again. That is also why the reply says what *will* happen.
+			FSlateApplication::Get().LeaveDebuggingMode(!bResuming);
+			if (GUnrealEd != nullptr)
+			{
+				GUnrealEd->PlaySessionSingleStepped();
+			}
+
+			Data->SetBoolField(TEXT("resuming"), bResuming);
+			Data->SetStringField(TEXT("message"), bResuming
+				? TEXT("resuming — PIE runs on until the next breakpoint")
+				: TEXT("stepping — execution halts again at the next node; poll halt_status"));
+			Responder->Ok(Data);
+		}
 	}
 
 	using namespace BlueprintDebug;
@@ -157,6 +250,14 @@ namespace McpLink
 			{
 				FString Operation;
 				Body->TryGetStringField(TEXT("operation"), Operation);
+
+				// Halt control names no Blueprint: it acts on whatever is
+				// currently stopped, exactly like the debugger's toolbar.
+				if (Operation == TEXT("halt_status") || IsHaltControl(Operation))
+				{
+					HandleHaltControl(Operation, Responder);
+					return;
+				}
 
 				UBlueprint* Blueprint = DebugBlueprintOrError(Body, Responder);
 				if (Blueprint == nullptr)
@@ -181,8 +282,9 @@ namespace McpLink
 						Data->SetObjectField(TEXT("halted_at"), NodeSiteToJson(Node));
 					}
 					Data->SetBoolField(TEXT("in_pie"), GEditor != nullptr && GEditor->PlayWorld != nullptr);
-					// Whether an armed breakpoint is safe to leave armed here.
-					Data->SetBoolField(TEXT("can_halt"), FApp::CanEverRender());
+					// Halting is answerable in any editor, windowed or not: the
+					// HTTP server is pumped from Slate's tick while stopped.
+					Data->SetBoolField(TEXT("halted"), FMcpLinkCoreModule::IsHaltedAtBreakpoint());
 					AddDebugObjectFields(Data, Blueprint);
 					Responder->Ok(Data);
 					return;
@@ -315,20 +417,6 @@ namespace McpLink
 					|| Operation == TEXT("set_breakpoint_enabled"))
 				{
 					const bool bEnabled = BoolOr(Body, TEXT("enabled"), true);
-					// A halt has no way back here: the resume would have to come
-					// through this same HTTP server, and the server stops ticking
-					// the moment execution halts.
-					if (bEnabled && !FApp::CanEverRender() && !BoolOr(Body, TEXT("force"), false))
-					{
-						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("cannot_halt"),
-							TEXT("this editor cannot render, so it has no Blueprint debugger to ")
-							TEXT("resume from: a breakpoint that hits enters Slate's debugging loop, ")
-							TEXT("which stops ticking the HTTP server and wedges the editor for good. ")
-							TEXT("Set it with enabled:false to arm it for a windowed session, use ")
-							TEXT("watches to read values without halting, or pass force:true if you ")
-							TEXT("accept the risk"));
-						return;
-					}
 
 					FBlueprintBreakpoint* Existing =
 						FKismetDebugUtilities::FindBreakpointForNode(Node, Blueprint);
@@ -352,8 +440,8 @@ namespace McpLink
 					Data->SetStringField(TEXT("blueprint"), Blueprint->GetPathName());
 					Data->SetBoolField(TEXT("enabled"), bEnabled);
 					Data->SetStringField(TEXT("message"), bEnabled
-							? TEXT("armed — execution halts here in a windowed editor, where the ")
-							  TEXT("Blueprint debugger's Resume is the only way to continue")
+							? TEXT("armed — execution halts here; drive it from halt_status, ")
+							  TEXT("step_into, step_over, step_out, abort and resume")
 							: TEXT("set but disabled — it will not halt execution"));
 					Responder->Ok(Data);
 					return;
@@ -442,7 +530,8 @@ namespace McpLink
 
 				Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_operation"),
 					FString::Printf(
-						TEXT("unknown operation '%s' — use status, list_breakpoints, set_breakpoint, ")
+						TEXT("unknown operation '%s' — use status, halt_status, resume, step_into, ")
+						TEXT("step_over, step_out, abort, list_breakpoints, set_breakpoint, ")
 						TEXT("set_breakpoint_enabled, remove_breakpoint, clear_breakpoints, ")
 						TEXT("list_watches, add_watch, read_watch, remove_watch, clear_watches or ")
 						TEXT("set_debug_object"),

@@ -1,0 +1,18 @@
+{
+  "name": "blueprint_debug_halt_status",
+  "description": "whether execution is halted on a breakpoint, naming no Blueprint",
+  "route": "/api/blueprints/debug",
+  "tool": "blueprint_debug",
+  "request": {
+    "operation": "halt_status"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "halted": false,
+      "single_stepping": false,
+      "message": "not halted"
+    }
+  }
+}

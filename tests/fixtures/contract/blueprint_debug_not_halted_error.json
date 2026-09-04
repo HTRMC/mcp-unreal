@@ -1,0 +1,17 @@
+{
+  "name": "blueprint_debug_not_halted_error",
+  "description": "resuming when nothing is halted",
+  "route": "/api/blueprints/debug",
+  "tool": "blueprint_debug",
+  "request": {
+    "operation": "resume"
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "not_halted",
+      "message": "execution is not halted on a breakpoint, so there is nothing to resume or step — halt_status reports whether it is"
+    }
+  }
+}

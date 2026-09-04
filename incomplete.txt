@@ -113,10 +113,6 @@ EDITOR WORKFLOW
   windows that -nullrhi never creates. A windowed editor would be needed to
   take this further. Opening and closing asset editors is covered by ui_ops.
 - Input injection is PIE-only, not editor-UI.
-- Blueprint stepping and inspection *while halted* are impossible over this
-  transport: a breakpoint hit enters Slate's debugging loop, which stops
-  ticking the HTTP server, so the request that would step or resume can never
-  arrive. Breakpoints, watches and live watch values during PIE are covered.
 - No Gameplay Debugger: its categories build their output as strings at draw
   time, into a canvas context, so there is nothing structured to read without
   a viewport. No network profiler.
@@ -244,3 +240,7 @@ CLOSED
 2026-09-04 — chaos_ops: interior faces — give the faces a fracture creates
   their own material slot, and UVs by box projection or by packing them into
   an atlas.
+2026-09-04 — blueprint_debug: halting — halt_status, resume, step_into,
+  step_over, step_out and abort. A halted editor stays answerable because the
+  HTTP server is pumped from Slate's pre-tick, which still runs inside the
+  debugging loop; headless halting works too, so the old refusal is gone.

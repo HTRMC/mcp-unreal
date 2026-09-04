@@ -21,6 +21,8 @@ public class McpLinkCore : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"Projects",
+			"Slate",
+			"SlateCore",
 			"UnrealEd",
 			"AssetTools",
 			"AssetRegistry"

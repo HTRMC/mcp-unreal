@@ -1,6 +1,6 @@
 {
   "name": "blueprint_debug_status",
-  "description": "what the debugger knows about a Blueprint, including whether this editor can halt at all",
+  "description": "what the debugger knows about a Blueprint, and whether execution is halted",
   "route": "/api/blueprints/debug",
   "tool": "blueprint_debug",
   "request": {
@@ -12,12 +12,12 @@
     "ok": true,
     "data": {
       "blueprint": "/Game/Blueprints/BP_McpDebugProbe.BP_McpDebugProbe",
-      "has_breakpoints": false,
+      "has_breakpoints": true,
       "has_watches": true,
       "has_debugging_data": true,
       "single_stepping": false,
       "in_pie": false,
-      "can_halt": false,
+      "halted": false,
       "debug_object": "",
       "debug_object_path_hint": ""
     }

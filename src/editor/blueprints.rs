@@ -283,9 +283,21 @@ pub enum BlueprintDebugOp {
     /// instance values are read from, and whether this editor can halt at all.
     Status { blueprint: String },
     ListBreakpoints { blueprint: String },
-    /// Put a breakpoint on a node. Refused with `enabled` when the editor
-    /// cannot render: a halt suspends the HTTP server too, so nothing could
-    /// resume it. Set it disabled to arm it for a windowed session.
+    /// Whether execution is currently halted on a breakpoint, and where.
+    /// Names no Blueprint: it reports whatever is stopped.
+    HaltStatus {},
+    /// Continue running until the next breakpoint.
+    Resume {},
+    /// Run the next node, descending into a called function graph.
+    StepInto {},
+    /// Run the next node in this graph, over any function it calls.
+    StepOver {},
+    /// Run until the current function graph returns.
+    StepOut {},
+    /// Abandon the rest of this frame's execution and continue.
+    Abort {},
+    /// Put a breakpoint on a node. When it hits, execution halts and only
+    /// this tool, status and output_log answer until it resumes.
     SetBreakpoint {
         blueprint: String,
         /// Graph name or slash path; the first event graph when omitted.
@@ -294,15 +306,12 @@ pub enum BlueprintDebugOp {
         node: String,
         /// Default true.
         enabled: Option<bool>,
-        /// Enable it headlessly anyway, accepting that a hit wedges the editor.
-        force: Option<bool>,
     },
     SetBreakpointEnabled {
         blueprint: String,
         graph: Option<String>,
         node: String,
         enabled: bool,
-        force: Option<bool>,
     },
     RemoveBreakpoint {
         blueprint: String,
@@ -389,7 +398,7 @@ impl UnrealMcp {
     }
 
     #[tool(
-        description = "Blueprint debugging: breakpoints, watched pins, and the instance their values are read from. Watches are the part that works unattended — during PIE a watched pin backed by a class property reports its live value without stopping anything. Breakpoints can be set, listed, enabled and cleared, but halting needs a windowed editor: a hit enters Slate's own debugging loop, which stops ticking the HTTP server, so nothing could step or resume over this connection, and a headless editor would hang for good. Enabling one is refused there for that reason."
+        description = "Blueprint debugging: breakpoints, stepping, watched pins, and the instance their values are read from. Watches work without stopping anything — during PIE a watched pin backed by a class property reports its live value. Breakpoints halt execution, and halt_status/resume/step_into/step_over/step_out/abort drive it from there; while halted only this tool, status and output_log answer, since every other handler would be re-entering the engine from inside a paused Blueprint."
     )]
     async fn blueprint_debug(
         &self,
