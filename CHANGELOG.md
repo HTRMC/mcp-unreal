@@ -27,6 +27,10 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`state_tree_ops` / `nav_ops`** — State Tree authoring (states,
+  transitions, tasks, conditions, evaluators, and a compile report) and
+  navigation queries against the built nav mesh (point projection, pathing with
+  waypoints, reachability, raycasts, random reachable points).
 - **`metasound_ops`** (new `McpLinkMetaSound` interop plugin) — MetaSound
   authoring: create a Source or Patch, discover the registered node classes,
   add and remove nodes, connect them to each other and to the graph interface,
@@ -106,6 +110,12 @@ installed as a pair.
   builds turn into an error that appears only on some machines.
 
 ### Fixed
+
+- `spawn_actor` on a volume class (Nav Mesh Bounds, Trigger, Blocking,
+  Post Process, ...) produced a brush-less actor that enclosed nothing: a Nav
+  Mesh Bounds Volume placed that way built an empty nav mesh, and Map Check
+  reported "collision component with 0 radius". Volumes now get the same cube
+  brush the editor's own placement builds.
 
 - Duplicate anonymous-namespace helpers (`McpTestFlags`, `IntOr`) broke the
   plugin build depending on which files had been edited most recently. They now

@@ -46,6 +46,7 @@ impl UnrealMcp {
                 + Self::level_router()
                 + Self::asset_router()
                 + Self::ai_router()
+                + Self::navigation_router()
                 + Self::audio_router()
                 + Self::mesh_router()
                 + Self::perf_router()

@@ -1,0 +1,60 @@
+{
+  "name": "state_tree_info",
+  "description": "a State Tree's state hierarchy with tasks and transitions",
+  "route": "/api/ai/statetree",
+  "tool": "state_tree_ops",
+  "request": {
+    "operation": "info",
+    "state_tree": "/Game/AI/ST_McpGuard"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "state_tree": "/Game/AI/ST_McpGuard.ST_McpGuard",
+      "schema": "StateTreeTestSchema",
+      "compiled": true,
+      "states": [
+        {
+          "name": "Root",
+          "id": "DF696B38407B56CD5391E59C9C59FE9E",
+          "type": "State",
+          "path": "/Game/AI/ST_McpGuard.ST_McpGuard:StateTreeEditorData_0.StateTreeState_0",
+          "tasks": [],
+          "enter_conditions": [],
+          "transitions": [],
+          "children": [
+            {
+              "name": "Patrol",
+              "id": "65E1B3B84F4B0E8674CF8E88B46C7683",
+              "type": "State",
+              "path": "/Game/AI/ST_McpGuard.ST_McpGuard:StateTreeEditorData_0.StateTreeState_0.StateTreeState_0",
+              "tasks": [
+                "StateTreeDelayTask"
+              ],
+              "enter_conditions": [],
+              "transitions": [
+                {
+                  "trigger": "OnStateCompleted",
+                  "type": "GotoState",
+                  "target": "Chase"
+                }
+              ],
+              "children": []
+            },
+            {
+              "name": "Chase",
+              "id": "2ABF349747723793130512BF648ED2EE",
+              "type": "State",
+              "path": "/Game/AI/ST_McpGuard.ST_McpGuard:StateTreeEditorData_0.StateTreeState_0.StateTreeState_1",
+              "tasks": [],
+              "enter_conditions": [],
+              "transitions": [],
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

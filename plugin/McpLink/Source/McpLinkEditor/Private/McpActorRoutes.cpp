@@ -1,8 +1,11 @@
+#include "ActorFactories/ActorFactory.h"
+#include "Builders/CubeBuilder.h"
 #include "Components/SceneComponent.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Editor.h"
 #include "Engine/World.h"
+#include "GameFramework/Volume.h"
 #include "EngineUtils.h"
 #include "GameFramework/Actor.h"
 #include "McpJson.h"
@@ -47,6 +50,26 @@ namespace McpLink
 			Obj->SetArrayField(TEXT("rotation"), RotatorToJson(Actor->GetActorRotation()));
 			Obj->SetArrayField(TEXT("scale"), VectorToJson(Actor->GetActorScale3D()));
 			return Obj;
+		}
+
+		/// A volume spawned through SpawnActor has no brush, so it encloses
+		/// nothing — a Nav Mesh Bounds Volume placed that way builds an empty
+		/// nav mesh, and Map Check reports "collision component with 0 radius".
+		/// The placement path builds a cube brush; this does the same, scaled
+		/// by the actor so `scale` means what it looks like it means.
+		void BuildDefaultVolumeBrush(AActor* Actor)
+		{
+			AVolume* Volume = Cast<AVolume>(Actor);
+			if (Volume == nullptr || Volume->Brush != nullptr)
+			{
+				return;
+			}
+			UCubeBuilder* Builder = NewObject<UCubeBuilder>(Volume);
+			Builder->X = 200.0f;
+			Builder->Y = 200.0f;
+			Builder->Z = 200.0f;
+			// The same call the editor's own volume placement makes.
+			UActorFactory::CreateBrushForVolumeActor(Volume, Builder);
 		}
 	}
 
@@ -145,6 +168,7 @@ namespace McpLink
 				{
 					Actor->SetActorScale3D(Scale);
 				}
+				BuildDefaultVolumeBrush(Actor);
 				FString Label;
 				if (Body->TryGetStringField(TEXT("name"), Label) && !Label.IsEmpty())
 				{

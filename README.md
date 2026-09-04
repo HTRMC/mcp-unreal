@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (77)
+## Tools (79)
 
 | Area | Tools |
 |---|---|
@@ -45,7 +45,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Animation | `anim_asset_ops`, `anim_notify_ops`, `skeleton_ops`, `skeletal_mesh_ops`, `physics_asset_ops` |
 | Content | `material_ops`, `material_graph`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
 | World building | `landscape_ops`, `foliage_ops`, `sublevel_ops`, `world_partition_ops`, `level_instance_ops` |
-| AI | `blackboard_ops`, `behavior_tree_ops` |
+| AI | `blackboard_ops`, `behavior_tree_ops`, `state_tree_ops`, `nav_ops` |
 | Editor workflow | `source_control_ops`, `validate_ops`, `gameplay_tag_ops`, `curve_ops`, `reference_ops` |
 | Introspection | `subsystem_query`, `ui_query` |
 | Engine API | `lookup_class`, `search_api` |
@@ -124,6 +124,12 @@ Times cross the wire as display-rate frames or as seconds, interchangeably, and 
 `skeleton_ops` reads the bone hierarchy and edits sockets, virtual bones and montage slot groups; `skeletal_mesh_ops` handles the LOD chain (through the real reduction module), material slots, mesh-only sockets and morph target listing. Either accepts a Skeletal Mesh path where a skeleton is wanted.
 
 `physics_asset_ops` generates a ragdoll from a skeletal mesh — the same body-and-constraint pass the Physics Asset editor runs on a new asset — then adds and removes individual bodies and constraints. Body and constraint tuning is ordinary `set_property` work on the reported paths.
+
+### State Trees and navigation
+
+`state_tree_ops` authors State Trees, the hierarchical state machine replacing Behavior Trees for a lot of AI and gameplay logic. There is no EdGraph — the editor draws `UStateTreeState` objects directly — so authoring is building that hierarchy: states, transitions, and tasks, enter conditions and evaluators from the structs the project has registered. Then `compile`: an uncompiled State Tree has empty runtime data and runs nothing, and the compile report names whatever the schema rejected.
+
+`nav_ops` asks the built nav mesh the questions that decide whether a level's navigation actually works — project a point onto the mesh, path between two points with waypoints and length, test reachability, raycast for a clear straight walk, pick a random reachable point. `build_level navigation` builds the mesh; a mesh with a hole in it looks exactly like a good one until something tries to walk it.
 
 ### Static meshes
 

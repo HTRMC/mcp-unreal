@@ -1,0 +1,37 @@
+{
+  "name": "nav_project_point",
+  "description": "nearest navigable point to a location above the mesh",
+  "route": "/api/ai/navigation",
+  "tool": "nav_ops",
+  "request": {
+    "operation": "project_point",
+    "location": [
+      500,
+      500,
+      400
+    ],
+    "extent": [
+      100,
+      100,
+      500
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "on_navmesh": true,
+      "query": [
+        500,
+        500,
+        400
+      ],
+      "projected": [
+        500,
+        500,
+        60
+      ],
+      "distance": 340
+    }
+  }
+}

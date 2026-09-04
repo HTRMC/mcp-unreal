@@ -1,0 +1,58 @@
+{
+  "name": "nav_find_path",
+  "description": "a path across the nav mesh with its waypoints and length",
+  "route": "/api/ai/navigation",
+  "tool": "nav_ops",
+  "request": {
+    "operation": "find_path",
+    "start": [
+      -1500,
+      -1500,
+      60
+    ],
+    "end": [
+      1500,
+      1500,
+      60
+    ],
+    "max_points": 5
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "start": [
+        -1500,
+        -1500,
+        60
+      ],
+      "end": [
+        1500,
+        1500,
+        60
+      ],
+      "valid": true,
+      "partial": false,
+      "length": 4242.640687119286,
+      "straight_line": 4242.640687119285,
+      "point_count": 3,
+      "points": [
+        [
+          -1500,
+          -1500,
+          60
+        ],
+        [
+          988,
+          988,
+          60
+        ],
+        [
+          1500,
+          1500,
+          60
+        ]
+      ]
+    }
+  }
+}

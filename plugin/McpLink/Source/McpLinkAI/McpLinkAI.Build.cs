@@ -1,4 +1,6 @@
-// McpLinkAI: Blackboard and Behavior Tree authoring routes.
+// McpLinkAI: Blackboard, Behavior Tree, State Tree and navigation-query routes.
+//
+// StateTree ships as an engine plugin; McpLink.uplugin marks it required.
 //
 // AIModule and BehaviorTreeEditor ship with the engine rather than as a
 // plugin, so this is a module of McpLink itself, not a sibling interop plugin.
@@ -28,8 +30,12 @@ public class McpLinkAI : ModuleRules
 			"AssetRegistry",
 			"AssetTools",
 			"AIModule",
+			"NavigationSystem",
 			"AIGraph",
-			"BehaviorTreeEditor"
+			"BehaviorTreeEditor",
+			"PropertyBindingUtils",
+			"StateTreeModule",
+			"StateTreeEditorModule"
 		});
 	}
 }

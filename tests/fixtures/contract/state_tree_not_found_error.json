@@ -1,0 +1,18 @@
+{
+  "name": "state_tree_not_found_error",
+  "description": "a missing State Tree asset is a 404",
+  "route": "/api/ai/statetree",
+  "tool": "state_tree_ops",
+  "request": {
+    "operation": "info",
+    "state_tree": "/Game/AI/ST_Missing"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "tree_not_found",
+      "message": "no State Tree asset at '/Game/AI/ST_Missing'"
+    }
+  }
+}

@@ -5,6 +5,8 @@ namespace McpLink
 {
 	void RegisterBlackboardRoutes(FMcpLinkCoreModule& Core);
 	void RegisterBehaviorTreeRoutes(FMcpLinkCoreModule& Core);
+	void RegisterNavigationRoutes(FMcpLinkCoreModule& Core);
+	void RegisterStateTreeRoutes(FMcpLinkCoreModule& Core);
 }
 
 class FMcpLinkAIModule : public IModuleInterface
@@ -15,6 +17,8 @@ public:
 		FMcpLinkCoreModule& Core = FMcpLinkCoreModule::Get();
 		McpLink::RegisterBlackboardRoutes(Core);
 		McpLink::RegisterBehaviorTreeRoutes(Core);
+		McpLink::RegisterNavigationRoutes(Core);
+		McpLink::RegisterStateTreeRoutes(Core);
 	}
 };
 

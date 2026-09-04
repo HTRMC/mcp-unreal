@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (77 tools, 60 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (79 tools, 62 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -56,10 +56,14 @@ NIAGARA
 
 AI
 --
-- EQS (Environment Query System): nothing.
-- State Trees, Smart Objects, Mass Entity: nothing.
-- Navigation: build_level navigation builds the mesh, but there are no nav
-  queries, path tests, nav modifiers, or nav-link authoring.
+- EQS (Environment Query System): nothing. The EQS editor plugin exports no
+  symbols, and its graph — not UEnvQuery::Options — is the source of truth, so
+  authoring options directly would be discarded the next time the asset opens.
+- Smart Objects, Mass Entity: nothing.
+- Nav modifiers and nav-link authoring: nothing (queries and the mesh build are
+  covered).
+- State Tree task/condition *parameters* are instanced-struct data with no
+  first-class editor here; the nodes can be added, not tuned.
 - AI Perception only via properties.
 
 
@@ -136,11 +140,11 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. EQS / State Trees
-2. Movie Render Queue (rendering a sequence to disk)
-3. Render targets / texture creation / thumbnails
-4. Material Functions and Material Layers
-5. Localization
+1. Movie Render Queue (rendering a sequence to disk)
+2. Render targets / texture creation / thumbnails
+3. Material Functions and Material Layers
+4. Localization
+5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
 CLOSED
@@ -169,3 +173,8 @@ CLOSED
 2026-09-04 — metasound_ops: MetaSound Source and Patch authoring — create,
   node classes, add/remove nodes, connections to nodes and to the graph
   interface, graph inputs and outputs, and literal input defaults.
+2026-09-04 — state_tree_ops, nav_ops: State Tree authoring (states,
+  transitions, tasks/conditions/evaluators, compile report) and navigation
+  queries (projection, pathing, reachability, raycasts, random points).
+  spawn_actor now builds a volume's brush, so a Nav Mesh Bounds Volume placed
+  through it produces a real nav mesh rather than an empty one.
