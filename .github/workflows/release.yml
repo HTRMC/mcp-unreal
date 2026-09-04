@@ -94,12 +94,13 @@ jobs:
           cp "target/${{ matrix.target }}/release/${{ matrix.binary }}" "dist/$stage/"
           cp README.md LICENSE CHANGELOG.md "dist/$stage/"
           cd dist
+          # No .sha256 sidecar: GitHub records a sha256 digest for every release
+          # asset and shows it in the UI and the API, so a plaintext hash hosted
+          # next to the file adds nothing (it is not a signature either way).
           if [ "${{ runner.os }}" = "Windows" ]; then
             7z a -tzip "$stage.zip" "$stage" > /dev/null
-            certutil -hashfile "$stage.zip" SHA256 | sed -n 2p | tr -d ' \r' > "$stage.zip.sha256"
           else
             tar czf "$stage.tar.gz" "$stage"
-            shasum -a 256 "$stage.tar.gz" | cut -d' ' -f1 > "$stage.tar.gz.sha256"
           fi
           rm -rf "$stage"
 

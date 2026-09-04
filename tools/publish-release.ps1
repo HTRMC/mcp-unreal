@@ -66,7 +66,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "packaging failed (exit $LASTEXITCODE)" }
     }
 
-    $assets = @(Get-ChildItem (Join-Path $repoRoot 'dist') -Filter 'McpLink-*.zip*' -File)
+    $assets = @(Get-ChildItem (Join-Path $repoRoot 'dist') -Filter 'McpLink-*.zip' -File)
     if (-not $assets) { throw 'no McpLink-*.zip in dist/ — run without -SkipPackage.' }
 
     foreach ($asset in $assets) {

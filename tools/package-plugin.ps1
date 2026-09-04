@@ -165,8 +165,10 @@ if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 
 Compress-Archive -Path (Join-Path $stageDir '*') -DestinationPath $zipPath -CompressionLevel Optimal
 
+# Printed for a local sanity check only. No .sha256 file is written: GitHub
+# records and displays a sha256 digest for every release asset, so a sidecar
+# would just be a second copy of the same number from the same source.
 $hash = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToLower()
-Set-Content -Path "$zipPath.sha256" -Value "$hash  $zipName"
 
 Write-Host ''
 Write-Host "Zip        $zipPath"
