@@ -66,8 +66,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "packaging failed (exit $LASTEXITCODE)" }
     }
 
-    $assets = @(Get-ChildItem (Join-Path $repoRoot 'dist') -Filter 'McpLink-*.zip' -File)
-    if (-not $assets) { throw 'no McpLink-*.zip in dist/ — run without -SkipPackage.' }
+    # Match the version being released, not every zip in dist/. Packaging does
+    # not clear the folder, so a previous release's zip is still sitting there
+    # and a bare McpLink-*.zip would attach it to this release as well.
+    $assets = @(Get-ChildItem (Join-Path $repoRoot 'dist') -Filter "McpLink-$pluginVersion-*.zip" -File)
+    if (-not $assets) {
+        throw "no McpLink-$pluginVersion-*.zip in dist/ — run without -SkipPackage."
+    }
 
     foreach ($asset in $assets) {
         $size = [math]::Round($asset.Length / 1MB, 1)
