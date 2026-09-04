@@ -1,0 +1,32 @@
+{
+  "name": "localization_list_translations",
+  "description": "one culture's gathered strings with their translations",
+  "route": "/api/workflow/localization",
+  "tool": "localization_ops",
+  "request": {
+    "operation": "list_translations",
+    "target": "Game",
+    "culture": "fr"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "target": "Game",
+      "culture": "fr",
+      "archive": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Content/Localization/Game/fr/Game.archive",
+      "total": 1,
+      "untranslated": 0,
+      "returned": 1,
+      "entries": [
+        {
+          "namespace": "McpLocProbe",
+          "key": "Probe",
+          "source": "Three localizable words",
+          "translation": "Trois mots traduits",
+          "untranslated": false
+        }
+      ]
+    }
+  }
+}

@@ -106,8 +106,10 @@ EDITOR WORKFLOW
 - No Gameplay Debugger, Visual Logger, or network profiler.
 - Localization gather/compile run as commandlets (a separate editor process),
   so they cannot be driven from inside a running editor session.
-- No translation editing: the .archive entries themselves are not exposed, and
-  there is no import/export of PO files or dialogue scripts.
+- Dialogue scripts and their PO import/export are not exposed (text archives
+  and PO files are).
+- No conflict-report reading, no word-count reports, and no per-entry metadata
+  or plural/gender variant editing.
 - Source control: no changelist management, no shelving, no diff/history
   (status, checkout, add, delete, revert, sync and submit are covered).
 
@@ -151,10 +153,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Translation editing (archive entries, PO import/export)
-2. Gameplay Debugger / Visual Logger
-3. Clustering and convex-hull tools for Geometry Collections
-4. Editor UI automation (clicking, dragging, opening asset editors)
+1. Gameplay Debugger / Visual Logger
+2. Clustering and convex-hull tools for Geometry Collections
+3. Editor UI automation (clicking, dragging, opening asset editors)
+4. Chaos Vehicles, Chaos Cloth and destruction fields
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -210,3 +212,6 @@ CLOSED
 2026-09-04 — texture_ops: import-free texture authoring — create a Texture2D
   from raw BGRA8 pixels or a fill colour, and read, write or flood-fill a
   region of an existing one.
+2026-09-04 — localization_ops: translation editing — list a culture's
+  gathered strings with their translations, set one, and export and import
+  PO files for translators working outside the editor.

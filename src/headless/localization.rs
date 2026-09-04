@@ -69,6 +69,30 @@ pub enum LocalizationOp {
     Gather { target: String },
     /// Compile the archives into the .locres files the game loads.
     Compile { target: String },
+    /// Write the archives out as PO files, the format translators work in.
+    ExportPo { target: String },
+    /// Read translated PO files back into the archives.
+    ImportPo { target: String },
+    /// The source strings a gather found for one culture, with their
+    /// translations and which are still untranslated.
+    ListTranslations {
+        target: String,
+        culture: String,
+        namespace_contains: Option<String>,
+        text_contains: Option<String>,
+        /// Only entries whose translation is missing or still the source text.
+        untranslated_only: Option<bool>,
+        max_results: Option<i32>,
+    },
+    /// Translate one entry, in the archive `compile` reads.
+    SetTranslation {
+        target: String,
+        culture: String,
+        /// Usually "" — the namespace from list_translations.
+        namespace: Option<String>,
+        key: String,
+        translation: String,
+    },
 }
 
 #[derive(serde::Serialize, schemars::JsonSchema)]
@@ -141,7 +165,7 @@ impl UnrealMcp {
 #[tool_router(router = localization_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
-        description = "Localization: list and create targets, manage their cultures and which one is native, then gather source strings into the target's manifest and archives and compile those into the .locres files the game loads. Target edits go through the running editor; gather and compile run the GatherText commandlet as a subprocess, which is what the Localization Dashboard does too — the engine's in-editor wrappers need a progress dialog and cannot run headless."
+        description = "Localization: list and create targets, manage their cultures and which one is native, point the gather at its sources, then gather source strings into the target's manifest and archives, translate them (in place, or by exporting PO files for translators and importing them back), and compile the result into the .locres files the game loads. Target edits go through the running editor; gather and compile run the GatherText commandlet as a subprocess, which is what the Localization Dashboard does too — the engine's in-editor wrappers need a progress dialog and cannot run headless."
     )]
     async fn localization_ops(
         &self,
@@ -153,6 +177,12 @@ impl UnrealMcp {
             }
             LocalizationOp::Compile { target } => {
                 self.run_localization_commandlet(target, "Compile").await
+            }
+            LocalizationOp::ExportPo { target } => {
+                self.run_localization_commandlet(target, "Export").await
+            }
+            LocalizationOp::ImportPo { target } => {
+                self.run_localization_commandlet(target, "Import").await
             }
             _ => {
                 let body = serde_json::to_value(&op)

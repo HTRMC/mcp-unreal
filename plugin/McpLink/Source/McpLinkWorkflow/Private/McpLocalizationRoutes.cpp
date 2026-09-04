@@ -19,7 +19,12 @@
 #include "McpLinkCoreModule.h"
 #include "McpResolve.h"
 #include "McpResponder.h"
+#include "Internationalization/InternationalizationArchive.h"
+#include "Internationalization/InternationalizationManifest.h"
 #include "Misc/ConfigCacheIni.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonInternationalizationArchiveSerializer.h"
+#include "Serialization/JsonInternationalizationManifestSerializer.h"
 #include "UObject/UnrealType.h"
 #include "ScopedTransaction.h"
 
@@ -101,6 +106,47 @@ namespace McpLink
 					? Settings.SupportedCulturesStatistics[Settings.NativeCultureIndex].CultureName
 					: FString());
 			return Object;
+		}
+
+		/// One culture's archive: the source text gathered into the manifest,
+		/// paired with its translation. Written by `gather` and read by
+		/// `compile`, so editing it in between is what translating a project
+		/// actually is.
+		///
+		/// Loading needs the manifest too: archives at format version AddedKeys
+		/// or newer carry keys, older ones are matched by source text through
+		/// the manifest, and the serializer refuses without it.
+		bool LoadArchive(ULocalizationTarget* Target, const FString& Culture,
+			TSharedRef<FInternationalizationArchive> Archive,
+			const TSharedRef<FMcpResponder>& Responder, FString& OutPath)
+		{
+			OutPath = LocalizationConfigurationScript::GetArchivePath(Target, Culture);
+			if (!FPaths::FileExists(OutPath))
+			{
+				Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("no_archive"),
+					FString::Printf(
+						TEXT("no archive at %s — add_culture then localization_ops gather writes ")
+						TEXT("one; nothing is translatable until the gather has run"),
+						*OutPath));
+				return false;
+			}
+
+			const FString ManifestPath = LocalizationConfigurationScript::GetManifestPath(Target);
+			TSharedPtr<FInternationalizationManifest> Manifest;
+			if (FPaths::FileExists(ManifestPath))
+			{
+				Manifest = MakeShared<FInternationalizationManifest>();
+				FJsonInternationalizationManifestSerializer::DeserializeManifestFromFile(
+					ManifestPath, Manifest.ToSharedRef());
+			}
+			if (!FJsonInternationalizationArchiveSerializer::DeserializeArchiveFromFile(
+					OutPath, Archive, Manifest, nullptr))
+			{
+				Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("archive_unreadable"),
+					FString::Printf(TEXT("could not parse the archive at %s"), *OutPath));
+				return false;
+			}
+			return true;
 		}
 
 		/// Target settings live in the project's ini, not in an asset, so a
@@ -402,12 +448,151 @@ namespace McpLink
 					return;
 				}
 
+				if (Operation == TEXT("list_translations")
+					|| Operation == TEXT("set_translation"))
+				{
+					FString Culture;
+					if (!RequireString(Body, TEXT("culture"), Culture, Responder,
+							TEXT("a culture this target supports — see target_info")))
+					{
+						return;
+					}
+					const TSharedRef<FInternationalizationArchive> Archive =
+						MakeShared<FInternationalizationArchive>();
+					FString ArchivePath;
+					if (!LoadArchive(Target, Culture, Archive, Responder, ArchivePath))
+					{
+						return;
+					}
+
+					if (Operation == TEXT("list_translations"))
+					{
+						FString NamespaceFilter, TextFilter;
+						Body->TryGetStringField(TEXT("namespace_contains"), NamespaceFilter);
+						Body->TryGetStringField(TEXT("text_contains"), TextFilter);
+						const bool bUntranslatedOnly =
+							BoolOr(Body, TEXT("untranslated_only"), false);
+						const int32 Max =
+							FMath::Clamp(IntOr(Body, TEXT("max_results"), 100), 1, 1000);
+
+						TArray<TSharedPtr<FJsonValue>> Items;
+						int32 Total = 0;
+						int32 Untranslated = 0;
+						for (auto It = Archive->GetEntriesByKeyIterator(); It; ++It)
+						{
+							const TSharedRef<FArchiveEntry>& Entry = It.Value();
+							const FString Source = Entry->Source.Text;
+							const FString Translation = Entry->Translation.Text;
+							// The gather seeds every entry with the source text,
+							// so "same as source" is what untranslated looks like.
+							const bool bIsUntranslated =
+								Translation.IsEmpty() || Translation.Equals(Source);
+							++Total;
+							if (bIsUntranslated)
+							{
+								++Untranslated;
+							}
+							if (bUntranslatedOnly && !bIsUntranslated)
+							{
+								continue;
+							}
+							const FString Namespace = Entry->Namespace.GetString();
+							if (!NamespaceFilter.IsEmpty() && !Namespace.Contains(NamespaceFilter))
+							{
+								continue;
+							}
+							if (!TextFilter.IsEmpty() && !Source.Contains(TextFilter))
+							{
+								continue;
+							}
+							if (Items.Num() >= Max)
+							{
+								continue;
+							}
+							const TSharedRef<FJsonObject> Item = MakeShared<FJsonObject>();
+							Item->SetStringField(TEXT("namespace"), Namespace);
+							Item->SetStringField(TEXT("key"), Entry->Key.GetString());
+							Item->SetStringField(TEXT("source"), Source);
+							Item->SetStringField(TEXT("translation"), Translation);
+							Item->SetBoolField(TEXT("untranslated"), bIsUntranslated);
+							Items.Add(MakeShared<FJsonValueObject>(Item));
+						}
+
+						const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+						Data->SetStringField(TEXT("target"), Target->Settings.Name);
+						Data->SetStringField(TEXT("culture"), Culture);
+						Data->SetStringField(TEXT("archive"), ArchivePath);
+						Data->SetNumberField(TEXT("total"), Total);
+						Data->SetNumberField(TEXT("untranslated"), Untranslated);
+						Data->SetNumberField(TEXT("returned"), Items.Num());
+						Data->SetArrayField(TEXT("entries"), Items);
+						Responder->Ok(Data);
+						return;
+					}
+
+					FString Namespace, Key, Translation;
+					Body->TryGetStringField(TEXT("namespace"), Namespace);
+					if (!RequireString(Body, TEXT("key"), Key, Responder,
+							TEXT("an entry key from list_translations")))
+					{
+						return;
+					}
+					if (!Body->TryGetStringField(TEXT("translation"), Translation))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'translation' is required — the translated text for this entry"));
+						return;
+					}
+					const TSharedPtr<FArchiveEntry> Entry =
+						Archive->FindEntryByKey(Namespace, Key, nullptr);
+					if (!Entry.IsValid())
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("entry_not_found"),
+							FString::Printf(
+								TEXT("no entry '%s' in namespace '%s' — list_translations shows ")
+								TEXT("what the gather found (an empty namespace is the usual one)"),
+								*Key, *Namespace));
+						return;
+					}
+					if (!Archive->SetTranslation(Namespace, Key, Entry->Source,
+							FLocItem(Translation), nullptr))
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError,
+							TEXT("set_translation_failed"),
+							TEXT("the archive refused the translation"));
+						return;
+					}
+					if (!FJsonInternationalizationArchiveSerializer::SerializeArchiveToFile(
+							Archive, ArchivePath))
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError,
+							TEXT("archive_not_written"),
+							FString::Printf(TEXT("could not write %s"), *ArchivePath));
+						return;
+					}
+
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("target"), Target->Settings.Name);
+					Data->SetStringField(TEXT("culture"), Culture);
+					Data->SetStringField(TEXT("namespace"), Namespace);
+					Data->SetStringField(TEXT("key"), Key);
+					Data->SetStringField(TEXT("source"), Entry->Source.Text);
+					Data->SetStringField(TEXT("translation"), Translation);
+					Data->SetStringField(TEXT("archive"), ArchivePath);
+					Data->SetStringField(TEXT("message"),
+						TEXT("archive updated — localization_ops compile turns it into the .locres ")
+						TEXT("the game loads"));
+					Responder->Ok(Data);
+					return;
+				}
+
 				Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_operation"),
 					FString::Printf(
 						TEXT("unknown operation '%s' — use list_targets, list_cultures, create_target, ")
 						TEXT("target_info, add_culture, remove_culture, set_native_culture, ")
-						TEXT("configure_gather, or generate_configs (gather and compile are localization_ops operations, ")
-						TEXT("run as commandlets)"),
+						TEXT("configure_gather, generate_configs, list_translations or ")
+						TEXT("set_translation (gather, compile, export_po and import_po are ")
+						TEXT("localization_ops operations, run as commandlets)"),
 						*Operation));
 			});
 	}

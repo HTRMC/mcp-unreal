@@ -56,10 +56,13 @@ installed as a pair.
   instance — add, replace, reorder, rename, hide and remove layers and the
   blends between them. `material_graph`'s graph report now also covers the
   Material Attributes input, which is what a layer stack connects to.
-- **`localization_ops`** — the Localization Dashboard's pipeline: targets and
-  their cultures, the native (source) culture, which sources are gathered from,
-  regenerating the commandlet config scripts, and running `gather` and `compile`
-  to produce a target's manifest, per-culture archives and `.locres` files. Target edits go through
+- **`localization_ops`** — the Localization Dashboard's whole pipeline: targets
+  and their cultures, the native (source) culture, which sources are gathered
+  from, regenerating the commandlet config scripts, running `gather` and
+  `compile` to produce a target's manifest, per-culture archives and `.locres`
+  files, and translating in between — either in place through
+  `list_translations` / `set_translation`, or by `export_po` / `import_po` for
+  translators working outside the editor. Target edits go through
   the editor; the two runs shell out to the `GatherText` commandlet the way the
   dashboard itself does.
 - **`movie_render`** (new `McpLinkMovieRender` interop plugin) — Movie Render

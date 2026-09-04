@@ -1,0 +1,19 @@
+{
+  "name": "localization_no_archive_error",
+  "description": "a culture with no gathered archive yet is a 404",
+  "route": "/api/workflow/localization",
+  "tool": "localization_ops",
+  "request": {
+    "operation": "list_translations",
+    "target": "Game",
+    "culture": "ja"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "no_archive",
+      "message": "no archive at C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Content/Localization/Game/ja/Game.archive — add_culture then localization_ops gather writes one; nothing is translatable until the gather has run"
+    }
+  }
+}
