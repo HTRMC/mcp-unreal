@@ -153,13 +153,48 @@ pub enum ChaosOp {
         noise_frequency: Option<f64>,
         noise_octaves: Option<i32>,
     },
+    /// Assign a material slot to the faces a fracture created. A fractured
+    /// collection shows its original material on the fresh interior faces
+    /// until this runs, which is why cut surfaces look wrong by default.
+    SetInteriorMaterial {
+        collection: String,
+        /// Index into the collection's Materials array; `info` lists them.
+        material_id: i32,
+        /// "internal" (default — the faces a cut created), "external" or "all".
+        faces: Option<String>,
+        /// Restrict to these bones; the whole collection when omitted.
+        bones: Option<Vec<i32>>,
+    },
+    /// Give faces UVs by projecting a box onto them — the quick way to make a
+    /// tiling interior material look right.
+    BoxProjectUvs {
+        collection: String,
+        faces: Option<String>,
+        /// Projection box edge length in cm (default 100).
+        box_size: Option<f64>,
+        /// UV channel (default 0).
+        uv_layer: Option<i32>,
+        /// Size the box to the collection's bounds instead of `box_size`.
+        fit_to_bounds: Option<bool>,
+    },
+    /// Pack the faces' UV islands into a non-overlapping atlas — what a baked
+    /// interior texture needs.
+    LayoutUvs {
+        collection: String,
+        faces: Option<String>,
+        uv_layer: Option<i32>,
+        /// Atlas resolution the gutter is measured against (default 1024).
+        resolution: Option<i32>,
+        /// Pixels left between islands (default 1).
+        gutter: Option<f64>,
+    },
     Save { collection: String },
 }
 
 #[tool_router(router = chaos_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
-        description = "Chaos destruction: build a Geometry Collection from Static Meshes, fracture it, cluster the pieces and give them convex collision. Each fracture splits the selected bones into children, so fracturing twice gives a two-level cluster — which is what the solver breaks apart at runtime. Uniform scatters Voronoi sites for you, Voronoi takes sites you place, and Planar slices with random planes; all three take grout, noise and an island split. Clustering decides what breaks apart together and in what order: auto_cluster groups a bone's children by count, fraction, size or a grid, and cluster / merge_clusters / cluster_magnet shape it by hand from the indices `bones` reports. generate_convex builds the hulls the solver actually collides with. Place the result with spawn_actor on GeometryCollectionActor and point its component's RestCollection at the asset. Needs the McpLinkChaos plugin."
+        description = "Chaos destruction: build a Geometry Collection from Static Meshes, fracture it, cluster the pieces and give them convex collision. Each fracture splits the selected bones into children, so fracturing twice gives a two-level cluster — which is what the solver breaks apart at runtime. Uniform scatters Voronoi sites for you, Voronoi takes sites you place, and Planar slices with random planes; all three take grout, noise and an island split. Clustering decides what breaks apart together and in what order: auto_cluster groups a bone's children by count, fraction, size or a grid, and cluster / merge_clusters / cluster_magnet shape it by hand from the indices `bones` reports. generate_convex builds the hulls the solver actually collides with, and set_interior_material, box_project_uvs and layout_uvs finish the faces a cut exposed. Place the result with spawn_actor on GeometryCollectionActor and point its component's RestCollection at the asset. Needs the McpLinkChaos plugin."
     )]
     async fn chaos_ops(
         &self,

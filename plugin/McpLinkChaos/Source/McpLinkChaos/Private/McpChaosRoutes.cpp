@@ -21,7 +21,9 @@
 #include "FractureEngineClustering.h"
 #include "FractureEngineConvex.h"
 #include "FractureEngineEdit.h"
+#include "FractureAutoUV.h"
 #include "FractureEngineFracturing.h"
+#include "FractureEngineMaterials.h"
 #include "GeometryCollection/GeometryCollectionConvexUtility.h"
 #include "GeometryCollection/GeometryCollectionAlgo.h"
 #include "GeometryCollection/GeometryCollectionConversion.h"
@@ -150,6 +152,44 @@ namespace McpLink
 				return false;
 			}
 			return true;
+		}
+
+		/// "internal" (the faces a cut created), "external" (the original
+		/// surface) or "all". Interior faces are the ones a fracture leaves
+		/// bare, so they are the default.
+		bool ReadTargetFaces(const FString& Name, FFractureEngineMaterials::ETargetFaces& OutFaces)
+		{
+			if (Name.IsEmpty() || Name == TEXT("internal"))
+			{
+				OutFaces = FFractureEngineMaterials::ETargetFaces::InternalFaces;
+			}
+			else if (Name == TEXT("external"))
+			{
+				OutFaces = FFractureEngineMaterials::ETargetFaces::ExternalFaces;
+			}
+			else if (Name == TEXT("all"))
+			{
+				OutFaces = FFractureEngineMaterials::ETargetFaces::AllFaces;
+			}
+			else
+			{
+				return false;
+			}
+			return true;
+		}
+
+		/// The same choice, in the enum the UV side uses.
+		UE::PlanarCut::ETargetFaces UvTargetFaces(FFractureEngineMaterials::ETargetFaces Faces)
+		{
+			switch (Faces)
+			{
+			case FFractureEngineMaterials::ETargetFaces::ExternalFaces:
+				return UE::PlanarCut::ETargetFaces::ExternalFaces;
+			case FFractureEngineMaterials::ETargetFaces::AllFaces:
+				return UE::PlanarCut::ETargetFaces::AllFaces;
+			default:
+				return UE::PlanarCut::ETargetFaces::InternalFaces;
+			}
 		}
 
 		/// Everything the Fracture mode's FGeometryCollectionEdit scope does when
@@ -400,6 +440,109 @@ namespace McpLink
 					return;
 				}
 
+				const bool bSetMaterial = Operation == TEXT("set_interior_material");
+				const bool bBoxUv = Operation == TEXT("box_project_uvs");
+				const bool bLayoutUv = Operation == TEXT("layout_uvs");
+				if (bSetMaterial || bBoxUv || bLayoutUv)
+				{
+					TSharedPtr<FGeometryCollection> Geometry = Collection->GetGeometryCollection();
+					if (!Geometry.IsValid())
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError,
+							TEXT("no_collection_data"), TEXT("this asset holds no collection data"));
+						return;
+					}
+
+					FString FacesName;
+					Body->TryGetStringField(TEXT("faces"), FacesName);
+					FFractureEngineMaterials::ETargetFaces Faces;
+					if (!ReadTargetFaces(FacesName.ToLower(), Faces))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_faces"),
+							FString::Printf(
+								TEXT("'%s' is not a face set — use internal (the faces a cut ")
+								TEXT("created), external or all"),
+								*FacesName));
+						return;
+					}
+
+					const FScopedTransaction Transaction(
+						NSLOCTEXT("McpLink", "FractureInterior", "McpLink Fracture Interior"));
+					Collection->Modify();
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+
+					if (bSetMaterial)
+					{
+						const int32 MaterialId = IntOr(Body, TEXT("material_id"), -1);
+						if (MaterialId < 0 || MaterialId >= Collection->Materials.Num())
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest,
+								TEXT("bad_material_id"),
+								FString::Printf(
+									TEXT("'material_id' must be 0..%d — an index into the ")
+									TEXT("collection's Materials array, which info reports. Add a ")
+									TEXT("slot with set_property on the asset's Materials first"),
+									Collection->Materials.Num() - 1));
+							return;
+						}
+						TArray<int32> Bones = ReadBones(Body, *Geometry);
+						if (Bones.IsEmpty())
+						{
+							FFractureEngineMaterials::SetMaterialOnAllGeometry(
+								*Geometry, Faces, MaterialId);
+						}
+						else
+						{
+							FFractureEngineMaterials::SetMaterial(
+								*Geometry, Bones, Faces, MaterialId);
+						}
+						Data->SetNumberField(TEXT("material_id"), MaterialId);
+					}
+					else if (bBoxUv)
+					{
+						const double Size = DoubleOr(Body, TEXT("box_size"), 100.0);
+						const int32 Layer = FMath::Max(0, IntOr(Body, TEXT("uv_layer"), 0));
+						if (!UE::PlanarCut::BoxProjectUVs(Layer, *Geometry,
+								FVector3d(Size, Size, Size), UvTargetFaces(Faces),
+								TArrayView<int32>(), FVector2f(0.5f, 0.5f),
+								BoolOr(Body, TEXT("fit_to_bounds"), false)))
+						{
+							Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("uv_failed"),
+								TEXT("box projection found no faces to project — the face set may ")
+								TEXT("be empty (an unfractured collection has no internal faces)"));
+							return;
+						}
+						Data->SetNumberField(TEXT("uv_layer"), Layer);
+					}
+					else
+					{
+						const int32 Layer = FMath::Max(0, IntOr(Body, TEXT("uv_layer"), 0));
+						const int32 Resolution =
+							FMath::Clamp(IntOr(Body, TEXT("resolution"), 1024), 16, 8192);
+						if (!UE::PlanarCut::UVLayout(Layer, *Geometry, Resolution,
+								static_cast<float>(DoubleOr(Body, TEXT("gutter"), 1.0)),
+								UvTargetFaces(Faces)))
+						{
+							Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("uv_failed"),
+								TEXT("UV layout found no faces to lay out — the face set may be ")
+								TEXT("empty, or the islands are degenerate"));
+							return;
+						}
+						Data->SetNumberField(TEXT("uv_layer"), Layer);
+						Data->SetNumberField(TEXT("resolution"), Resolution);
+					}
+
+					FinalizeCollection(Collection);
+					Data->SetStringField(TEXT("collection"), Collection->GetPathName());
+					Data->SetStringField(TEXT("faces"),
+						FacesName.IsEmpty() ? TEXT("internal") : *FacesName.ToLower());
+					AddStructureFields(Data, Collection);
+					Data->SetStringField(TEXT("message"),
+						TEXT("collection updated — save to keep it"));
+					Responder->Ok(Data);
+					return;
+				}
+
 				const bool bAutoCluster = Operation == TEXT("auto_cluster");
 				const bool bCluster = Operation == TEXT("cluster");
 				const bool bMerge = Operation == TEXT("merge_clusters");
@@ -548,7 +691,8 @@ namespace McpLink
 							TEXT("unknown operation '%s' — use create, info, bones, fracture_uniform, ")
 							TEXT("fracture_voronoi, fracture_planar, auto_cluster, cluster, ")
 							TEXT("merge_clusters, cluster_magnet, delete_bones, generate_convex, ")
-							TEXT("simplify_convex or save"),
+							TEXT("simplify_convex, set_interior_material, box_project_uvs, ")
+							TEXT("layout_uvs or save"),
 							*Operation));
 					return;
 				}

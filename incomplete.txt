@@ -30,8 +30,9 @@ PHYSICS & DESTRUCTION
   CrumbleCluster). What is missing is authoring a persistent UFieldSystem
   *asset* — a field node graph — rather than issuing one-off commands.
 - Geometry Collections: no per-bone damage thresholds beyond set_property on
-  the asset, no embedded geometry, and no auto-UV or material assignment for
-  the interior faces a fracture creates.
+  the asset, and no embedded geometry.
+- No texture baking for fractured interiors (UV layout is covered; baking
+  ambient occlusion or curvature into the atlas is not).
 - Physics on actors/components is only reachable as properties (physics_asset_ops
   covers ragdoll bodies and constraints).
 
@@ -171,8 +172,8 @@ LARGEST COHERENT HOLES
 If picking next work:
 
 1. Source-control changelists, shelving, diff and history
-2. Interior materials and UVs for fractured geometry
-3. Chaos Vehicles and Chaos Cloth
+2. Chaos Vehicles and Chaos Cloth
+3. Texture baking for fractured interiors
 4. Widget clicking (needs a windowed editor; see EDITOR WORKFLOW)
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
@@ -240,3 +241,6 @@ CLOSED
   rebuild or simplify the convex collision the solver uses.
 2026-09-04 — ui_ops: asset editors — open, close and list them, which is
   also how an asset whose editor finishes its construction gets completed.
+2026-09-04 — chaos_ops: interior faces — give the faces a fracture creates
+  their own material slot, and UVs by box projection or by packing them into
+  an atlas.

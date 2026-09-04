@@ -1,0 +1,19 @@
+{
+  "name": "chaos_bad_material_error",
+  "description": "an out-of-range interior material slot names the valid range",
+  "route": "/api/chaos/ops",
+  "tool": "chaos_ops",
+  "request": {
+    "operation": "set_interior_material",
+    "collection": "/Game/Destruction/GC_McpWall",
+    "material_id": 9
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "bad_material_id",
+      "message": "'material_id' must be 0..1 — an index into the collection's Materials array, which info reports. Add a slot with set_property on the asset's Materials first"
+    }
+  }
+}

@@ -22,6 +22,7 @@ public class McpLinkChaos : ModuleRules
 			"GeometryCollectionEngine",
 			"GeometryCollectionEditor",
 			"FractureEngine",
+			"PlanarCut",
 			"DataflowCore",
 			"Chaos"
 		});

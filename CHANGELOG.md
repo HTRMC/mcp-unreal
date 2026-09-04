@@ -55,8 +55,10 @@ installed as a pair.
   again to add a cluster level; the response reports the bones per level.
   Clustering shapes what breaks apart together — automatic clustering by
   count, fraction, size or grid, plus clustering, merging, magnet-growing and
-  deleting bones by index — and convex hulls can be rebuilt or simplified for
-  the collision the solver actually uses.
+  deleting bones by index — convex hulls can be rebuilt or simplified for the
+  collision the solver actually uses, and the interior faces a cut exposes can
+  be given their own material slot and UVs, by box projection or by packing
+  them into an atlas.
 - **`blueprint_debug`** — breakpoints, watched pins, and the debug object their
   values are read from. Watch values are live during PIE without halting
   anything, which is the part an agent can actually use; halting itself needs a
