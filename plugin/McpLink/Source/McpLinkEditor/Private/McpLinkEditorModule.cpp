@@ -17,6 +17,7 @@ public:
 		McpLink::RegisterEditorOpsRoutes(Core);
 		McpLink::RegisterPerfRoutes(Core);
 		McpLink::RegisterVisualLogRoutes(Core);
+		McpLink::RegisterUiOpsRoutes(Core);
 		McpLink::RegisterPieRoutes(Core);
 		McpLink::RegisterCaptureRoutes(Core);
 		McpLink::RegisterIntrospectRoutes(Core);

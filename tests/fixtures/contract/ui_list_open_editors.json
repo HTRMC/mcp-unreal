@@ -1,0 +1,17 @@
+{
+  "name": "ui_list_open_editors",
+  "description": "which assets currently have an editor open",
+  "route": "/api/editor/ui_ops",
+  "tool": "ui_ops",
+  "request": {
+    "operation": "list_open"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "count": 0,
+      "open": []
+    }
+  }
+}

@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (88)
+## Tools (89)
 
 | Area | Tools |
 |---|---|
@@ -47,12 +47,14 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | World building | `landscape_ops`, `foliage_ops`, `sublevel_ops`, `world_partition_ops`, `level_instance_ops` |
 | AI | `blackboard_ops`, `behavior_tree_ops`, `state_tree_ops`, `nav_ops` |
 | Editor workflow | `source_control_ops`, `validate_ops`, `gameplay_tag_ops`, `curve_ops`, `reference_ops`, `localization_ops` |
-| Introspection | `subsystem_query`, `ui_query` |
+| Introspection | `subsystem_query`, `ui_query`, `ui_ops` |
 | Engine API | `lookup_class`, `search_api` |
 | Project config | `project_ops`, `config_ops`, `cook_project`, `package_project`, `code_ops` |
 | Interop plugins | `niagara_ops`, `niagara_author`, `metasound_ops`, `movie_render`, `chaos_ops`, `gas_ops`, `pcg_ops`, `python_exec` (need McpLinkNiagara / McpLinkMetaSound / McpLinkMovieRender / McpLinkChaos / McpLinkGAS / McpLinkPCG / McpLinkPython enabled) |
 
 Headless tools work with no editor open. Editor tools need the Unreal Editor running with McpLink enabled — call `status` to see what is currently available.
+
+`ui_ops` opens, closes and lists asset editors. That is worth having for more than the window: some assets are only finished off when their editor constructs them — a freshly created Material Layer gets its input and output nodes that way — so opening one can be the step that completes an asset. Clicking widgets is not available; see `incomplete.txt` for what the AutomationDriver does when asked.
 
 ### Engine API lookup
 

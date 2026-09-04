@@ -25,6 +25,7 @@ pub mod play;
 pub mod python;
 pub mod render;
 pub mod sequences;
+pub mod uiops;
 pub mod user_types;
 pub mod visuallog;
 pub mod utils;

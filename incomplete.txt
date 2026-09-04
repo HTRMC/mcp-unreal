@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (88 tools, 72 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (89 tools, 73 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -96,9 +96,16 @@ AUDIO
 
 EDITOR WORKFLOW
 ---------------
-- The editor UI is read-only: ui_query inspects Slate/UMG trees but nothing
-  clicks a button, drags a widget, or opens an asset editor. Input injection is
-  PIE-only, not editor-UI.
+- Nothing clicks or drags an editor widget. The engine's AutomationDriver is
+  the right mechanism and its threading works out (it dispatches to the game
+  thread and blocks, so it has to run on a worker thread with the HTTP
+  response deferred — which FMcpResponder supports), but in a headless editor
+  the very first call, IDriverElement::Exists(), asserts inside the driver
+  ("Assertion failed: (Index >= 0) & (Index < ArrayNum)", Array.h:1339) and
+  takes the editor with it, because it resolves elements through platform
+  windows that -nullrhi never creates. A windowed editor would be needed to
+  take this further. Opening and closing asset editors is covered by ui_ops.
+- Input injection is PIE-only, not editor-UI.
 - Blueprint stepping and inspection *while halted* are impossible over this
   transport: a breakpoint hit enters Slate's debugging loop, which stops
   ticking the HTTP server, so the request that would step or resume can never
@@ -157,10 +164,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Editor UI automation (clicking, dragging, opening asset editors)
-2. Chaos Vehicles, Chaos Cloth and destruction fields
-3. Source-control changelists, shelving, diff and history
-4. Interior materials and UVs for fractured geometry
+1. Chaos Vehicles, Chaos Cloth and destruction fields
+2. Source-control changelists, shelving, diff and history
+3. Interior materials and UVs for fractured geometry
+4. Widget clicking (needs a windowed editor; see EDITOR WORKFLOW)
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -225,3 +232,5 @@ CLOSED
 2026-09-04 — chaos_ops: clustering and convex hulls — list bones, cluster
   them automatically or by hand, merge, magnet-grow and delete them, and
   rebuild or simplify the convex collision the solver uses.
+2026-09-04 — ui_ops: asset editors — open, close and list them, which is
+  also how an asset whose editor finishes its construction gets completed.

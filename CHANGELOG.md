@@ -38,6 +38,9 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`ui_ops`** — open, close and list asset editors. Opening one is sometimes
+  the step that finishes an asset, because part of the work lives in the
+  editor's own construction.
 - **`visual_log_ops`** — the Visual Logger, read back as data rather than drawn
   on a timeline: record a play session and query the engine's own `UE_VLOG`
   entries by actor, category or game time, with their log lines, status blocks
