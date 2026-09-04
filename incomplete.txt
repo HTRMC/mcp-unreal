@@ -236,6 +236,8 @@ CLOSED
   parser on a malformed selector, not the headless editor; a windowed editor is
   still needed, because widgets are located through arranged geometry.
 2026-09-04 — eqs_ops: Environment Queries — create, options with a generator,
-  tests, enable/disable, compile and save. The graph classes export no symbols,
-  but reflection plus virtual dispatch on their exported AIGraph bases builds
-  the real graph, so the asset survives being opened in the editor.
+  tests, enable/disable, compile, save and run. The graph classes export no
+  symbols, but reflection plus virtual dispatch on their exported AIGraph bases
+  builds the real graph, so the asset survives being opened in the editor.
+  Running works in the editor world without PIE, since that world carries the
+  AI system the query manager lives on.

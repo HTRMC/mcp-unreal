@@ -1,0 +1,40 @@
+{
+  "name": "eqs_ops_run",
+  "description": "an Environment Query run as an actor, with its scored items best first",
+  "route": "/api/ai/eqs",
+  "tool": "eqs_ops",
+  "request": {
+    "operation": "run",
+    "query": "/Game/AI/EQS_McpCover",
+    "querier": "Start",
+    "max_items": 5
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "query": "/Game/AI/EQS_McpCover.EQS_McpCover",
+      "querier": "/Game/Maps/TestMap.TestMap:PersistentLevel.PlayerStart_0",
+      "world": "TestMap",
+      "run_mode": "all_matching",
+      "status": "success",
+      "success": true,
+      "item_type": "EnvQueryItemType_Point",
+      "option_index": 0,
+      "item_count": 1,
+      "single_item": false,
+      "returned": 1,
+      "items": [
+        {
+          "index": 0,
+          "score": 0,
+          "location": [
+            0,
+            0,
+            120
+          ]
+        }
+      ]
+    }
+  }
+}

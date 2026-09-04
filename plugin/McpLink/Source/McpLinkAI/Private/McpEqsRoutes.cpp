@@ -36,7 +36,11 @@
 #include "EnvironmentQuery/EnvQuery.h"
 #include "EnvironmentQuery/EnvQueryOption.h"
 #include "EnvironmentQuery/EnvQueryGenerator.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/EnvQueryTest.h"
+#include "EnvironmentQuery/EnvQueryTypes.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
 #include "McpAssetUtils.h"
 #include "McpJson.h"
 #include "McpLinkCoreModule.h"
@@ -278,7 +282,41 @@ namespace McpLink
 			{
 				Graph->UpdateAsset(0);
 			}
+#if USE_EQS_DEBUGGER
+			// The query manager caches a *duplicate* of every template it has
+			// run, keyed by asset name, so without this a re-run would execute
+			// the version from before the edit. This is the same call the asset
+			// editor makes when a query changes.
+			UEnvQueryManager::NotifyAssetUpdate(Query);
+#endif
 			Query->MarkPackageDirty();
+		}
+
+
+		/// Wire name -> run mode. all_matching is the default because it is the
+		/// only mode that reports the whole scored set, which is what inspecting
+		/// a query wants; the single-item modes are what gameplay actually runs.
+		bool RunModeFromName(const FString& Name, EEnvQueryRunMode::Type& Out)
+		{
+			if (Name == TEXT("all_matching")) { Out = EEnvQueryRunMode::AllMatching; return true; }
+			if (Name == TEXT("single_best")) { Out = EEnvQueryRunMode::SingleResult; return true; }
+			if (Name == TEXT("random_best_5pct")) { Out = EEnvQueryRunMode::RandomBest5Pct; return true; }
+			if (Name == TEXT("random_best_25pct")) { Out = EEnvQueryRunMode::RandomBest25Pct; return true; }
+			return false;
+		}
+
+		const TCHAR* QueryStatusName(EEnvQueryStatus::Type Status)
+		{
+			switch (Status)
+			{
+			case EEnvQueryStatus::Processing: return TEXT("processing");
+			case EEnvQueryStatus::Success: return TEXT("success");
+			case EEnvQueryStatus::Failed: return TEXT("failed");
+			case EEnvQueryStatus::Aborted: return TEXT("aborted");
+			case EEnvQueryStatus::OwnerLost: return TEXT("owner_lost");
+			case EEnvQueryStatus::MissingParam: return TEXT("missing_param");
+			}
+			return TEXT("unknown");
 		}
 
 		UAIGraphNode* OptionAtOrError(UEnvQuery* Query, const TSharedRef<FJsonObject>& Body,
@@ -327,6 +365,137 @@ namespace McpLink
 					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
 					Data->SetArrayField(TEXT("generators"), Generators);
 					Data->SetArrayField(TEXT("tests"), Tests);
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("run"))
+				{
+					// Running reads UEnvQuery::Options and never touches the graph,
+					// so it sits ahead of the editor-class gate below: a compiled
+					// query runs with or without the EnvironmentQueryEditor plugin.
+					UEnvQuery* RunTarget = QueryOrError(Body, Responder);
+					if (RunTarget == nullptr)
+					{
+						return;
+					}
+					UWorld* World = ResolveWorldOrError(Body, Responder);
+					if (World == nullptr)
+					{
+						return;
+					}
+					FString QuerierSpec;
+					if (!RequireString(Body, TEXT("querier"), QuerierSpec, Responder,
+							TEXT("the actor to run the query as — every context resolves relative "
+								 "to it, starting with Querier")))
+					{
+						return;
+					}
+					AActor* Querier = ResolveActor(World, QuerierSpec);
+					if (Querier == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound,
+							TEXT("querier_not_found"),
+							FString::Printf(
+								TEXT("no actor '%s' in '%s' — pass an actor label or object path"),
+								*QuerierSpec, *World->GetName()));
+						return;
+					}
+					FString RunModeName;
+					Body->TryGetStringField(TEXT("run_mode"), RunModeName);
+					RunModeName = RunModeName.IsEmpty() ? TEXT("all_matching") : RunModeName.ToLower();
+					EEnvQueryRunMode::Type RunMode = EEnvQueryRunMode::AllMatching;
+					if (!RunModeFromName(RunModeName, RunMode))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_run_mode"),
+							FString::Printf(
+								TEXT("unknown run_mode '%s' — use all_matching, single_best, ")
+								TEXT("random_best_5pct or random_best_25pct"), *RunModeName));
+						return;
+					}
+					if (RunTarget->GetOptions().Num() == 0)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("not_compiled"),
+							TEXT("this query has no compiled options, so there is nothing to run — "
+								 "add_option gives it a generator, then compile"));
+						return;
+					}
+					// The manager hangs off the world's AI system, and editor worlds
+					// are created asking for one, so a query runs without PIE.
+					UEnvQueryManager* Manager = UEnvQueryManager::GetCurrent(World);
+					if (Manager == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("no_eqs_manager"),
+							TEXT("this world has no AI system, so there is no query manager — the "
+								 "world settings can disable it"));
+						return;
+					}
+
+					const FEnvQueryRequest Request(RunTarget, Querier);
+					const TSharedPtr<FEnvQueryResult> Result =
+						Manager->RunInstantQuery(Request, RunMode);
+					if (!Result.IsValid())
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("run_failed"),
+							TEXT("the manager built no instance for this query — its generator "
+								 "failed to load, or its options are empty"));
+						return;
+					}
+
+					const int32 MaxItems = FMath::Clamp(IntOr(Body, TEXT("max_items"), 50), 1, 500);
+					TArray<TSharedPtr<FJsonValue>> Items;
+					for (int32 Index = 0;
+						 Index < Result->Items.Num() && Items.Num() < MaxItems; ++Index)
+					{
+						const TSharedRef<FJsonObject> Item = MakeShared<FJsonObject>();
+						Item->SetNumberField(TEXT("index"), Index);
+						Item->SetNumberField(TEXT("score"), Result->GetItemScore(Index));
+						// An actor item is a vector item too, so the location is
+						// filled either way; the actor fields only say who is there.
+						Item->SetArrayField(TEXT("location"),
+							VectorToJson(Result->GetItemAsLocation(Index)));
+						if (AActor* ItemActor = Result->GetItemAsActor(Index))
+						{
+							Item->SetStringField(TEXT("actor"), ItemActor->GetPathName());
+							Item->SetStringField(TEXT("label"), ItemActor->GetActorNameOrLabel());
+						}
+						Items.Add(MakeShared<FJsonValueObject>(Item));
+					}
+
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("query"), RunTarget->GetPathName());
+					Data->SetStringField(TEXT("querier"), Querier->GetPathName());
+					Data->SetStringField(TEXT("world"), World->GetName());
+					Data->SetStringField(TEXT("run_mode"), RunModeName);
+					Data->SetStringField(TEXT("status"), QueryStatusName(Result->GetRawStatus()));
+					Data->SetBoolField(TEXT("success"), Result->IsSuccessful());
+					Data->SetStringField(TEXT("item_type"),
+						Result->ItemType.Get() != nullptr ? Result->ItemType->GetName() : FString());
+					Data->SetNumberField(TEXT("option_index"), Result->OptionIndex);
+					// Items are sorted best first, and in all_matching everything
+					// that failed a test has already been dropped.
+					Data->SetNumberField(TEXT("item_count"), Result->Items.Num());
+					Data->SetBoolField(TEXT("single_item"), RunMode != EEnvQueryRunMode::AllMatching);
+					Data->SetNumberField(TEXT("returned"), Items.Num());
+					Data->SetArrayField(TEXT("items"), Items);
+					if (!Result->IsSuccessful())
+					{
+						// Nowhere qualifying is a real answer, not a failure to run:
+						// the tests did their job and filtered everything out.
+						Data->SetStringField(TEXT("message"),
+							TEXT("no item passed the query's tests"));
+					}
+					else if (RunMode != EEnvQueryRunMode::AllMatching)
+					{
+						// A single-item mode does not actually throw the rest away
+						// here: FEnvQueryInstance::bDebuggingInfoEnabled defaults to
+						// true, and PickSingleItem then swaps the winner to index 0
+						// and keeps the whole scored set for the EQS debugger. So
+						// the pick is item 0 and the rest is context, not results.
+						Data->SetStringField(TEXT("message"),
+							TEXT("item 0 is the pick; the rest of the scored set is kept for "
+								 "inspection, as the EQS debugger does in an editor build"));
+					}
 					Responder->Ok(Data);
 					return;
 				}
@@ -614,7 +783,8 @@ namespace McpLink
 				Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_operation"),
 					FString::Printf(
 						TEXT("unknown operation '%s' — use list_classes, create, info, add_option, ")
-						TEXT("remove_option, add_test, remove_test, set_test_enabled, compile or save"),
+						TEXT("remove_option, add_test, remove_test, set_test_enabled, compile, save ")
+						TEXT("or run"),
 						*Operation));
 			});
 	}

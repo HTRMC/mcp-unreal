@@ -59,12 +59,32 @@ pub enum EqsOp {
     /// `set_property`.
     Compile { query: String },
     Save { query: String },
+    /// Run the query and get its scored items back — where the AI would
+    /// actually stand, best first. Needs no PIE: the editor world has an AI
+    /// system of its own, so a query runs against the level as it is open.
+    Run {
+        query: String,
+        /// The actor to run as. Every context resolves relative to it, starting
+        /// with Querier, so the same query gives different answers per actor.
+        querier: String,
+        /// "all_matching" (default) keeps every item that passed, scored and
+        /// sorted — what you want when inspecting a query. "single_best",
+        /// "random_best_5pct" and "random_best_25pct" pick one item the way
+        /// gameplay would: the pick is item 0, and the rest of the scored set
+        /// comes back with it because an editor build keeps it for the EQS
+        /// debugger.
+        run_mode: Option<String>,
+        /// "auto" (default), "pie" or "editor".
+        world: Option<String>,
+        /// Cap on returned items, 1..500. Default 50.
+        max_items: Option<u32>,
+    },
 }
 
 #[tool_router(router = eqs_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
-        description = "Author Environment Query System assets: an EQS query is a list of options, each one a generator that produces candidate items (a grid of points, actors of a class) plus ordered tests that score and filter them — how AI picks where to stand or what to shoot. Create a query, add options and tests, enable or disable tests, then compile and save. Generator and test settings are ordinary properties: info reports each one's object_path, and set_property edits it exactly as the details panel would, after which compile folds it into the runtime query."
+        description = "Author Environment Query System assets: an EQS query is a list of options, each one a generator that produces candidate items (a grid of points, actors of a class) plus ordered tests that score and filter them — how AI picks where to stand or what to shoot. Create a query, add options and tests, enable or disable tests, then compile and save. Generator and test settings are ordinary properties: info reports each one's object_path, and set_property edits it exactly as the details panel would, after which compile folds it into the runtime query. run executes the query as a chosen actor and returns the scored items, best first, which is how you check that a query actually picks the spots you meant — it works in the editor world without entering PIE."
     )]
     async fn eqs_ops(&self, Parameters(op): Parameters<EqsOp>) -> Result<Json<Value>, ErrorData> {
         let body =

@@ -54,7 +54,10 @@ installed as a pair.
   of an exported AIGraph base, so `NewObject` plus virtual dispatch builds the
   real graph and `UpdateAsset` compiles it. Generator and test settings are
   ordinary properties, edited through `set_property` on the paths `info`
-  reports.
+  reports. `run` then executes the query as a chosen actor and reports the
+  scored items best first — the check that a query actually picks the spots
+  it was meant to. It needs no PIE: the editor world carries an AI system,
+  which is where the query manager lives.
 - **Editor UI automation.** `ui_ops` gained `find_widgets`, `click`,
   `double_click`, `hover`, `focus`, `type`, `press_key` and `scroll`, so the
   editor's own interface is drivable and not only readable. This was previously

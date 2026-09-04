@@ -1,0 +1,19 @@
+{
+  "name": "eqs_ops_run_querier_error",
+  "description": "a querier that is not an actor in the world",
+  "route": "/api/ai/eqs",
+  "tool": "eqs_ops",
+  "request": {
+    "operation": "run",
+    "query": "/Game/AI/EQS_McpCover",
+    "querier": "NoSuchActor"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "querier_not_found",
+      "message": "no actor 'NoSuchActor' in 'TestMap' — pass an actor label or object path"
+    }
+  }
+}
