@@ -27,6 +27,12 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`localization_ops`** — the Localization Dashboard's pipeline: targets and
+  their cultures, the native (source) culture, which sources are gathered from,
+  regenerating the commandlet config scripts, and running `gather` and `compile`
+  to produce a target's manifest, per-culture archives and `.locres` files. Target edits go through
+  the editor; the two runs shell out to the `GatherText` commandlet the way the
+  dashboard itself does.
 - **`movie_render`** (new `McpLinkMovieRender` interop plugin) — Movie Render
   Queue: build a render config, tune its settings, and render a Level Sequence
   to an image sequence or video. `sequence_ops` could author a sequence but not

@@ -130,6 +130,9 @@ fn wire_body(fixture: &Fixture) -> Option<Value> {
         "world_partition_ops" => to_json::<world::WorldPartitionOp>(&fixture.name, req),
         "level_instance_ops" => to_json::<world::LevelInstanceOp>(&fixture.name, req),
         "foliage_ops" => to_json::<world::FoliageOp>(&fixture.name, req),
+        "localization_ops" => {
+            to_json::<mcp_unreal::headless::localization::LocalizationOp>(&fixture.name, req)
+        }
         "source_control_ops" => to_json::<workflow::SourceControlOp>(&fixture.name, req),
         "validate_ops" => to_json::<workflow::ValidateOp>(&fixture.name, req),
         "gameplay_tag_ops" => to_json::<workflow::GameplayTagOp>(&fixture.name, req),

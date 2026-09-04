@@ -2,6 +2,7 @@ pub mod build;
 pub mod code;
 pub mod cook;
 pub mod ini;
+pub mod localization;
 pub mod log;
 pub mod package;
 pub mod parsers;

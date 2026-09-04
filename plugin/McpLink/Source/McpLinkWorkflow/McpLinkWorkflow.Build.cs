@@ -1,6 +1,6 @@
 // McpLinkWorkflow: the editor's own housekeeping — source control, data
-// validation and Map Check, gameplay tags, curve assets, and the reference
-// graph behind the Reference Viewer and Size Map.
+// validation and Map Check, gameplay tags, curve assets, localization targets,
+// and the reference graph behind the Reference Viewer and Size Map.
 //
 // DataValidation and GameplayTagsEditor are engine plugins rather than engine
 // modules; McpLink.uplugin marks both as required so the dependency is honest.
@@ -34,7 +34,8 @@ public class McpLinkWorkflow : ModuleRules
 			"GameplayTags",
 			"GameplayTagsEditor",
 			"Kismet",
-			"MessageLog"
+			"MessageLog",
+			"Localization"
 		});
 	}
 }

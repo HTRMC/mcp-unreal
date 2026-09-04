@@ -7,6 +7,7 @@ namespace McpLink
 	void RegisterValidationRoutes(FMcpLinkCoreModule& Core);
 	void RegisterTagAndCurveRoutes(FMcpLinkCoreModule& Core);
 	void RegisterReferenceRoutes(FMcpLinkCoreModule& Core);
+	void RegisterLocalizationRoutes(FMcpLinkCoreModule& Core);
 }
 
 class FMcpLinkWorkflowModule : public IModuleInterface
@@ -19,6 +20,7 @@ public:
 		McpLink::RegisterValidationRoutes(Core);
 		McpLink::RegisterTagAndCurveRoutes(Core);
 		McpLink::RegisterReferenceRoutes(Core);
+		McpLink::RegisterLocalizationRoutes(Core);
 	}
 };
 

@@ -1,0 +1,49 @@
+{
+  "name": "localization_list_targets",
+  "description": "the project's localization targets with their cultures, gather sources and data directory",
+  "route": "/api/workflow/localization",
+  "tool": "localization_ops",
+  "request": {
+    "operation": "list_targets"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "count": 1,
+      "targets": [
+        {
+          "name": "Game",
+          "path": "/Script/Localization.Default__LocalizationSettings:ProjectLocalizationTargetSet.LocalizationTarget_0",
+          "config": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Config/Localization/Game_Gather.ini",
+          "data_directory": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Content/Localization/Game",
+          "cultures": [
+            {
+              "culture": "en",
+              "words": 0,
+              "native": true
+            },
+            {
+              "culture": "fr",
+              "words": 0,
+              "native": false
+            }
+          ],
+          "gather": {
+            "from_text_files": true,
+            "from_packages": true,
+            "from_metadata": false,
+            "text_search_directories": [
+              "Source",
+              "Config"
+            ],
+            "package_include_wildcards": [
+              "Content/*"
+            ]
+          },
+          "native_culture": "en"
+        }
+      ]
+    }
+  }
+}

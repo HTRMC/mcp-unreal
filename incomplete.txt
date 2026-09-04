@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (82 tools, 65 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (83 tools, 67 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -97,7 +97,10 @@ EDITOR WORKFLOW
   PIE-only, not editor-UI.
 - Debugging: no Blueprint breakpoints, stepping or watch values. No Gameplay
   Debugger, Visual Logger, or network profiler.
-- No localization: no gather/compile, no culture management.
+- Localization gather/compile run as commandlets (a separate editor process),
+  so they cannot be driven from inside a running editor session.
+- No translation editing: the .archive entries themselves are not exposed, and
+  there is no import/export of PO files or dialogue scripts.
 - Source control: no changelist management, no shelving, no diff/history
   (status, checkout, add, delete, revert, sync and submit are covered).
 
@@ -141,10 +144,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Localization (gather/compile, culture management)
-2. Material Layers and layer blends
-3. Blueprint debugging (breakpoints, stepping, watch values)
-4. Chaos destruction (Geometry Collections, fracturing)
+1. Material Layers and layer blends
+2. Blueprint debugging (breakpoints, stepping, watch values)
+3. Chaos destruction (Geometry Collections, fracturing)
+4. Translation editing (archive entries, PO import/export)
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -184,3 +187,6 @@ CLOSED
   rendering, and Material Function authoring.
 2026-09-04 — movie_render: Movie Render Queue — render configs, settings, and
   rendering a Level Sequence to an image sequence or video through PIE.
+2026-09-04 — localization_ops: the Localization Dashboard pipeline — targets,
+  supported and native cultures, commandlet config generation, and gather and
+  compile producing a manifest, per-culture archives and .locres files.

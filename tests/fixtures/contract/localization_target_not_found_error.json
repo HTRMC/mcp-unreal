@@ -1,0 +1,18 @@
+{
+  "name": "localization_target_not_found_error",
+  "description": "a missing localization target is a 404",
+  "route": "/api/workflow/localization",
+  "tool": "localization_ops",
+  "request": {
+    "operation": "target_info",
+    "target": "NotATarget"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "target_not_found",
+      "message": "no localization target 'NotATarget' — see list_targets"
+    }
+  }
+}

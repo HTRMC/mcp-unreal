@@ -40,6 +40,7 @@ impl UnrealMcp {
                 + Self::headless_package_router()
                 + Self::headless_code_router()
                 + Self::headless_trace_router()
+                + Self::localization_router()
                 + Self::project_ops_router()
                 + Self::object_router()
                 + Self::actor_router()
