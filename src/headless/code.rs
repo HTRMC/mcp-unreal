@@ -54,60 +54,264 @@ pub(crate) struct BaseClass {
 /// by passing `base_header` alongside a prefixed `base`.
 pub(crate) const BASE_CLASSES: &[BaseClass] = &[
     // --- Actors ---
-    BaseClass { prefixed: "AActor", header: "GameFramework/Actor.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "APawn", header: "GameFramework/Pawn.h", template: ClassTemplate::Pawn },
-    BaseClass { prefixed: "ACharacter", header: "GameFramework/Character.h", template: ClassTemplate::Character },
-    BaseClass { prefixed: "ADefaultPawn", header: "GameFramework/DefaultPawn.h", template: ClassTemplate::Pawn },
-    BaseClass { prefixed: "ASpectatorPawn", header: "GameFramework/SpectatorPawn.h", template: ClassTemplate::Pawn },
-    BaseClass { prefixed: "AController", header: "GameFramework/Controller.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "APlayerController", header: "GameFramework/PlayerController.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "AAIController", header: "AIController.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "AGameModeBase", header: "GameFramework/GameModeBase.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "AGameMode", header: "GameFramework/GameMode.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "AGameStateBase", header: "GameFramework/GameStateBase.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "AGameState", header: "GameFramework/GameState.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "APlayerState", header: "GameFramework/PlayerState.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "AHUD", header: "GameFramework/HUD.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "AWorldSettings", header: "GameFramework/WorldSettings.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "AStaticMeshActor", header: "Engine/StaticMeshActor.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "ACameraActor", header: "Camera/CameraActor.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "AVolume", header: "GameFramework/Volume.h", template: ClassTemplate::Actor },
-    BaseClass { prefixed: "ATriggerBox", header: "Engine/TriggerBox.h", template: ClassTemplate::Actor },
+    BaseClass {
+        prefixed: "AActor",
+        header: "GameFramework/Actor.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "APawn",
+        header: "GameFramework/Pawn.h",
+        template: ClassTemplate::Pawn,
+    },
+    BaseClass {
+        prefixed: "ACharacter",
+        header: "GameFramework/Character.h",
+        template: ClassTemplate::Character,
+    },
+    BaseClass {
+        prefixed: "ADefaultPawn",
+        header: "GameFramework/DefaultPawn.h",
+        template: ClassTemplate::Pawn,
+    },
+    BaseClass {
+        prefixed: "ASpectatorPawn",
+        header: "GameFramework/SpectatorPawn.h",
+        template: ClassTemplate::Pawn,
+    },
+    BaseClass {
+        prefixed: "AController",
+        header: "GameFramework/Controller.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "APlayerController",
+        header: "GameFramework/PlayerController.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "AAIController",
+        header: "AIController.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "AGameModeBase",
+        header: "GameFramework/GameModeBase.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "AGameMode",
+        header: "GameFramework/GameMode.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "AGameStateBase",
+        header: "GameFramework/GameStateBase.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "AGameState",
+        header: "GameFramework/GameState.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "APlayerState",
+        header: "GameFramework/PlayerState.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "AHUD",
+        header: "GameFramework/HUD.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "AWorldSettings",
+        header: "GameFramework/WorldSettings.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "AStaticMeshActor",
+        header: "Engine/StaticMeshActor.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "ACameraActor",
+        header: "Camera/CameraActor.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "AVolume",
+        header: "GameFramework/Volume.h",
+        template: ClassTemplate::Actor,
+    },
+    BaseClass {
+        prefixed: "ATriggerBox",
+        header: "Engine/TriggerBox.h",
+        template: ClassTemplate::Actor,
+    },
     // --- Components ---
-    BaseClass { prefixed: "UActorComponent", header: "Components/ActorComponent.h", template: ClassTemplate::ActorComponent },
-    BaseClass { prefixed: "USceneComponent", header: "Components/SceneComponent.h", template: ClassTemplate::ActorComponent },
-    BaseClass { prefixed: "UPrimitiveComponent", header: "Components/PrimitiveComponent.h", template: ClassTemplate::ActorComponent },
-    BaseClass { prefixed: "UStaticMeshComponent", header: "Components/StaticMeshComponent.h", template: ClassTemplate::ActorComponent },
-    BaseClass { prefixed: "USkeletalMeshComponent", header: "Components/SkeletalMeshComponent.h", template: ClassTemplate::ActorComponent },
-    BaseClass { prefixed: "UCharacterMovementComponent", header: "GameFramework/CharacterMovementComponent.h", template: ClassTemplate::ActorComponent },
-    BaseClass { prefixed: "UCameraComponent", header: "Camera/CameraComponent.h", template: ClassTemplate::ActorComponent },
-    BaseClass { prefixed: "USpringArmComponent", header: "GameFramework/SpringArmComponent.h", template: ClassTemplate::ActorComponent },
+    BaseClass {
+        prefixed: "UActorComponent",
+        header: "Components/ActorComponent.h",
+        template: ClassTemplate::ActorComponent,
+    },
+    BaseClass {
+        prefixed: "USceneComponent",
+        header: "Components/SceneComponent.h",
+        template: ClassTemplate::ActorComponent,
+    },
+    BaseClass {
+        prefixed: "UPrimitiveComponent",
+        header: "Components/PrimitiveComponent.h",
+        template: ClassTemplate::ActorComponent,
+    },
+    BaseClass {
+        prefixed: "UStaticMeshComponent",
+        header: "Components/StaticMeshComponent.h",
+        template: ClassTemplate::ActorComponent,
+    },
+    BaseClass {
+        prefixed: "USkeletalMeshComponent",
+        header: "Components/SkeletalMeshComponent.h",
+        template: ClassTemplate::ActorComponent,
+    },
+    BaseClass {
+        prefixed: "UCharacterMovementComponent",
+        header: "GameFramework/CharacterMovementComponent.h",
+        template: ClassTemplate::ActorComponent,
+    },
+    BaseClass {
+        prefixed: "UCameraComponent",
+        header: "Camera/CameraComponent.h",
+        template: ClassTemplate::ActorComponent,
+    },
+    BaseClass {
+        prefixed: "USpringArmComponent",
+        header: "GameFramework/SpringArmComponent.h",
+        template: ClassTemplate::ActorComponent,
+    },
     // --- Plain UObjects ---
-    BaseClass { prefixed: "UObject", header: "UObject/NoExportTypes.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UDataAsset", header: "Engine/DataAsset.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UPrimaryDataAsset", header: "Engine/DataAsset.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UDeveloperSettings", header: "Engine/DeveloperSettings.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UBlueprintFunctionLibrary", header: "Kismet/BlueprintFunctionLibrary.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "USaveGame", header: "GameFramework/SaveGame.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UGameInstance", header: "Engine/GameInstance.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UGameInstanceSubsystem", header: "Subsystems/GameInstanceSubsystem.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UWorldSubsystem", header: "Subsystems/WorldSubsystem.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "ULocalPlayerSubsystem", header: "Subsystems/LocalPlayerSubsystem.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UEngineSubsystem", header: "Subsystems/EngineSubsystem.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UEditorSubsystem", header: "EditorSubsystem.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UUserWidget", header: "Blueprint/UserWidget.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UAnimInstance", header: "Animation/AnimInstance.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UAnimNotify", header: "Animation/AnimNotifies/AnimNotify.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UAnimNotifyState", header: "Animation/AnimNotifies/AnimNotifyState.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UBTTaskNode", header: "BehaviorTree/BTTaskNode.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UBTService", header: "BehaviorTree/BTService.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UBTDecorator", header: "BehaviorTree/BTDecorator.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UGameplayAbility", header: "Abilities/GameplayAbility.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UAttributeSet", header: "AttributeSet.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UGameplayEffect", header: "GameplayEffect.h", template: ClassTemplate::UObject },
-    BaseClass { prefixed: "UAbilitySystemComponent", header: "AbilitySystemComponent.h", template: ClassTemplate::ActorComponent },
+    BaseClass {
+        prefixed: "UObject",
+        header: "UObject/NoExportTypes.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UDataAsset",
+        header: "Engine/DataAsset.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UPrimaryDataAsset",
+        header: "Engine/DataAsset.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UDeveloperSettings",
+        header: "Engine/DeveloperSettings.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UBlueprintFunctionLibrary",
+        header: "Kismet/BlueprintFunctionLibrary.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "USaveGame",
+        header: "GameFramework/SaveGame.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UGameInstance",
+        header: "Engine/GameInstance.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UGameInstanceSubsystem",
+        header: "Subsystems/GameInstanceSubsystem.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UWorldSubsystem",
+        header: "Subsystems/WorldSubsystem.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "ULocalPlayerSubsystem",
+        header: "Subsystems/LocalPlayerSubsystem.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UEngineSubsystem",
+        header: "Subsystems/EngineSubsystem.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UEditorSubsystem",
+        header: "EditorSubsystem.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UUserWidget",
+        header: "Blueprint/UserWidget.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UAnimInstance",
+        header: "Animation/AnimInstance.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UAnimNotify",
+        header: "Animation/AnimNotifies/AnimNotify.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UAnimNotifyState",
+        header: "Animation/AnimNotifies/AnimNotifyState.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UBTTaskNode",
+        header: "BehaviorTree/BTTaskNode.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UBTService",
+        header: "BehaviorTree/BTService.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UBTDecorator",
+        header: "BehaviorTree/BTDecorator.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UGameplayAbility",
+        header: "Abilities/GameplayAbility.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UAttributeSet",
+        header: "AttributeSet.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UGameplayEffect",
+        header: "GameplayEffect.h",
+        template: ClassTemplate::UObject,
+    },
+    BaseClass {
+        prefixed: "UAbilitySystemComponent",
+        header: "AbilitySystemComponent.h",
+        template: ClassTemplate::ActorComponent,
+    },
     // --- Interface ---
-    BaseClass { prefixed: "UInterface", header: "UObject/Interface.h", template: ClassTemplate::Interface },
+    BaseClass {
+        prefixed: "UInterface",
+        header: "UObject/Interface.h",
+        template: ClassTemplate::Interface,
+    },
 ];
 
 /// Look a base class up by prefixed ("AActor") or unprefixed ("Actor") name.
@@ -132,9 +336,7 @@ pub enum CodeOp {
     /// The shortlist of common base classes. Not exhaustive: `create_class`
     /// also resolves any reflected class in the installed engine source (and
     /// anything `lookup_class` can find) straight from the class index.
-    ListBaseClasses {
-        name_contains: Option<String>,
-    },
+    ListBaseClasses { name_contains: Option<String> },
     /// Scaffold a new UCLASS (or plain C++ class) from the engine templates.
     CreateClass {
         /// Unprefixed name, e.g. "MyActor". The A/U/I prefix comes from the base.
@@ -217,21 +419,20 @@ impl UnrealMcp {
                 // The curated table answers the common bases outright; only a
                 // miss pays for the engine-wide class index (first build of it
                 // scans the whole engine source, then it is cached on disk).
-                let resolved =
-                    match resolve_base(base.as_deref(), base_header.as_deref(), None) {
-                        Ok(resolved) => resolved,
-                        Err(BaseError::Invalid(message)) => return Err(error::invalid(message)),
-                        Err(BaseError::TryIndex) => {
-                            let index = self.docs.get().await;
-                            resolve_base(base.as_deref(), base_header.as_deref(), Some(&index))
-                                .map_err(|e| match e {
-                                    BaseError::Invalid(message) => error::invalid(message),
-                                    BaseError::TryIndex => error::internal(
-                                        "base class resolution did not terminate",
-                                    ),
-                                })?
-                        }
-                    };
+                let resolved = match resolve_base(base.as_deref(), base_header.as_deref(), None) {
+                    Ok(resolved) => resolved,
+                    Err(BaseError::Invalid(message)) => return Err(error::invalid(message)),
+                    Err(BaseError::TryIndex) => {
+                        let index = self.docs.get().await;
+                        resolve_base(base.as_deref(), base_header.as_deref(), Some(&index))
+                            .map_err(|e| match e {
+                                BaseError::Invalid(message) => error::invalid(message),
+                                BaseError::TryIndex => {
+                                    error::internal("base class resolution did not terminate")
+                                }
+                            })?
+                    }
+                };
                 Ok(Json(create_class(
                     project,
                     &templates,
@@ -296,14 +497,14 @@ fn module_dir(project: &ProjectInfo, name: &str) -> PathBuf {
 }
 
 fn read_uproject(project: &ProjectInfo) -> Result<Value, ErrorData> {
-    let text = std::fs::read_to_string(&project.uproject).map_err(|e| {
+    let text = std::fs::read_to_string(&project.uproject)
+        .map_err(|e| error::internal(format!("cannot read {}: {e}", project.uproject.display())))?;
+    serde_json::from_str(&text).map_err(|e| {
         error::internal(format!(
-            "cannot read {}: {e}",
+            "{} is not valid JSON: {e}",
             project.uproject.display()
         ))
-    })?;
-    serde_json::from_str(&text)
-        .map_err(|e| error::internal(format!("{} is not valid JSON: {e}", project.uproject.display())))
+    })
 }
 
 fn list_modules(project: &ProjectInfo) -> Result<Value, ErrorData> {
@@ -316,7 +517,10 @@ fn list_modules(project: &ProjectInfo) -> Result<Value, ErrorData> {
 
     let mut modules = Vec::new();
     for entry in &declared {
-        let name = entry.get("Name").and_then(|n| n.as_str()).unwrap_or_default();
+        let name = entry
+            .get("Name")
+            .and_then(|n| n.as_str())
+            .unwrap_or_default();
         let dir = module_dir(project, name);
         modules.push(json!({
             "name": name,
@@ -471,15 +675,12 @@ fn resolve_base(
     let Some(index) = index else {
         return Err(BaseError::TryIndex);
     };
-    let found = index
-        .get(spec)
-        .map(|e| (spec.to_string(), e))
-        .or_else(|| {
-            ['A', 'U', 'I'].iter().find_map(|p| {
-                let candidate = format!("{p}{spec}");
-                index.get(&candidate).map(|e| (candidate, e))
-            })
-        });
+    let found = index.get(spec).map(|e| (spec.to_string(), e)).or_else(|| {
+        ['A', 'U', 'I'].iter().find_map(|p| {
+            let candidate = format!("{p}{spec}");
+            index.get(&candidate).map(|e| (candidate, e))
+        })
+    });
     let Some((name, entry)) = found else {
         let suggestions = index.suggest(spec, 5);
         return Err(BaseError::Invalid(format!(
@@ -543,7 +744,10 @@ pub(crate) fn tidy(text: &str) -> String {
             }
             // An empty token between two includes leaves a gap the wizard's
             // output would not have.
-            let between_includes = out.lines().last().is_some_and(|l| l.starts_with("#include"))
+            let between_includes = out
+                .lines()
+                .last()
+                .is_some_and(|l| l.starts_with("#include"))
                 && lines[index + 1..]
                     .first()
                     .is_some_and(|l| l.starts_with("#include"));
@@ -602,8 +806,18 @@ fn create_class(
     // Public/Private split when the module already uses one, flat otherwise.
     let split = root.join("Public").is_dir() && root.join("Private").is_dir();
     let sub = args.subdirectory.unwrap_or_default();
-    let header_dir = if split { root.join("Public") } else { root.clone() }.join(&sub);
-    let source_dir = if split { root.join("Private") } else { root.clone() }.join(&sub);
+    let header_dir = if split {
+        root.join("Public")
+    } else {
+        root.clone()
+    }
+    .join(&sub);
+    let source_dir = if split {
+        root.join("Private")
+    } else {
+        root.clone()
+    }
+    .join(&sub);
 
     let unprefixed = args.name.clone();
     // A plain C++ class carries no reflection prefix, matching what the
@@ -656,7 +870,8 @@ fn create_class(
         ("PROPERTY_OVERRIDES", ""),
     ];
 
-    let header_template = read_template(templates, &format!("{}.h.template", base.template.stem()))?;
+    let header_template =
+        read_template(templates, &format!("{}.h.template", base.template.stem()))?;
     let source_template =
         read_template(templates, &format!("{}.cpp.template", base.template.stem()))?;
 
@@ -881,7 +1096,10 @@ pub(crate) fn add_to_target(path: &Path, module: &str) -> Result<Option<String>,
     // Anchor on the last existing ExtraModuleNames call so ordering matches
     // what a human would write; fall back to the end of the constructor.
     let updated = if let Some(pos) = text.rfind("ExtraModuleNames") {
-        let line_end = text[pos..].find('\n').map(|i| pos + i + 1).unwrap_or(text.len());
+        let line_end = text[pos..]
+            .find('\n')
+            .map(|i| pos + i + 1)
+            .unwrap_or(text.len());
         format!("{}{insert}{}", &text[..line_end], &text[line_end..])
     } else if let Some(pos) = text.find('}') {
         format!("{}{insert}{}", &text[..pos], &text[pos..])
@@ -1041,7 +1259,9 @@ mod tests {
     #[test]
     fn include_paths_start_after_the_module_include_root() {
         assert_eq!(
-            include_path_for(Path::new("E/Source/Runtime/Engine/Classes/GameFramework/Actor.h")),
+            include_path_for(Path::new(
+                "E/Source/Runtime/Engine/Classes/GameFramework/Actor.h"
+            )),
             "GameFramework/Actor.h"
         );
         assert_eq!(
@@ -1074,7 +1294,10 @@ mod tests {
 
     #[test]
     fn cs_list_quotes_each_dependency() {
-        assert_eq!(cs_list(&["Core".into(), "Engine".into()]), "\"Core\", \"Engine\"");
+        assert_eq!(
+            cs_list(&["Core".into(), "Engine".into()]),
+            "\"Core\", \"Engine\""
+        );
         assert_eq!(cs_list(&[]), "");
     }
 
@@ -1130,6 +1353,10 @@ mod tests {
 
     #[test]
     fn add_to_target_ignores_a_missing_file() {
-        assert!(add_to_target(Path::new("does/not/exist.Target.cs"), "X").unwrap().is_none());
+        assert!(
+            add_to_target(Path::new("does/not/exist.Target.cs"), "X")
+                .unwrap()
+                .is_none()
+        );
     }
 }

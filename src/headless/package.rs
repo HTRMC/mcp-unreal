@@ -149,12 +149,11 @@ pub(crate) fn package_args(
 
     let mut archive_directory = None;
     if input.archive.unwrap_or(true) {
-        let dir = input.archive_directory.clone().map(PathBuf::from).unwrap_or_else(|| {
-            project_root
-                .join("Saved")
-                .join("Packaged")
-                .join(&platform)
-        });
+        let dir = input
+            .archive_directory
+            .clone()
+            .map(PathBuf::from)
+            .unwrap_or_else(|| project_root.join("Saved").join("Packaged").join(&platform));
         args.push("-archive".into());
         args.push(format!("-archivedirectory={}", dir.display()));
         archive_directory = Some(dir);
@@ -211,9 +210,7 @@ impl UnrealMcp {
         let combined = result.combined();
         let diags = parse_build_diagnostics(&combined);
         let (errors, error_count) = cap(diags.errors, MAX_ERRORS);
-        let archive_exists = archive_directory
-            .as_ref()
-            .is_some_and(|dir| dir.exists());
+        let archive_exists = archive_directory.as_ref().is_some_and(|dir| dir.exists());
 
         Ok(Json(PackageOutput {
             success: !result.timed_out && result.exit_code == 0,
@@ -274,7 +271,10 @@ mod tests {
             "-clientconfig=Shipping",
             "-platform=Win64",
         ] {
-            assert!(args.iter().any(|a| a == expected), "missing {expected} in {args:?}");
+            assert!(
+                args.iter().any(|a| a == expected),
+                "missing {expected} in {args:?}"
+            );
         }
         assert!(args.iter().any(|a| a.starts_with("-archivedirectory=")));
     }

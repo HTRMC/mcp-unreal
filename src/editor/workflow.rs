@@ -23,12 +23,22 @@ pub enum SourceControlOp {
     },
     /// Re-run the provider's login/connect step.
     Connect {},
-    CheckOut { files: Vec<String> },
-    MarkForAdd { files: Vec<String> },
-    MarkForDelete { files: Vec<String> },
-    Revert { files: Vec<String> },
+    CheckOut {
+        files: Vec<String>,
+    },
+    MarkForAdd {
+        files: Vec<String>,
+    },
+    MarkForDelete {
+        files: Vec<String>,
+    },
+    Revert {
+        files: Vec<String>,
+    },
     /// Get the latest revision of these files.
-    Sync { files: Vec<String> },
+    Sync {
+        files: Vec<String>,
+    },
     /// Check in. A submit with no description is rejected by every provider.
     Submit {
         files: Vec<String>,
@@ -82,8 +92,13 @@ pub enum GameplayTagOp {
         /// Tag source ini to write to; the project default when omitted.
         source: Option<String>,
     },
-    Rename { tag: String, new_tag: String },
-    Remove { tag: String },
+    Rename {
+        tag: String,
+        new_tag: String,
+    },
+    Remove {
+        tag: String,
+    },
 }
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -91,7 +106,9 @@ pub enum GameplayTagOp {
 #[schemars(transform = crate::schema::object_with_oneof)]
 pub enum CurveOp {
     /// Every channel of the curve with its keys.
-    Info { curve: String },
+    Info {
+        curve: String,
+    },
     /// Replace a channel's keys.
     SetKeys {
         /// Curve asset path; asset_ops create makes CurveFloat, CurveVector
@@ -112,8 +129,13 @@ pub enum CurveOp {
         keys: Vec<Value>,
         interp: Option<String>,
     },
-    Clear { curve: String, channel: Option<i32> },
-    Save { curve: String },
+    Clear {
+        curve: String,
+        channel: Option<i32>,
+    },
+    Save {
+        curve: String,
+    },
 }
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -189,7 +211,10 @@ impl UnrealMcp {
     #[tool(
         description = "Keyframes on Curve assets (CurveFloat, CurveVector, CurveLinearColor): read every channel's keys, replace or extend them with times, values and per-key interpolation, or clear a channel. asset_ops create makes the asset; this is what fills it in."
     )]
-    async fn curve_ops(&self, Parameters(op): Parameters<CurveOp>) -> Result<Json<Value>, ErrorData> {
+    async fn curve_ops(
+        &self,
+        Parameters(op): Parameters<CurveOp>,
+    ) -> Result<Json<Value>, ErrorData> {
         let body =
             serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
         self.call_plugin("/api/workflow/curves", body)

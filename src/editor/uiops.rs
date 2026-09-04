@@ -13,8 +13,12 @@ pub enum UiOp {
     /// Open an asset's editor. Some engine code only finishes an asset when
     /// its editor constructs itself — a fresh Material Layer gets its input
     /// and output nodes that way.
-    OpenAsset { asset: String },
-    CloseAsset { asset: String },
+    OpenAsset {
+        asset: String,
+    },
+    CloseAsset {
+        asset: String,
+    },
     CloseAll {},
     /// Which assets currently have an editor open. An open editor also lists
     /// its own transient preview objects.

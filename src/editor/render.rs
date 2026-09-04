@@ -55,10 +55,7 @@ pub enum RenderOp {
     },
     /// Bake the target into a Texture2D asset. An existing texture at `path`
     /// is overwritten in place, which keeps everything referencing it.
-    ToTexture {
-        render_target: String,
-        path: String,
-    },
+    ToTexture { render_target: String, path: String },
     /// Render an asset's thumbnail — to a file, or into the asset's package
     /// where the content browser shows it.
     GenerateThumbnail {
@@ -82,7 +79,9 @@ pub enum MaterialFunctionOp {
         expose_to_library: Option<bool>,
     },
     /// The function's expressions with their paths and pin names.
-    Info { function: String },
+    Info {
+        function: String,
+    },
     /// Add an expression. FunctionInput and FunctionOutput are the function's
     /// parameters and results; `name` sets theirs.
     AddExpression {
@@ -109,10 +108,16 @@ pub enum MaterialFunctionOp {
         to_input: Option<String>,
     },
     /// Auto-arrange the graph.
-    Layout { function: String },
+    Layout {
+        function: String,
+    },
     /// Recompile the function and every material that uses it.
-    Update { function: String },
-    Save { function: String },
+    Update {
+        function: String,
+    },
+    Save {
+        function: String,
+    },
 }
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -212,7 +217,9 @@ impl UnrealMcp {
     ) -> Result<Json<Value>, ErrorData> {
         let body =
             serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
-        self.call_plugin("/api/content/render", body).await.map(Json)
+        self.call_plugin("/api/content/render", body)
+            .await
+            .map(Json)
     }
 
     #[tool(
@@ -238,6 +245,8 @@ impl UnrealMcp {
     ) -> Result<Json<Value>, ErrorData> {
         let body =
             serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
-        self.call_plugin("/api/materials/layers", body).await.map(Json)
+        self.call_plugin("/api/materials/layers", body)
+            .await
+            .map(Json)
     }
 }

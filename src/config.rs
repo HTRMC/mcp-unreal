@@ -121,7 +121,10 @@ fn detect_engine_root() -> (PathBuf, EngineRootSource) {
 pub fn engine_search_locations() -> Vec<String> {
     let mut out = Vec::new();
     if let Some(manifest) = launcher_manifest_path() {
-        out.push(format!("the Epic launcher manifest ({})", manifest.display()));
+        out.push(format!(
+            "the Epic launcher manifest ({})",
+            manifest.display()
+        ));
     }
     for path in conventional_install_dirs() {
         out.push(path.display().to_string());

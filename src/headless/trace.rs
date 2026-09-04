@@ -37,8 +37,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "TimingInsights.ExportTimingEvents",
         "every individual scope instance; huge, so narrow it with -threads=/-timers=/-startTime=/-endTime=",
     ),
-    ("threads", "TimingInsights.ExportThreads", "thread ids and names"),
-    ("counters", "TimingInsights.ExportCounters", "the counters the trace recorded"),
+    (
+        "threads",
+        "TimingInsights.ExportThreads",
+        "thread ids and names",
+    ),
+    (
+        "counters",
+        "TimingInsights.ExportCounters",
+        "the counters the trace recorded",
+    ),
     (
         "counter_values",
         "TimingInsights.ExportCounterValues",
@@ -89,7 +97,10 @@ impl UnrealMcp {
     #[tool(
         description = "Read Unreal Insights traces back: list the .utrace files on disk, then analyse one headlessly and export timers, aggregated timer statistics (inclusive/exclusive cost — the place to start when something is slow), individual timing events, threads or counters to CSV, with the first rows returned inline. Complements perf_ops trace_start/trace_stop, which only record."
     )]
-    async fn trace_ops(&self, Parameters(op): Parameters<TraceOp>) -> Result<Json<Value>, ErrorData> {
+    async fn trace_ops(
+        &self,
+        Parameters(op): Parameters<TraceOp>,
+    ) -> Result<Json<Value>, ErrorData> {
         match op {
             TraceOp::ListExports {} => Ok(Json(json!({
                 "exports": EXPORTS
@@ -127,7 +138,8 @@ impl UnrealMcp {
                 max_rows,
             } => {
                 let kind = data.unwrap_or_else(|| "timer_statistics".into());
-                let Some((_, command, _)) = EXPORTS.iter().find(|(name, _, _)| *name == kind) else {
+                let Some((_, command, _)) = EXPORTS.iter().find(|(name, _, _)| *name == kind)
+                else {
                     return Err(error::invalid(format!(
                         "unknown data '{kind}' — one of {}",
                         EXPORTS
@@ -155,7 +167,9 @@ impl UnrealMcp {
                     Some(extra) => format!("{command} {} {extra}", csv.display()),
                     None => format!("{command} {}", csv.display()),
                 };
-                let run = self.run_insights(&trace, std::slice::from_ref(&full)).await?;
+                let run = self
+                    .run_insights(&trace, std::slice::from_ref(&full))
+                    .await?;
                 let rows = read_csv(&csv, max_rows.unwrap_or(DEFAULT_ROWS as u32) as usize);
                 Ok(Json(json!({
                     "trace": trace.display().to_string(),
@@ -276,11 +290,7 @@ impl UnrealMcp {
     }
 
     /// Analyse `trace` headlessly, running `commands` once analysis completes.
-    async fn run_insights(
-        &self,
-        trace: &Path,
-        commands: &[String],
-    ) -> Result<Value, ErrorData> {
+    async fn run_insights(&self, trace: &Path, commands: &[String]) -> Result<Value, ErrorData> {
         let binary = self.insights_binary();
         if !binary.exists() {
             return Err(error::missing_tool(&binary, "UnrealInsights"));
@@ -290,10 +300,8 @@ impl UnrealMcp {
         let (exec_arg, command_file) = if commands.len() == 1 {
             (commands[0].clone(), None)
         } else {
-            let path = std::env::temp_dir().join(format!(
-                "mcp-unreal-insights-{}.txt",
-                std::process::id()
-            ));
+            let path = std::env::temp_dir()
+                .join(format!("mcp-unreal-insights-{}.txt", std::process::id()));
             std::fs::write(&path, commands.join("\n"))
                 .map_err(|e| error::internal(format!("cannot write {}: {e}", path.display())))?;
             (format!("@={}", path.display()), Some(path))

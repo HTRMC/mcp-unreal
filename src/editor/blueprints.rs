@@ -281,8 +281,12 @@ pub enum BlueprintDebugOp {
     /// What the debugger knows about this Blueprint: breakpoints and watches
     /// set, whether it has compiled debug data, whether PIE is running, which
     /// instance values are read from, and whether this editor can halt at all.
-    Status { blueprint: String },
-    ListBreakpoints { blueprint: String },
+    Status {
+        blueprint: String,
+    },
+    ListBreakpoints {
+        blueprint: String,
+    },
     /// Whether execution is currently halted on a breakpoint, and where.
     /// Names no Blueprint: it reports whatever is stopped.
     HaltStatus {},
@@ -318,7 +322,9 @@ pub enum BlueprintDebugOp {
         graph: Option<String>,
         node: String,
     },
-    ClearBreakpoints { blueprint: String },
+    ClearBreakpoints {
+        blueprint: String,
+    },
     /// Every watched pin with its current value, or why it has none.
     ListWatches {
         blueprint: String,
@@ -349,10 +355,15 @@ pub enum BlueprintDebugOp {
         node: String,
         pin: String,
     },
-    ClearWatches { blueprint: String },
+    ClearWatches {
+        blueprint: String,
+    },
     /// Pick the instance watch values are read from — during PIE, the path
     /// find_actors reports for the spawned actor.
-    SetDebugObject { blueprint: String, object: String },
+    SetDebugObject {
+        blueprint: String,
+        object: String,
+    },
 }
 
 #[tool_router(router = blueprint_router, vis = "pub(crate)")]
@@ -406,7 +417,9 @@ impl UnrealMcp {
     ) -> Result<Json<Value>, ErrorData> {
         let body =
             serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
-        self.call_plugin("/api/blueprints/debug", body).await.map(Json)
+        self.call_plugin("/api/blueprints/debug", body)
+            .await
+            .map(Json)
     }
 }
 

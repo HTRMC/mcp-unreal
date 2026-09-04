@@ -228,7 +228,9 @@ pub enum TextureOp {
         width: Option<i32>,
         height: Option<i32>,
     },
-    Save { texture: String },
+    Save {
+        texture: String,
+    },
 }
 
 #[tool_router(router = content_router, vis = "pub(crate)")]

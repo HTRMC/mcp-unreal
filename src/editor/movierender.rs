@@ -15,7 +15,9 @@ use crate::UnrealMcp;
 pub enum MovieRenderOp {
     /// Setting classes a config can hold — render passes, output types
     /// (PNG/JPG/EXR/WAV/encoder), anti-aliasing, burn-ins, CVar overrides.
-    ListSettingClasses { name_contains: Option<String> },
+    ListSettingClasses {
+        name_contains: Option<String>,
+    },
     /// New Movie Pipeline config, seeded with an output setting plus a render
     /// pass and output type (a config missing either produces no files).
     CreateConfig {
@@ -28,10 +30,20 @@ pub enum MovieRenderOp {
     },
     /// The config's settings with their paths, plus the resolved output
     /// directory, file-name format and resolution.
-    ConfigInfo { config: String },
-    AddSetting { config: String, class: String },
-    RemoveSetting { config: String, class: String },
-    Save { config: String },
+    ConfigInfo {
+        config: String,
+    },
+    AddSetting {
+        config: String,
+        class: String,
+    },
+    RemoveSetting {
+        config: String,
+        class: String,
+    },
+    Save {
+        config: String,
+    },
     /// Queue a render and start it. Asynchronous — poll `render_status`.
     /// Needs a windowed editor, since the render runs through PIE.
     Render {

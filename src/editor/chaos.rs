@@ -23,7 +23,9 @@ pub enum ChaosOp {
     },
     /// Bone, geometry and vertex counts, the cluster levels, the materials, and
     /// whether convex collision hulls exist.
-    Info { collection: String },
+    Info {
+        collection: String,
+    },
     /// The individual bones, so the clustering operations have indices to take:
     /// each with its name, cluster level, parent and child count.
     Bones {
@@ -64,7 +66,10 @@ pub enum ChaosOp {
         bones: Vec<i32>,
     },
     /// Merge the named clusters into one.
-    MergeClusters { collection: String, bones: Vec<i32> },
+    MergeClusters {
+        collection: String,
+        bones: Vec<i32>,
+    },
     /// Pull neighbouring pieces into the named clusters, out to `iterations`
     /// rings of neighbours.
     ClusterMagnet {
@@ -74,7 +79,10 @@ pub enum ChaosOp {
         iterations: Option<i32>,
     },
     /// Delete bones and everything under them.
-    DeleteBones { collection: String, bones: Vec<i32> },
+    DeleteBones {
+        collection: String,
+        bones: Vec<i32>,
+    },
     /// Build the non-overlapping convex hulls the solver collides with. A
     /// collection without them falls back to much coarser collision.
     GenerateConvex {
@@ -188,7 +196,9 @@ pub enum ChaosOp {
         /// Pixels left between islands (default 1).
         gutter: Option<f64>,
     },
-    Save { collection: String },
+    Save {
+        collection: String,
+    },
 }
 
 #[tool_router(router = chaos_router, vis = "pub(crate)")]

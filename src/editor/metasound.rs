@@ -97,7 +97,9 @@ pub enum MetaSoundOp {
         /// Number, bool, string, or an asset path.
         value: Value,
     },
-    Save { metasound: String },
+    Save {
+        metasound: String,
+    },
 }
 
 #[tool_router(router = metasound_router, vis = "pub(crate)")]
@@ -111,6 +113,8 @@ impl UnrealMcp {
     ) -> Result<Json<Value>, ErrorData> {
         let body =
             serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
-        self.call_plugin("/api/audio/metasound", body).await.map(Json)
+        self.call_plugin("/api/audio/metasound", body)
+            .await
+            .map(Json)
     }
 }

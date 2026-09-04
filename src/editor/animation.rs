@@ -32,9 +32,14 @@ pub enum AnimAssetOp {
     },
     /// Structure of the asset: montage slots, segments and sections; blend
     /// space axes and samples; composite segments.
-    Info { asset: String },
+    Info {
+        asset: String,
+    },
     /// Montage only: add an animation slot.
-    AddSlot { asset: String, slot: String },
+    AddSlot {
+        asset: String,
+        slot: String,
+    },
     /// Montage only: a named section at a time on the montage timeline.
     AddSection {
         asset: String,
@@ -49,7 +54,10 @@ pub enum AnimAssetOp {
         time: Option<f64>,
         next_section: Option<String>,
     },
-    RemoveSection { asset: String, name: String },
+    RemoveSection {
+        asset: String,
+        name: String,
+    },
     /// Place an animation in a montage slot or a composite's track.
     AddSegment {
         asset: String,
@@ -82,7 +90,10 @@ pub enum AnimAssetOp {
         index: i32,
         position: [f64; 3],
     },
-    RemoveSample { asset: String, index: i32 },
+    RemoveSample {
+        asset: String,
+        index: i32,
+    },
     /// Blend space only: name and range of a parameter axis.
     SetAxis {
         asset: String,
@@ -93,7 +104,9 @@ pub enum AnimAssetOp {
         max: Option<f64>,
         grid_divisions: Option<i32>,
     },
-    Save { asset: String },
+    Save {
+        asset: String,
+    },
 }
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -101,9 +114,17 @@ pub enum AnimAssetOp {
 #[schemars(transform = crate::schema::object_with_oneof)]
 pub enum AnimNotifyOp {
     /// Notify tracks, notifies, sync markers and float curves on the asset.
-    List { animation: String },
-    AddTrack { animation: String, track: String },
-    RemoveTrack { animation: String, track: String },
+    List {
+        animation: String,
+    },
+    AddTrack {
+        animation: String,
+        track: String,
+    },
+    RemoveTrack {
+        animation: String,
+        track: String,
+    },
     /// Add a notify or notify state. With `class` it instantiates that notify
     /// class (a duration makes it a state); with only `name` it adds a bare
     /// named notify, which an Anim Blueprint receives as AnimNotify_<Name>.
@@ -119,7 +140,10 @@ pub enum AnimNotifyOp {
         /// Notify track name, from `list` (default "1").
         track: Option<String>,
     },
-    RemoveNotifies { animation: String, name: String },
+    RemoveNotifies {
+        animation: String,
+        name: String,
+    },
     /// Anim Sequence only.
     AddSyncMarker {
         animation: String,
@@ -127,16 +151,27 @@ pub enum AnimNotifyOp {
         time: f64,
         track: Option<String>,
     },
-    RemoveSyncMarkers { animation: String },
-    AddCurve { animation: String, name: String },
-    RemoveCurve { animation: String, name: String },
+    RemoveSyncMarkers {
+        animation: String,
+    },
+    AddCurve {
+        animation: String,
+        name: String,
+    },
+    RemoveCurve {
+        animation: String,
+        name: String,
+    },
     AddCurveKeys {
         animation: String,
         name: String,
         /// [{"time": 0.0, "value": 1.0}, ...].
         keys: Vec<Value>,
     },
-    GetCurveKeys { animation: String, name: String },
+    GetCurveKeys {
+        animation: String,
+        name: String,
+    },
 }
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -159,7 +194,10 @@ pub enum SkeletonOp {
         rotation: Option<[f64; 3]>,
         scale: Option<[f64; 3]>,
     },
-    RemoveSocket { skeleton: String, name: String },
+    RemoveSocket {
+        skeleton: String,
+        name: String,
+    },
     /// A bone driven by two existing bones, usable as an animation target.
     AddVirtualBone {
         skeleton: String,
@@ -167,18 +205,35 @@ pub enum SkeletonOp {
         target: String,
         name: Option<String>,
     },
-    RemoveVirtualBone { skeleton: String, name: String },
+    RemoveVirtualBone {
+        skeleton: String,
+        name: String,
+    },
     /// Register a montage slot name.
-    AddSlot { skeleton: String, name: String },
-    RemoveSlot { skeleton: String, name: String },
-    AddSlotGroup { skeleton: String, name: String },
+    AddSlot {
+        skeleton: String,
+        name: String,
+    },
+    RemoveSlot {
+        skeleton: String,
+        name: String,
+    },
+    AddSlotGroup {
+        skeleton: String,
+        name: String,
+    },
     SetSlotGroup {
         skeleton: String,
         name: String,
         group: String,
     },
-    SetPreviewMesh { skeleton: String, mesh: String },
-    Save { skeleton: String },
+    SetPreviewMesh {
+        skeleton: String,
+        mesh: String,
+    },
+    Save {
+        skeleton: String,
+    },
 }
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -219,14 +274,22 @@ pub enum SkeletalMeshOp {
         rotation: Option<[f64; 3]>,
         scale: Option<[f64; 3]>,
     },
-    RemoveSocket { mesh: String, name: String },
+    RemoveSocket {
+        mesh: String,
+        name: String,
+    },
     RenameSocket {
         mesh: String,
         name: String,
         new_name: String,
     },
-    AssignPhysicsAsset { mesh: String, physics_asset: String },
-    Save { mesh: String },
+    AssignPhysicsAsset {
+        mesh: String,
+        physics_asset: String,
+    },
+    Save {
+        mesh: String,
+    },
 }
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -253,7 +316,10 @@ pub enum PhysicsAssetOp {
         /// Physics Asset path, or a Skeletal Mesh whose asset to use.
         asset: String,
     },
-    AddBody { asset: String, bone: String },
+    AddBody {
+        asset: String,
+        bone: String,
+    },
     /// Removing a body also drops the constraints that referenced it.
     RemoveBody {
         asset: String,
@@ -268,8 +334,13 @@ pub enum PhysicsAssetOp {
         bone2: String,
         name: Option<String>,
     },
-    RemoveConstraint { asset: String, index: i32 },
-    Save { asset: String },
+    RemoveConstraint {
+        asset: String,
+        index: i32,
+    },
+    Save {
+        asset: String,
+    },
 }
 
 #[tool_router(router = animation_router, vis = "pub(crate)")]

@@ -194,7 +194,10 @@ pub enum SublevelOp {
         world: Option<String>,
     },
     /// Make this the level new actors are spawned into.
-    SetCurrent { level: String, world: Option<String> },
+    SetCurrent {
+        level: String,
+        world: Option<String>,
+    },
     /// Move the sublevel — and everything loaded in it — in world space.
     SetTransform {
         level: String,

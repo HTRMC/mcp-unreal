@@ -39,11 +39,22 @@ pub enum LocalizationOp {
         /// The culture the source text is authored in (default "en").
         native_culture: Option<String>,
     },
-    TargetInfo { target: String },
-    AddCulture { target: String, culture: String },
-    RemoveCulture { target: String, culture: String },
+    TargetInfo {
+        target: String,
+    },
+    AddCulture {
+        target: String,
+        culture: String,
+    },
+    RemoveCulture {
+        target: String,
+        culture: String,
+    },
     /// Make an already-supported culture the source language.
-    SetNativeCulture { target: String, culture: String },
+    SetNativeCulture {
+        target: String,
+        culture: String,
+    },
     /// Which sources `gather` collects strings from. The target the engine
     /// ships in BaseEditor.ini has every one of these disabled, so gathering it
     /// untouched produces an empty manifest. Omitted fields are left alone.
@@ -63,16 +74,26 @@ pub enum LocalizationOp {
     /// Rewrite the target's commandlet config files from its current settings.
     /// `gather` and `compile` read those, so run this after changing a target
     /// with set_property.
-    GenerateConfigs { target: String },
+    GenerateConfigs {
+        target: String,
+    },
     /// Run the GatherText commandlet: collect source strings into the target's
     /// manifest and archives. Minutes on a large project.
-    Gather { target: String },
+    Gather {
+        target: String,
+    },
     /// Compile the archives into the .locres files the game loads.
-    Compile { target: String },
+    Compile {
+        target: String,
+    },
     /// Write the archives out as PO files, the format translators work in.
-    ExportPo { target: String },
+    ExportPo {
+        target: String,
+    },
     /// Read translated PO files back into the archives.
-    ImportPo { target: String },
+    ImportPo {
+        target: String,
+    },
     /// The source strings a gather found for one culture, with their
     /// translations and which are still untranslated.
     ListTranslations {

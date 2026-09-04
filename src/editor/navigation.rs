@@ -72,7 +72,9 @@ pub enum NavigationOp {
 pub enum StateTreeOp {
     /// Schema classes `create` accepts — the schema decides which tasks and
     /// conditions are legal in the tree.
-    ListSchemas { name_contains: Option<String> },
+    ListSchemas {
+        name_contains: Option<String>,
+    },
     /// Task, condition and evaluator structs `add_node` accepts.
     ListNodeStructs {
         /// "task", "condition" or "evaluator"; all three when omitted.
@@ -89,7 +91,9 @@ pub enum StateTreeOp {
     },
     /// The state hierarchy with each state's tasks, enter conditions and
     /// transitions, and whether the tree is compiled.
-    Info { state_tree: String },
+    Info {
+        state_tree: String,
+    },
     AddState {
         state_tree: String,
         name: String,
@@ -103,7 +107,10 @@ pub enum StateTreeOp {
         state: String,
         name: String,
     },
-    RemoveState { state_tree: String, state: String },
+    RemoveState {
+        state_tree: String,
+        state: String,
+    },
     /// Where a state goes when it finishes, ticks or receives an event.
     AddTransition {
         state_tree: String,
@@ -137,8 +144,12 @@ pub enum StateTreeOp {
     /// Compile the tree and report the compiler's messages. An uncompiled
     /// State Tree has empty runtime data and does nothing, so this is what
     /// tells you the tree actually works.
-    Compile { state_tree: String },
-    Save { state_tree: String },
+    Compile {
+        state_tree: String,
+    },
+    Save {
+        state_tree: String,
+    },
 }
 
 #[tool_router(router = navigation_router, vis = "pub(crate)")]

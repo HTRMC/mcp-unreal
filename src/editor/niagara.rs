@@ -254,6 +254,8 @@ impl UnrealMcp {
     ) -> Result<Json<Value>, ErrorData> {
         let body =
             serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
-        self.call_plugin("/api/niagara/author", body).await.map(Json)
+        self.call_plugin("/api/niagara/author", body)
+            .await
+            .map(Json)
     }
 }

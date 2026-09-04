@@ -18,10 +18,14 @@ pub enum EqsOp {
         name_filter: Option<String>,
     },
     /// Create an Environment Query asset with an empty graph and its root node.
-    Create { path: String },
+    Create {
+        path: String,
+    },
     /// The query's options, each with its generator, its ordered tests, and
     /// the object paths to edit them through `set_property`.
-    Info { query: String },
+    Info {
+        query: String,
+    },
     /// Add an option: one generator producing candidate items.
     AddOption {
         query: String,
@@ -57,8 +61,12 @@ pub enum EqsOp {
     /// Rebuild the runtime options from the graph. Every editing operation
     /// does this already; call it after editing a generator or test through
     /// `set_property`.
-    Compile { query: String },
-    Save { query: String },
+    Compile {
+        query: String,
+    },
+    Save {
+        query: String,
+    },
     /// Run the query and get its scored items back — where the AI would
     /// actually stand, best first. Needs no PIE: the editor world has an AI
     /// system of its own, so a query runs against the level as it is open.
