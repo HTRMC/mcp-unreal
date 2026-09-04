@@ -155,7 +155,7 @@ impl UnrealMcp {
                     Some(extra) => format!("{command} {} {extra}", csv.display()),
                     None => format!("{command} {}", csv.display()),
                 };
-                let run = self.run_insights(&trace, &[full.clone()]).await?;
+                let run = self.run_insights(&trace, std::slice::from_ref(&full)).await?;
                 let rows = read_csv(&csv, max_rows.unwrap_or(DEFAULT_ROWS as u32) as usize);
                 Ok(Json(json!({
                     "trace": trace.display().to_string(),
@@ -229,7 +229,7 @@ impl UnrealMcp {
                 }
             }
         }
-        found.sort_by(|a, b| b.0.cmp(&a.0));
+        found.sort_by_key(|(modified, _)| std::cmp::Reverse(*modified));
         found.into_iter().map(|(_, path)| path).collect()
     }
 

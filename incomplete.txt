@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (62 tools, 45 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (68 tools, 51 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -12,22 +12,19 @@ factory-backed asset shell), run_console_command, and python_exec (anything the
 
 ANIMATION & CHARACTERS
 ----------------------
-- Animation assets themselves. Anim Blueprints are fully authored, but Montages
-  (sections, slots, notifies), Blend Spaces, Aim Offsets, Anim Composites and
-  notify tracks can only be *referenced*, never created or edited —
-  anim_blueprint_modify takes them as inputs only.
-- Skeletal Meshes / Skeletons: no LOD, socket, virtual bone, morph target or
-  material-slot editing. Only static_mesh_ops exists.
 - IK Rig, IK Retargeter, Control Rig, Pose Search / Motion Matching: nothing.
-- Physics Assets: no bodies, constraints, or ragdoll setup.
+- Pose Assets: no creation or pose editing.
+- No morph target authoring (they can be listed, not created or edited).
+- Anim Sequences themselves: bone track data is read-only (no retargeting, no
+  key editing, no additive-from-pose baking).
 
 
 PHYSICS & DESTRUCTION
 ---------------------
 - Chaos: Geometry Collections, fracturing, destruction fields, Chaos Vehicles,
   Chaos Cloth — none.
-- No constraint authoring. Physics is only reachable as actor/component
-  properties.
+- Physics on actors/components is only reachable as properties (physics_asset_ops
+  covers ragdoll bodies and constraints).
 
 
 RENDERING & CINEMATICS OUTPUT
@@ -51,9 +48,10 @@ MATERIALS & TEXTURES
 
 NIAGARA
 -------
-- No system or emitter authoring: no emitter stack, modules, scratch pads, or
-  renderer setup. niagara_ops only lists, spawns, and sets user parameters on
-  live components. (Compare pcg_ops, which does get full graph authoring.)
+- No scratch pad or custom module scripts: niagara_author places existing module
+  scripts in a stack but cannot author a new module's own graph.
+- No simulation stages, event handlers or parameter-definition assets.
+- Dynamic inputs on a module input (only literal values are settable).
 
 
 AI
@@ -146,11 +144,11 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Niagara authoring (emitters, module stacks)
-2. Animation assets (montages, blend spaces)
-3. World Partition + sublevels
-4. MetaSounds
-5. EQS / State Trees
+1. World Partition + sublevels
+2. MetaSounds
+3. EQS / State Trees
+4. Movie Render Queue (rendering a sequence to disk)
+5. Source control
 
 
 CLOSED
@@ -161,3 +159,11 @@ CLOSED
   templates, any reflected engine class usable as a base.
 2026-09-04 — trace_ops: Unreal Insights traces analysed headlessly and exported
   to CSV (timers, timer statistics, timing events, threads, counters).
+2026-09-04 — niagara_author: system/emitter assets, emitter handles, the full
+  module stack per script stage with typed inputs, module add/remove/enable,
+  literal input values, renderers, and a real compile report.
+2026-09-04 — anim_asset_ops, anim_notify_ops, skeleton_ops, skeletal_mesh_ops,
+  physics_asset_ops: montages, composites, blend spaces and aim offsets;
+  notifies, notify states, tracks, sync markers and curves; skeleton sockets,
+  virtual bones and slot groups; skeletal-mesh LODs, material slots and
+  sockets; ragdoll generation with per-body and per-constraint editing.

@@ -29,27 +29,9 @@ namespace McpLink
 {
 	namespace
 	{
-		UObject* LoadAssetFlexible(const FString& Path)
-		{
-			if (Path.IsEmpty())
-			{
-				return nullptr;
-			}
-			if (UObject* Direct = ResolveObject(Path))
-			{
-				return Direct;
-			}
-			if (!Path.Contains(TEXT(".")))
-			{
-				return ResolveObject(
-					FString::Printf(TEXT("%s.%s"), *Path, *FPackageName::GetShortName(Path)));
-			}
-			return nullptr;
-		}
-
 		UNiagaraSystem* SystemOrError(const FString& Spec, const TSharedRef<FMcpResponder>& Responder)
 		{
-			UNiagaraSystem* System = Cast<UNiagaraSystem>(LoadAssetFlexible(Spec));
+			UNiagaraSystem* System = Cast<UNiagaraSystem>(ResolveAsset(Spec));
 			if (System == nullptr)
 			{
 				Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("system_not_found"),
@@ -261,7 +243,7 @@ namespace McpLink
 			}
 			else if ((Var->IsUObject() || Var->IsDataInterface()) && Value->TryGetString(Text))
 			{
-				UObject* Object = LoadAssetFlexible(Text);
+				UObject* Object = ResolveAsset(Text);
 				if (Object == nullptr)
 				{
 					OutError = FString::Printf(TEXT("object '%s' for parameter '%s' not found"), *Text, *RawName);

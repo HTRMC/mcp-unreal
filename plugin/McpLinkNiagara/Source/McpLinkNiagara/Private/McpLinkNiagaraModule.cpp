@@ -4,6 +4,7 @@
 namespace McpLink
 {
 	void RegisterNiagaraRoutes(FMcpLinkCoreModule& Core);
+	void RegisterNiagaraAuthoringRoutes(FMcpLinkCoreModule& Core);
 }
 
 class FMcpLinkNiagaraModule : public IModuleInterface
@@ -14,6 +15,7 @@ public:
 		// McpLinkCore queues routes registered after the server is up, so
 		// plugin load order does not matter.
 		McpLink::RegisterNiagaraRoutes(FMcpLinkCoreModule::Get());
+		McpLink::RegisterNiagaraAuthoringRoutes(FMcpLinkCoreModule::Get());
 	}
 };
 

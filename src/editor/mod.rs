@@ -1,6 +1,7 @@
 pub mod actors;
 pub mod ai;
 pub mod anim_blueprints;
+pub mod animation;
 pub mod assets;
 pub mod audio;
 pub mod blueprints;

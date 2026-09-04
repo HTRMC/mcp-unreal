@@ -1,0 +1,24 @@
+{
+  "name": "anim_notify_list",
+  "description": "notify tracks, notifies, sync markers and curves on a montage",
+  "route": "/api/anim/notifies",
+  "tool": "anim_notify_ops",
+  "request": {
+    "operation": "list",
+    "animation": "/Game/Anims/AM_McpWalk"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "animation": "/Game/Anims/AM_McpWalk.AM_McpWalk",
+      "length": 6.266666889190674,
+      "tracks": [
+        "1"
+      ],
+      "notifies": [],
+      "sync_markers": [],
+      "float_curves": []
+    }
+  }
+}

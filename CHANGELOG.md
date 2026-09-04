@@ -12,6 +12,21 @@ installed as a pair.
 
 ### Added
 
+- **`niagara_author`** — Niagara authoring, not just driving: create system and
+  emitter assets, add/remove/rename/enable emitters, read the whole stack
+  (every emitter's emitter-spawn/update and particle-spawn/update module lists
+  with typed inputs, plus renderers), add and remove modules anywhere in a
+  stack, set literal module input values, add and remove renderers, then
+  compile — with each script's status and the real compile errors reported,
+  since `PollForCompilationComplete`'s bool means "still compiling" and
+  "nothing to compile" alike.
+- **`anim_asset_ops` / `anim_notify_ops` / `skeleton_ops` /
+  `skeletal_mesh_ops` / `physics_asset_ops`** (new `McpLinkAnimation` module) —
+  the animation assets that could previously only be *referenced*. Montages
+  (slots, segments, sections), Anim Composites, Blend Spaces and Aim Offsets;
+  notifies, notify states, notify tracks, sync markers and curves; skeleton
+  sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
+  and sockets; and ragdoll generation with per-body and per-constraint editing.
 - **`package_project`** — packaging past the end of `cook_project`: RunUAT
   BuildCookRun through compile, cook, stage, pak and archive, with
   dedicated-server targets, distribution builds, IoStore, and deploy-and-run on
@@ -27,7 +42,6 @@ installed as a pair.
   headlessly through UnrealInsights and exports timers, aggregated timer
   statistics, timing events, threads or counters to CSV with the first rows
   returned inline.
-
 - **`asset_ops`** — the asset lifecycle that was missing entirely: create any
   factory-backed asset class (Data Assets, Curves, Curve Tables, String Tables,
   User-Defined Structs and Enums) with optional factory configuration; import

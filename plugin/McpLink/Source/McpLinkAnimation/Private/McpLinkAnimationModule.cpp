@@ -1,0 +1,25 @@
+#include "McpLinkCoreModule.h"
+#include "Modules/ModuleManager.h"
+
+namespace McpLink
+{
+	void RegisterAnimAssetRoutes(FMcpLinkCoreModule& Core);
+	void RegisterAnimNotifyRoutes(FMcpLinkCoreModule& Core);
+	void RegisterSkeletonRoutes(FMcpLinkCoreModule& Core);
+	void RegisterPhysicsAssetRoutes(FMcpLinkCoreModule& Core);
+}
+
+class FMcpLinkAnimationModule : public IModuleInterface
+{
+public:
+	virtual void StartupModule() override
+	{
+		FMcpLinkCoreModule& Core = FMcpLinkCoreModule::Get();
+		McpLink::RegisterAnimAssetRoutes(Core);
+		McpLink::RegisterAnimNotifyRoutes(Core);
+		McpLink::RegisterSkeletonRoutes(Core);
+		McpLink::RegisterPhysicsAssetRoutes(Core);
+	}
+};
+
+IMPLEMENT_MODULE(FMcpLinkAnimationModule, McpLinkAnimation)

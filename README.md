@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (62)
+## Tools (68)
 
 | Area | Tools |
 |---|---|
@@ -42,13 +42,14 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Editor | `run_console_command`, `get_output_log`, `capture_viewport`, `build_level`, `perf_ops`, `trace_ops` |
 | Play | `pie_control`, `player_control`, **`input_inject`** |
 | Blueprints | `blueprint_query`, `blueprint_modify`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
+| Animation | `anim_asset_ops`, `anim_notify_ops`, `skeleton_ops`, `skeletal_mesh_ops`, `physics_asset_ops` |
 | Content | `material_ops`, `material_graph`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
 | World building | `landscape_ops`, `foliage_ops` |
 | AI | `blackboard_ops`, `behavior_tree_ops` |
 | Introspection | `subsystem_query`, `ui_query` |
 | Engine API | `lookup_class`, `search_api` |
 | Project config | `project_ops`, `config_ops`, `cook_project`, `package_project`, `code_ops` |
-| Interop plugins | `niagara_ops`, `gas_ops`, `pcg_ops`, `python_exec` (need McpLinkNiagara / McpLinkGAS / McpLinkPCG / McpLinkPython enabled) |
+| Interop plugins | `niagara_ops`, `niagara_author`, `gas_ops`, `pcg_ops`, `python_exec` (need McpLinkNiagara / McpLinkGAS / McpLinkPCG / McpLinkPython enabled) |
 
 Headless tools work with no editor open. Editor tools need the Unreal Editor running with McpLink enabled — call `status` to see what is currently available.
 
@@ -105,6 +106,16 @@ Times cross the wire as display-rate frames or as seconds, interchangeably, and 
 
 `behavior_tree_ops` authors the tree the way the Behavior Tree editor does: it builds the asset's `BTGraph` (with its Root node) and lets `UBehaviorTreeGraph::UpdateAsset` compile that into the runtime tree, because a runtime tree written directly is discarded the next time the asset is opened. `list_node_classes` enumerates every task, composite, decorator and service the project has, native or Blueprint — start there. Composites and tasks are wired as children; decorators and services attach to a node as sub-nodes. `compile` reports whether the graph actually produced a root, which is the difference between a tree that runs and one that silently does nothing. Node settings are properties on the `instance` path `get_tree` reports.
 
+### Animation assets, skeletons and physics assets
+
+`anim_asset_ops` creates and edits the animation assets that were previously reference-only: Montages (slots, animation segments with trim/rate/loop, named sections and their next-section links), Anim Composites, Blend Spaces (1D and 2D) and Aim Offsets (parameter axes, samples placed in the space). `info` reads the whole structure back.
+
+`anim_notify_ops` covers notify tracks, notifies and notify states, sync markers and float curves, through the engine's own `UAnimationBlueprintLibrary` — so curve names land on the skeleton and tracks stay valid. A notify's own settings are properties on the reported path, so `set_property` tunes them.
+
+`skeleton_ops` reads the bone hierarchy and edits sockets, virtual bones and montage slot groups; `skeletal_mesh_ops` handles the LOD chain (through the real reduction module), material slots, mesh-only sockets and morph target listing. Either accepts a Skeletal Mesh path where a skeleton is wanted.
+
+`physics_asset_ops` generates a ragdoll from a skeletal mesh — the same body-and-constraint pass the Physics Asset editor runs on a new asset — then adds and removes individual bodies and constraints. Body and constraint tuning is ordinary `set_property` work on the reported paths.
+
 ### Static meshes
 
 `static_mesh_ops` drives `UStaticMeshEditorSubsystem`, so LOD generation runs the real reduction module and `add_convex_collision` runs the real convex decomposition. It reports LODs with vertex counts and screen sizes, material slots, sockets, Nanite settings and collision counts; generates or removes a LOD chain or applies a project LOD group; adds simple (box/sphere/capsule/K-DOP) or convex collision; toggles Nanite and lightmap UV generation; and adds, moves and removes sockets.
@@ -130,6 +141,7 @@ Times cross the wire as display-rate frames or as seconds, interchangeably, and 
 Three optional sibling plugins add route groups for engine systems a project may or may not use; `status` lists `niagara`, `gameplay_abilities` and `pcg` in `features` when they are loaded.
 
 - `niagara_ops` lists systems (engine templates under `/Niagara`), reads emitters and user parameters, spawns systems at a location or attached to an actor, sets typed user parameters on live components, and pauses/activates/destroys them. Spawning needs a rendering editor (Niagara refuses under `-nullrhi`); the tool says so. A freshly loaded system compiles for a few seconds first — `system_ready` tells you when it is actually running.
+- `niagara_author` builds systems rather than just driving them: create system and emitter assets, add/remove/rename/enable emitters, read the full stack (every emitter's four script stacks with their ordered modules and typed inputs, plus renderers), add and remove modules anywhere in a stack, set literal module input values, and add or remove renderers. `compile` reports each script's status and the actual compile errors — run it after authoring, since that is what surfaces a broken stack. (`ready_to_run` is always false under `-nullrhi`; `compiled` and `errors` are the signal.)
 - `gas_ops` reads an actor's attribute sets (current and base), granted abilities, active effects and owned tags, grants and activates abilities, applies and removes gameplay effects, sets attribute base values and adds loose tags.
 - `pcg_ops` authors PCG graphs (create, add nodes from any of the ~200 settings classes, connect pins, save), attaches components to actors, sets graph, seed and parameters, generates asynchronously and reports the result. Per-node options are ordinary properties on the reported `settings_path`, so `set_property` edits them.
 

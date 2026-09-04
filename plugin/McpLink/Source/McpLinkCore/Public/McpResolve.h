@@ -31,6 +31,12 @@ namespace McpLink
 	// Full object path -> UObject (resolves in memory, then tries loading).
 	MCPLINKCORE_API UObject* ResolveObject(const FString& Path);
 
+	// Asset path -> UObject, accepting both "/Game/Foo" and "/Game/Foo.Foo".
+	// Never loads a package that does not exist: a failed TryLoad leaves an
+	// empty UPackage registered, after which IAssetTools::CreateAsset refuses
+	// the path as already taken.
+	MCPLINKCORE_API UObject* ResolveAsset(const FString& Path);
+
 	// "StaticMeshActor", "/Script/Engine.StaticMeshActor", or a Blueprint
 	// asset path ("/Game/BP_Thing" or "/Game/BP_Thing.BP_Thing_C").
 	MCPLINKCORE_API UClass* ResolveClass(const FString& Spec);

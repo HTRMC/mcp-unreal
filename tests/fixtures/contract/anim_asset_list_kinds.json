@@ -1,0 +1,23 @@
+{
+  "name": "anim_asset_list_kinds",
+  "description": "the animation asset kinds anim_asset_ops can create",
+  "route": "/api/anim/assets",
+  "tool": "anim_asset_ops",
+  "request": {
+    "operation": "list_kinds"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "kinds": [
+        "montage",
+        "composite",
+        "blend_space",
+        "blend_space_1d",
+        "aim_offset",
+        "aim_offset_1d"
+      ]
+    }
+  }
+}

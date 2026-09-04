@@ -10,6 +10,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Actor.h"
+#include "Misc/PackageName.h"
 #include "UObject/SoftObjectPath.h"
 #include "UObject/UObjectGlobals.h"
 
@@ -103,6 +104,28 @@ namespace McpLink
 		if (UObject* Found = SoftPath.ResolveObject())
 		{
 			return Found;
+		}
+		return SoftPath.TryLoad();
+	}
+
+	UObject* ResolveAsset(const FString& Path)
+	{
+		if (Path.IsEmpty())
+		{
+			return nullptr;
+		}
+		// "/Game/Foo" is the package; the asset inside it repeats the name.
+		const FString Full = Path.Contains(TEXT("."))
+			? Path
+			: FString::Printf(TEXT("%s.%s"), *Path, *FPackageName::GetShortName(Path));
+		const FSoftObjectPath SoftPath(Full);
+		if (UObject* Found = SoftPath.ResolveObject())
+		{
+			return Found;
+		}
+		if (!FPackageName::DoesPackageExist(FPackageName::ObjectPathToPackageName(Full)))
+		{
+			return nullptr;
 		}
 		return SoftPath.TryLoad();
 	}

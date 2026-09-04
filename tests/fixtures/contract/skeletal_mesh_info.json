@@ -1,0 +1,30 @@
+{
+  "name": "skeletal_mesh_info",
+  "description": "LODs, material slots, sockets and morph targets of a skeletal mesh",
+  "route": "/api/anim/mesh",
+  "tool": "skeletal_mesh_ops",
+  "request": {
+    "operation": "info",
+    "mesh": "/Engine/EngineMeshes/SkeletalCube"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "mesh": "/Engine/EngineMeshes/SkeletalCube.SkeletalCube",
+      "skeleton": "/Engine/EngineMeshes/SkeletalCube_Skeleton.SkeletalCube_Skeleton",
+      "physics_asset": "",
+      "lod_count": 1,
+      "material_slots": [
+        {
+          "index": 0,
+          "slot": "MaterialSlot",
+          "material": ""
+        }
+      ],
+      "mesh_sockets": [],
+      "morph_target_count": 0,
+      "morph_targets": []
+    }
+  }
+}

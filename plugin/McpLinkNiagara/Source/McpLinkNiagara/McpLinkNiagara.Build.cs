@@ -17,8 +17,10 @@ public class McpLinkNiagara : ModuleRules
 			"McpLinkCore",
 			"UnrealEd",
 			"AssetRegistry",
+			"AssetTools",
 			"Niagara",
-			"NiagaraCore"
+			"NiagaraCore",
+			"NiagaraEditor"
 		});
 	}
 }

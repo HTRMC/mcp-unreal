@@ -1,0 +1,19 @@
+{
+  "name": "skeleton_socket_not_found_error",
+  "description": "removing an absent skeleton socket is a 404",
+  "route": "/api/anim/skeleton",
+  "tool": "skeleton_ops",
+  "request": {
+    "operation": "remove_socket",
+    "skeleton": "/Engine/EngineMeshes/SkeletalCube_Skeleton",
+    "name": "NotASocket"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "socket_not_found",
+      "message": "skeleton has no socket 'NotASocket'"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "niagara_author_list_stages",
+  "description": "the Niagara script stacks a module can be added to",
+  "route": "/api/niagara/author",
+  "tool": "niagara_author",
+  "request": {
+    "operation": "list_stages"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "stages": [
+        {
+          "stage": "system_spawn",
+          "scope": "system"
+        },
+        {
+          "stage": "system_update",
+          "scope": "system"
+        },
+        {
+          "stage": "emitter_spawn",
+          "scope": "emitter"
+        },
+        {
+          "stage": "emitter_update",
+          "scope": "emitter"
+        },
+        {
+          "stage": "particle_spawn",
+          "scope": "emitter"
+        },
+        {
+          "stage": "particle_update",
+          "scope": "emitter"
+        }
+      ]
+    }
+  }
+}

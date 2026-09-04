@@ -111,6 +111,12 @@ fn wire_body(fixture: &Fixture) -> Option<Value> {
         "anim_blueprint_modify" => {
             to_json::<anim_blueprints::AnimBlueprintModify>(&fixture.name, req)
         }
+        "niagara_author" => to_json::<niagara::NiagaraAuthorOp>(&fixture.name, req),
+        "anim_asset_ops" => to_json::<animation::AnimAssetOp>(&fixture.name, req),
+        "anim_notify_ops" => to_json::<animation::AnimNotifyOp>(&fixture.name, req),
+        "skeleton_ops" => to_json::<animation::SkeletonOp>(&fixture.name, req),
+        "skeletal_mesh_ops" => to_json::<animation::SkeletalMeshOp>(&fixture.name, req),
+        "physics_asset_ops" => to_json::<animation::PhysicsAssetOp>(&fixture.name, req),
         "material_graph" => to_json::<material_graph::MaterialGraphOp>(&fixture.name, req),
         "sequence_ops" => to_json::<sequences::SequenceOp>(&fixture.name, req),
         "landscape_ops" => to_json::<world::LandscapeOp>(&fixture.name, req),

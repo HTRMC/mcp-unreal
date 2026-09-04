@@ -1,0 +1,18 @@
+{
+  "name": "physics_asset_not_found_error",
+  "description": "a path with no physics asset, and no mesh carrying one, is a 404",
+  "route": "/api/anim/physics",
+  "tool": "physics_asset_ops",
+  "request": {
+    "operation": "info",
+    "asset": "/Engine/EngineMeshes/SkeletalCube"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "asset_not_found",
+      "message": "no Physics Asset (or mesh with one) at '/Engine/EngineMeshes/SkeletalCube'"
+    }
+  }
+}

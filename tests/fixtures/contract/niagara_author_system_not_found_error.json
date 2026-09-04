@@ -1,0 +1,18 @@
+{
+  "name": "niagara_author_system_not_found_error",
+  "description": "a missing Niagara system is a 404 naming the discovery tool",
+  "route": "/api/niagara/author",
+  "tool": "niagara_author",
+  "request": {
+    "operation": "stack",
+    "system": "/Game/Nope/NS_Missing"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "system_not_found",
+      "message": "no Niagara system at '/Game/Nope/NS_Missing' — see niagara_ops list_systems"
+    }
+  }
+}

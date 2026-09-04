@@ -56,6 +56,7 @@ impl UnrealMcp {
                 + Self::docs_router()
                 + Self::blueprint_router()
                 + Self::anim_blueprint_router()
+                + Self::animation_router()
                 + Self::content_router()
                 + Self::introspect_router()
                 + Self::niagara_router()
