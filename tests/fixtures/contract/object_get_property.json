@@ -1,0 +1,18 @@
+{
+  "name": "object_get_property",
+  "description": "Read a UPROPERTY through engine reflection; FText comes back as a plain string with its type named.",
+  "route": "/api/object/get_property",
+  "tool": "get_property",
+  "request": {
+    "object_path": "/Game/Contract/WBP_Contract.WBP_Contract:WidgetTree.Label",
+    "property": "Text"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "value": "Contract",
+      "type": "FText"
+    }
+  }
+}

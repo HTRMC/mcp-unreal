@@ -1,0 +1,56 @@
+{
+  "name": "widget_add_widget",
+  "description": "Add a TextBlock under the root panel; the reply carries the widget, its slot and the parent it landed in.",
+  "route": "/api/widget_blueprints/modify",
+  "tool": "widget_blueprint_modify",
+  "request": {
+    "operation": "add_widget",
+    "blueprint": "/Game/Contract/WBP_Contract",
+    "class": "TextBlock",
+    "name": "Label"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "name": "Label",
+      "class": "TextBlock",
+      "class_path": "/Script/UMG.TextBlock",
+      "path": "/Game/Contract/WBP_Contract.WBP_Contract:WidgetTree.Label",
+      "is_variable": false,
+      "slot": {
+        "class": "CanvasPanelSlot",
+        "path": "/Game/Contract/WBP_Contract.WBP_Contract:WidgetTree.CanvasPanel_0.CanvasPanelSlot_0",
+        "index": 0,
+        "properties": {
+          "LayoutData": {
+            "Offsets": {
+              "Left": 0,
+              "Top": 0,
+              "Right": 100,
+              "Bottom": 30
+            },
+            "Anchors": {
+              "Minimum": {
+                "X": 0,
+                "Y": 0
+              },
+              "Maximum": {
+                "X": 0,
+                "Y": 0
+              }
+            },
+            "Alignment": {
+              "X": 0,
+              "Y": 0
+            }
+          },
+          "bAutoSize": false,
+          "ZOrder": 0
+        }
+      },
+      "parent": "CanvasPanel_0",
+      "message": "configure with set_widget (appearance/behaviour) and set_slot (layout); bind_event for OnClicked etc."
+    }
+  }
+}

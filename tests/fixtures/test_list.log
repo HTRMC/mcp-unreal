@@ -1,0 +1,6 @@
+[2026.09.03-12.00.00:000][  0]LogAutomationController: Display: Found 3 Automation Tests, based on 'All Tests'
+[2026.09.03-12.00.00:001][  0]LogAutomationController: Display: [0] MyProject.Unit.FirstTest
+[2026.09.03-12.00.00:002][  0]LogAutomationController: Display: [1] MyProject.Unit.SecondTest
+[2026.09.03-12.00.00:003][  0]LogAutomationController: Display: [2] System.Core.Misc.Timespan
+[2026.09.03-12.00.00:004][  0]LogAutomationController: Display: [3] MyProject.Unit.FirstTest
+[2026.09.03-12.00.00:005][  0]LogTemp: Display: [4] NotATestLine

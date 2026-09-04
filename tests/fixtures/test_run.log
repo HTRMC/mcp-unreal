@@ -1,0 +1,8 @@
+[2026.09.03-12.00.00:000][  0]LogAutomationController: Display: Test Started. Name={FFirstTest}
+[2026.09.03-12.00.01:000][  1]LogAutomationController: Error: Expected 5 but got 4
+[2026.09.03-12.00.01:010][  1]LogAutomationController: Warning: Slow path taken
+[2026.09.03-12.00.01:050][  1]LogAutomationController: Display: Test Completed. Result={Failed} Name={FFirstTest} Path={MyProject.Unit.FirstTest} Duration={0.05}
+[2026.09.03-12.00.02:000][  2]LogAutomationController: Display: Test Started. Name={FSecondTest}
+[2026.09.03-12.00.02:100][  2]LogAutomationController: Display: Test Completed. Result={Passed} Name={FSecondTest} Path={MyProject.Unit.SecondTest} Duration={0.10}
+[2026.09.03-12.00.03:000][  3]LogAutomationController: Display: Test Completed. Result={Skipped} Name={FThirdTest} Path={MyProject.Unit.ThirdTest} Duration={0.00}
+[2026.09.03-12.00.04:000][  4]LogAutomationController: Display: Test Completed. Result={Success} Test={MyProject.Legacy.OldFormatTest} Duration={0.20}

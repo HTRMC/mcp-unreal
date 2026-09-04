@@ -1,0 +1,351 @@
+//! Asset authoring: materials, textures, data tables, Enhanced Input assets,
+//! and instanced meshes.
+
+use rmcp::handler::server::wrapper::{Json, Parameters};
+use rmcp::{ErrorData, tool, tool_router};
+use serde_json::{Value, json};
+
+use crate::UnrealMcp;
+
+#[derive(serde::Deserialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum MaterialOp {
+    /// Create an empty Material asset. Editing the material graph itself is not
+    /// supported yet — instance an existing material instead where possible.
+    Create {
+        /// e.g. "/Game/Materials/M_Thing".
+        path: String,
+    },
+    /// Create a Material Instance of an existing material, which is what you
+    /// parameterise.
+    CreateInstance {
+        /// e.g. "/Game/Materials/MI_Thing".
+        path: String,
+        /// Material to instance, e.g. "/Engine/BasicShapes/BasicShapeMaterial".
+        parent: String,
+    },
+    /// Scalar, vector, texture and static-switch parameter names of a material.
+    ListParameters {
+        /// Material or Material Instance path.
+        material: String,
+    },
+    /// Read one parameter's current value and type.
+    GetParameter { material: String, parameter: String },
+    /// Set a parameter on a Material Instance. Pass `value` as a number for a
+    /// scalar, `value` as [R,G,B,A] for a vector, or `texture` as an asset path.
+    SetParameter {
+        /// Material Instance path.
+        material: String,
+        parameter: String,
+        value: Option<Value>,
+        texture: Option<String>,
+    },
+    /// Write the material asset to disk.
+    Save { material: String },
+}
+
+#[derive(serde::Deserialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum DataTableOp {
+    /// Create a DataTable asset for a row struct.
+    Create {
+        /// e.g. "/Game/Data/DT_Items".
+        path: String,
+        /// A struct deriving from FTableRowBase: "/Script/MyGame.ItemRow" or the bare name "ItemRow".
+        row_struct: String,
+    },
+    /// Row struct, row count and column names/types.
+    GetInfo {
+        table: String,
+    },
+    /// Read rows (all, or one by name).
+    GetRows {
+        table: String,
+        /// Read just this row.
+        row: Option<String>,
+        /// Max rows (default 50, cap 500).
+        max_rows: Option<u32>,
+    },
+    /// Create or update a row. Unspecified columns keep their current values.
+    SetRow {
+        table: String,
+        row: String,
+        /// Column values, keyed by column name (see get_info).
+        values: Value,
+    },
+    DeleteRow {
+        table: String,
+        row: String,
+    },
+    /// Replace the table's contents from CSV text (first column is the row name).
+    ImportCsv {
+        table: String,
+        csv: String,
+    },
+    Save {
+        table: String,
+    },
+}
+
+#[derive(serde::Deserialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum InputAssetOp {
+    /// Create an Input Action asset.
+    CreateAction {
+        /// e.g. "/Game/Input/IA_Move".
+        path: String,
+        /// bool (default), float, vector2d, or vector.
+        value_type: Option<String>,
+    },
+    /// Create an Input Mapping Context asset.
+    CreateContext {
+        /// e.g. "/Game/Input/IMC_Default".
+        path: String,
+    },
+    /// Bind a key to an action inside a mapping context.
+    MapKey {
+        context: String,
+        action: String,
+        /// UE key name, e.g. "W", "SpaceBar", "Gamepad_LeftX".
+        key: String,
+    },
+    UnmapKey {
+        context: String,
+        action: String,
+        key: String,
+    },
+    /// List a mapping context's bindings.
+    GetContext { context: String },
+    /// Write an Input Action or Mapping Context asset to disk.
+    Save { path: String },
+}
+
+#[derive(serde::Deserialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum IsmOp {
+    /// Attach a new instanced-static-mesh component to an actor.
+    Create {
+        /// Actor path or editor label.
+        actor: String,
+        /// StaticMesh asset path, e.g. "/Engine/BasicShapes/Cube.Cube".
+        mesh: String,
+        /// Use a hierarchical (HISM) component, which culls and LODs per instance.
+        hierarchical: Option<bool>,
+        world: Option<String>,
+    },
+    /// Mesh, class and instance count of the component.
+    GetInfo {
+        actor: String,
+        /// Component name; defaults to the actor's first ISM component.
+        component: Option<String>,
+        world: Option<String>,
+    },
+    /// Add instances in bulk — the efficient way to scatter meshes.
+    AddInstances {
+        actor: String,
+        component: Option<String>,
+        /// Each entry: {"location":[x,y,z], "rotation":[p,y,r], "scale":[x,y,z]}.
+        instances: Vec<Value>,
+        world: Option<String>,
+    },
+    /// Move/rotate/scale one instance by index.
+    UpdateInstance {
+        actor: String,
+        component: Option<String>,
+        index: u32,
+        location: Option<[f64; 3]>,
+        rotation: Option<[f64; 3]>,
+        scale: Option<[f64; 3]>,
+        world: Option<String>,
+    },
+    /// Remove every instance from the component.
+    Clear {
+        actor: String,
+        component: Option<String>,
+        world: Option<String>,
+    },
+}
+
+#[derive(serde::Deserialize, schemars::JsonSchema)]
+pub struct TextureInfoInput {
+    /// Texture asset path, e.g. "/Engine/EngineResources/DefaultTexture".
+    pub texture: String,
+}
+
+#[tool_router(router = content_router, vis = "pub(crate)")]
+impl UnrealMcp {
+    #[tool(
+        description = "Materials: create materials and material instances, list/read/write instance parameters, and save. Parameterising a Material Instance is the supported way to vary a material; editing material graphs is not yet available."
+    )]
+    async fn material_ops(
+        &self,
+        Parameters(op): Parameters<MaterialOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body = match op {
+            MaterialOp::Create { path } => json!({"operation": "create", "path": path}),
+            MaterialOp::CreateInstance { path, parent } => {
+                json!({"operation": "create_instance", "path": path, "parent": parent})
+            }
+            MaterialOp::ListParameters { material } => {
+                json!({"operation": "list_parameters", "material": material})
+            }
+            MaterialOp::GetParameter {
+                material,
+                parameter,
+            } => {
+                json!({"operation": "get_parameter", "material": material, "parameter": parameter})
+            }
+            MaterialOp::SetParameter {
+                material,
+                parameter,
+                value,
+                texture,
+            } => json!({
+                "operation": "set_parameter", "material": material,
+                "parameter": parameter, "value": value, "texture": texture,
+            }),
+            MaterialOp::Save { material } => json!({"operation": "save", "material": material}),
+        };
+        self.call_plugin("/api/materials/ops", body).await.map(Json)
+    }
+
+    #[tool(
+        description = "DataTables: inspect the row struct and columns, read rows, create/update/delete rows, import CSV, and save."
+    )]
+    async fn data_table_ops(
+        &self,
+        Parameters(op): Parameters<DataTableOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body = match op {
+            DataTableOp::Create { path, row_struct } => {
+                json!({"operation": "create", "path": path, "row_struct": row_struct})
+            }
+            DataTableOp::GetInfo { table } => json!({"operation": "get_info", "table": table}),
+            DataTableOp::GetRows {
+                table,
+                row,
+                max_rows,
+            } => json!({
+                "operation": "get_rows", "table": table,
+                "row": row, "max_rows": max_rows,
+            }),
+            DataTableOp::SetRow { table, row, values } => {
+                json!({"operation": "set_row", "table": table, "row": row, "values": values})
+            }
+            DataTableOp::DeleteRow { table, row } => {
+                json!({"operation": "delete_row", "table": table, "row": row})
+            }
+            DataTableOp::ImportCsv { table, csv } => {
+                json!({"operation": "import_csv", "table": table, "csv": csv})
+            }
+            DataTableOp::Save { table } => json!({"operation": "save", "table": table}),
+        };
+        self.call_plugin("/api/data/ops", body).await.map(Json)
+    }
+
+    #[tool(
+        description = "Author Enhanced Input assets: create Input Actions and Mapping Contexts, bind or unbind keys, and inspect a context. This is the design-time counterpart to input_inject, which drives input at runtime."
+    )]
+    async fn input_asset_ops(
+        &self,
+        Parameters(op): Parameters<InputAssetOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body = match op {
+            InputAssetOp::CreateAction { path, value_type } => {
+                json!({"operation": "create_action", "path": path, "value_type": value_type})
+            }
+            InputAssetOp::CreateContext { path } => {
+                json!({"operation": "create_context", "path": path})
+            }
+            InputAssetOp::MapKey {
+                context,
+                action,
+                key,
+            } => json!({"operation": "map_key", "context": context, "action": action, "key": key}),
+            InputAssetOp::UnmapKey {
+                context,
+                action,
+                key,
+            } => {
+                json!({"operation": "unmap_key", "context": context, "action": action, "key": key})
+            }
+            InputAssetOp::GetContext { context } => {
+                json!({"operation": "get_context", "context": context})
+            }
+            InputAssetOp::Save { path } => json!({"operation": "save", "path": path}),
+        };
+        self.call_plugin("/api/input_assets/ops", body)
+            .await
+            .map(Json)
+    }
+
+    #[tool(
+        description = "Instanced static meshes: attach an ISM/HISM component to an actor and add, update or clear instances in bulk. Use this to place many copies of a mesh cheaply instead of spawning many actors."
+    )]
+    async fn ism_ops(&self, Parameters(op): Parameters<IsmOp>) -> Result<Json<Value>, ErrorData> {
+        let body = match op {
+            IsmOp::Create {
+                actor,
+                mesh,
+                hierarchical,
+                world,
+            } => json!({
+                "operation": "create", "actor": actor, "mesh": mesh,
+                "hierarchical": hierarchical, "world": world,
+            }),
+            IsmOp::GetInfo {
+                actor,
+                component,
+                world,
+            } => json!({
+                "operation": "get_info", "actor": actor,
+                "component": component, "world": world,
+            }),
+            IsmOp::AddInstances {
+                actor,
+                component,
+                instances,
+                world,
+            } => json!({
+                "operation": "add_instances", "actor": actor, "component": component,
+                "instances": instances, "world": world,
+            }),
+            IsmOp::UpdateInstance {
+                actor,
+                component,
+                index,
+                location,
+                rotation,
+                scale,
+                world,
+            } => json!({
+                "operation": "update_instance", "actor": actor, "component": component,
+                "index": index, "location": location, "rotation": rotation,
+                "scale": scale, "world": world,
+            }),
+            IsmOp::Clear {
+                actor,
+                component,
+                world,
+            } => json!({
+                "operation": "clear", "actor": actor,
+                "component": component, "world": world,
+            }),
+        };
+        self.call_plugin("/api/ism/ops", body).await.map(Json)
+    }
+
+    #[tool(description = "Get a texture asset's dimensions, pixel format and sRGB/LOD settings.")]
+    async fn texture_info(
+        &self,
+        Parameters(input): Parameters<TextureInfoInput>,
+    ) -> Result<Json<Value>, ErrorData> {
+        self.call_plugin("/api/textures/info", json!({"texture": input.texture}))
+            .await
+            .map(Json)
+    }
+}

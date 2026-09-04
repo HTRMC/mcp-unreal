@@ -1,0 +1,18 @@
+{
+  "name": "object_property_not_found_error",
+  "description": "A misspelled property name fails with the closest matches rather than silently doing nothing.",
+  "route": "/api/object/get_property",
+  "tool": "get_property",
+  "request": {
+    "object_path": "/Game/Contract/WBP_Contract.WBP_Contract:WidgetTree.Label",
+    "property": "Txet"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "property_not_found",
+      "message": "class TextBlock has no property 'Txet'"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "landscape_set_heights",
+  "description": "Sculpt a vertex rect from explicit heights in centimetres, row-major from min_y.",
+  "route": "/api/world/landscape",
+  "tool": "landscape_ops",
+  "request": {
+    "operation": "set_heights",
+    "min_x": 0,
+    "min_y": 0,
+    "max_x": 2,
+    "max_y": 0,
+    "heights": [
+      0,
+      100,
+      200
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "min_x": 0,
+      "min_y": 0,
+      "max_x": 2,
+      "max_y": 0,
+      "vertices_written": 3
+    }
+  }
+}

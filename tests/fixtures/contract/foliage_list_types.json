@@ -1,0 +1,25 @@
+{
+  "name": "foliage_list_types",
+  "description": "Foliage types in the level with their instance counts and source meshes.",
+  "route": "/api/world/foliage",
+  "tool": "foliage_ops",
+  "request": {
+    "operation": "list_types"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "foliage_actor": "/Game/Maps/TestMap.TestMap:PersistentLevel.InstancedFoliageActor_0",
+      "types": [
+        {
+          "name": "Cone",
+          "type": "/Game/Maps/TestMap.TestMap:PersistentLevel.InstancedFoliageActor_0.FoliageType_InstancedStaticMesh_0",
+          "class": "FoliageType_InstancedStaticMesh",
+          "instance_count": 6,
+          "static_mesh": "/Engine/BasicShapes/Cone.Cone"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mcp-unreal": {
+      "type": "stdio",
+      "command": "C:\\Tools\\mcp-unreal\\mcp-unreal.exe",
+      "env": {
+        "MCP_UNREAL_PROJECT": "C:\\Path\\To\\YourProject\\YourProject.uproject"
+      }
+    }
+  }
+}

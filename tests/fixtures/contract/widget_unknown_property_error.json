@@ -1,0 +1,22 @@
+{
+  "name": "widget_unknown_property_error",
+  "description": "Unknown property names are refused before anything is written, listing what is editable.",
+  "route": "/api/widget_blueprints/modify",
+  "tool": "widget_blueprint_modify",
+  "request": {
+    "operation": "set_widget",
+    "blueprint": "/Game/Contract/WBP_Contract",
+    "widget": "Label",
+    "properties": {
+      "NoSuchProperty": 1
+    }
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "set_failed",
+      "message": "unknown property on TextBlock: NoSuchProperty — editable properties: Text, ColorAndOpacity, MinDesiredWidth, Font, StrikeBrush, ShadowOffset, ShadowColorAndOpacity, bWrapWithInvalidationPanel, TextTransformPolicy, TextOverflowPolicy, bSimpleTextMode, ShapedTextOptions, Justification, WrappingPolicy, AutoWrapText, ApplyLineHeightToBottomLine, FontFacesLoadingPaintPolicy, WrapTextAt, Margin, LineHeightPercentage, Slot, ToolTipText, ToolTipWidget, RenderTransform, RenderTransformPivot, FlowDirectionPreference, bIsEnabled, bOverride_Cursor, bOverrideAccessibleDefaults, bCanChildrenBeAccessible, AccessibleBehavior, AccessibleSummaryBehavior, AccessibleText, AccessibleSummaryText, bIsVolatile, Cursor, Clipping, Visibility, PixelSnapping, RenderOpacity, Navigation"
+    }
+  }
+}

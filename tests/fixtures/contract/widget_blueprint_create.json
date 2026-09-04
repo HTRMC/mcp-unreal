@@ -1,0 +1,30 @@
+{
+  "name": "widget_blueprint_create",
+  "description": "Create a Widget Blueprint with the default CanvasPanel root.",
+  "route": "/api/widget_blueprints/modify",
+  "tool": "widget_blueprint_modify",
+  "request": {
+    "operation": "create",
+    "path": "/Game/Contract/WBP_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "path": "/Game/Contract/WBP_Contract.WBP_Contract",
+      "name": "WBP_Contract",
+      "parent_class": "/Script/UMG.UserWidget",
+      "root": {
+        "name": "CanvasPanel_0",
+        "class": "CanvasPanel",
+        "class_path": "/Script/UMG.CanvasPanel",
+        "path": "/Game/Contract/WBP_Contract.WBP_Contract:WidgetTree.CanvasPanel_0",
+        "is_variable": false,
+        "is_panel": true,
+        "multiple_children": true,
+        "child_count": 0
+      },
+      "message": "created in memory and compiled — add_widget next, then blueprint_modify save"
+    }
+  }
+}

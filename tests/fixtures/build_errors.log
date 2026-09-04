@@ -1,0 +1,13 @@
+Using bundled DotNet SDK version: 8.0.300
+Log file: C:\Users\Test\AppData\Local\UnrealBuildTool\Log.txt
+Building MyProjectEditor...
+Determining projects to restore...
+[1/6] Compile [x64] MyActor.cpp
+C:\Proj\Source\MyProject\MyActor.cpp(42): error C2065: 'UndeclaredThing': undeclared identifier
+C:\Proj\Source\MyProject\MyActor.cpp(42): error C2065: 'UndeclaredThing': undeclared identifier
+C:\Proj\Source\MyProject\MyActor.cpp(88): fatal error C1004: unexpected end-of-file found
+C:\Proj\Source\MyProject\MyActor.cpp(50): warning C4101: 'Unused': unreferenced local variable
+[2/6] Compile [x64] Other.cpp
+/home/test/Proj/Source/MyProject/Other.cpp:12:5: error: use of undeclared identifier 'Foo'
+ERROR: Failed to build module MyProject
+Total time: 12.5 seconds

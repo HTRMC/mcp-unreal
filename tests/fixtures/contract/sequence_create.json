@@ -1,0 +1,32 @@
+{
+  "name": "sequence_create",
+  "description": "Create a Level Sequence; the reply is the whole sequence: rates, playback range in frames and seconds, bindings and tracks.",
+  "route": "/api/sequences/ops",
+  "tool": "sequence_ops",
+  "request": {
+    "operation": "create",
+    "path": "/Game/Contract/LS_Contract",
+    "display_rate": 30,
+    "duration_seconds": 2
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "sequence": "/Game/Contract/LS_Contract.LS_Contract",
+      "display_rate": 30,
+      "tick_resolution": 24000,
+      "playback_range": {
+        "start_frame": 0,
+        "end_frame": 60,
+        "start_seconds": 0,
+        "end_seconds": 2,
+        "start_tick": 0,
+        "end_tick": 48000
+      },
+      "marked_frames": [],
+      "root_tracks": [],
+      "bindings": []
+    }
+  }
+}

@@ -1,0 +1,95 @@
+[2026.09.03-14.32.19:822][  0]Cmd: Automation RunTests McpLink
+[2026.09.03-14.32.19:822][  0]Automation: RunTests='McpLink' Queued.
+[2026.09.03-14.32.20:119][  1]LogAssetRegistry: AssetRegistryGather time 0.1357s: AssetDataDiscovery 0.0418s, AssetDataGather 0.0299s, StoreResults 0.0640s. Wall time 5.6500s.
+	NumCachedDirectories 6. NumUncachedDirectories 1747. NumCachedFiles 8751. NumUncachedFiles 0.
+	BackgroundTickInterruptions 4.
+[2026.09.03-14.32.20:132][  1]LogAssetRegistry: Display: Starting OnFilesLoaded.Broadcast
+[2026.09.03-14.32.20:141][  1]LogPlacementMode: Display: The Asset Registry is done with its initial scan, the list of placeable classes has been updated.
+[2026.09.03-14.32.20:152][  1]LogCollectionManager: Fixed up redirectors for 0 collections in 0.000000 seconds (updated 0 objects)
+[2026.09.03-14.32.20:167][  1]LogAssetRegistry: Display: Completed OnFilesLoaded.Broadcast: 0.035s
+[2026.09.03-14.32.20:167][  1]LogSourceControl: Uncontrolled asset discovery started...
+[2026.09.03-14.32.20:192][  1]LogEngineAutomationLatentCommand: FWaitForInteractiveFrameRate: FApp::CanEverRender() == false. Passing wait immediately.
+[2026.09.03-14.32.20:192][  2]LogAutomationCommandLine: Display: Ready to start automation
+[2026.09.03-14.32.20:265][  2]LogSourceControl: Uncontrolled asset discovery finished in 0.099107 seconds (Found 8727 uncontrolled assets)
+[2026.09.03-14.32.20:923][ 33]LogAssetRegistry: Display: Asset registry cache written as 118.4 MiB to C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Intermediate/CachedAssetRegistry/CachedAssetRegistry_*.ref
+[2026.09.03-14.32.20:923][ 33]LogAssetRegistry: Display: CleanupOrphanedCacheFiles (PostWrite): 1 .ref files found, 1 referenced binaries
+[2026.09.03-14.32.20:923][ 33]LogAssetRegistry: Display:   CachedAssetRegistry_0_34BFEB6D4AB0A07FA002ECA7E0D3C2D5.bin: deleted (orphaned, unreferenced by any .ref)
+[2026.09.03-14.32.20:923][ 33]LogAssetRegistry: Display: CleanupOrphanedCacheFiles: 2 total binaries, 1 referenced (kept), 0 old-style pre-migration (kept), 1 orphans deleted, 0 orphans locked (kept)
+[2026.09.03-14.32.25:199][234]LogModuleManager: InternalLoadLibrary: 'ScreenShotComparisonTools' ('D:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-ScreenShotComparisonTools.dll')
+[2026.09.03-14.32.25:216][235]LogAutomationWorker: Received FindWorkersMessage from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:216][235]LogAutomationController: Received FindWorkersResponseMessage from 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:216][235]LogAutomationController: Requesting test list from 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:232][236]LogAutomationWorker: Received RequestTestsMessage from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:263][236]LogAutomationWorker: Set 6373 tests to FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:263][236]LogAutomationController: Received RequestTestsReplyCompleteMessage from 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:266][236]LogAutomationController: 6373 tests available on 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:297][236]LogAutomationCommandLine: Display: Found 8 automation tests based on 'McpLink'
+[2026.09.03-14.32.25:297][236]LogAutomationCommandLine: Display: 	McpLink.Blueprint.PinType
+[2026.09.03-14.32.25:297][236]LogAutomationCommandLine: Display: 	McpLink.Core.Json.ParseBody
+[2026.09.03-14.32.25:297][236]LogAutomationCommandLine: Display: 	McpLink.Core.LogCapture.Ring
+[2026.09.03-14.32.25:297][236]LogAutomationCommandLine: Display: 	McpLink.Core.Resolve.Class
+[2026.09.03-14.32.25:297][236]LogAutomationCommandLine: Display: 	McpLink.Core.Resolve.Vectors
+[2026.09.03-14.32.25:297][236]LogAutomationCommandLine: Display: 	McpLink.Core.Responder.ExactlyOnce
+[2026.09.03-14.32.25:297][236]LogAutomationCommandLine: Display: 	McpLink.Input.State.AxesAndMouse
+[2026.09.03-14.32.25:297][236]LogAutomationCommandLine: Display: 	McpLink.Input.State.Keys
+[2026.09.03-14.32.25:297][236]LogAutomationController: Sending StopTests to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:300][236]LogAutomationController: Sending StartTestSession to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:300][236]LogAutomationController: Display: Clearing C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/Automation/Logs/ and C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/Automation/Tmp/
+[2026.09.03-14.32.25:300][236]AutomationTestingLog: -----Test Run 3----
+[2026.09.03-14.32.25:301][236]LogAutomationController: Sending RunTest PinType to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:301][237]LogAutomationController: Display: Test Started. Name={PinType} Path={McpLink.Blueprint.PinType}
+[2026.09.03-14.32.25:303][237]LogAutomationWorker: Received StopTests from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:303][237]LogAutomationWorker: Received StartTestSession from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:303][237]LogAutomationWorker: Received RunTests PinType from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:325][238]LogAutomationController: Display: Test Completed. Result={Success} Name={PinType} Path={McpLink.Blueprint.PinType}
+[2026.09.03-14.32.25:325][238]LogAutomationController: BeginEvents: McpLink.Blueprint.PinType
+[2026.09.03-14.32.25:325][238]LogAutomationController: EndEvents: McpLink.Blueprint.PinType
+[2026.09.03-14.32.25:325][238]LogAutomationController: Sending RunTest ParseBody to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:325][239]LogAutomationController: Display: Test Started. Name={ParseBody} Path={McpLink.Core.Json.ParseBody}
+[2026.09.03-14.32.25:341][239]LogAutomationWorker: Received RunTests ParseBody from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:357][240]LogAutomationController: Display: Test Completed. Result={Success} Name={ParseBody} Path={McpLink.Core.Json.ParseBody}
+[2026.09.03-14.32.25:357][240]LogAutomationController: BeginEvents: McpLink.Core.Json.ParseBody
+[2026.09.03-14.32.25:357][240]LogAutomationController: EndEvents: McpLink.Core.Json.ParseBody
+[2026.09.03-14.32.25:358][240]LogAutomationController: Sending RunTest Ring to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:358][241]LogAutomationController: Display: Test Started. Name={Ring} Path={McpLink.Core.LogCapture.Ring}
+[2026.09.03-14.32.25:373][241]LogAutomationWorker: Received RunTests Ring from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:403][242]LogAutomationController: Display: Test Completed. Result={Success} Name={Ring} Path={McpLink.Core.LogCapture.Ring}
+[2026.09.03-14.32.25:403][242]LogAutomationController: BeginEvents: McpLink.Core.LogCapture.Ring
+[2026.09.03-14.32.25:403][242]LogAutomationController: EndEvents: McpLink.Core.LogCapture.Ring
+[2026.09.03-14.32.25:403][242]LogAutomationController: Sending RunTest Class to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:405][243]LogAutomationController: Display: Test Started. Name={Class} Path={McpLink.Core.Resolve.Class}
+[2026.09.03-14.32.25:419][243]LogAutomationWorker: Received RunTests Class from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:450][244]LogAutomationController: Display: Test Completed. Result={Success} Name={Class} Path={McpLink.Core.Resolve.Class}
+[2026.09.03-14.32.25:450][244]LogAutomationController: BeginEvents: McpLink.Core.Resolve.Class
+[2026.09.03-14.32.25:450][244]LogAutomationController: EndEvents: McpLink.Core.Resolve.Class
+[2026.09.03-14.32.25:451][244]LogAutomationController: Sending RunTest Vectors to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:451][245]LogAutomationController: Display: Test Started. Name={Vectors} Path={McpLink.Core.Resolve.Vectors}
+[2026.09.03-14.32.25:466][245]LogAutomationWorker: Received RunTests Vectors from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:482][246]LogAutomationController: Display: Test Completed. Result={Success} Name={Vectors} Path={McpLink.Core.Resolve.Vectors}
+[2026.09.03-14.32.25:482][246]LogAutomationController: BeginEvents: McpLink.Core.Resolve.Vectors
+[2026.09.03-14.32.25:482][246]LogAutomationController: EndEvents: McpLink.Core.Resolve.Vectors
+[2026.09.03-14.32.25:483][246]LogAutomationController: Sending RunTest ExactlyOnce to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:483][247]LogAutomationController: Display: Test Started. Name={ExactlyOnce} Path={McpLink.Core.Responder.ExactlyOnce}
+[2026.09.03-14.32.25:512][247]LogAutomationWorker: Received RunTests ExactlyOnce from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:512][247]LogTemp: Verbose: McpLink: attempted double response — ignored
+[2026.09.03-14.32.25:528][248]LogAutomationController: Display: Test Completed. Result={Success} Name={ExactlyOnce} Path={McpLink.Core.Responder.ExactlyOnce}
+[2026.09.03-14.32.25:528][248]LogAutomationController: BeginEvents: McpLink.Core.Responder.ExactlyOnce
+[2026.09.03-14.32.25:528][248]LogAutomationController: EndEvents: McpLink.Core.Responder.ExactlyOnce
+[2026.09.03-14.32.25:529][248]LogAutomationController: Sending RunTest AxesAndMouse to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:529][249]LogAutomationController: Display: Test Started. Name={AxesAndMouse} Path={McpLink.Input.State.AxesAndMouse}
+[2026.09.03-14.32.25:543][249]LogAutomationWorker: Received RunTests AxesAndMouse from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:574][250]LogAutomationController: Display: Test Completed. Result={Success} Name={AxesAndMouse} Path={McpLink.Input.State.AxesAndMouse}
+[2026.09.03-14.32.25:574][250]LogAutomationController: BeginEvents: McpLink.Input.State.AxesAndMouse
+[2026.09.03-14.32.25:574][250]LogAutomationController: EndEvents: McpLink.Input.State.AxesAndMouse
+[2026.09.03-14.32.25:575][250]LogAutomationController: Sending RunTest Keys to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:575][251]LogAutomationController: Display: Test Started. Name={Keys} Path={McpLink.Input.State.Keys}
+[2026.09.03-14.32.25:590][251]LogAutomationWorker: Received RunTests Keys from FB5E4EBC4649AFF36935FCBA575D15A6
+[2026.09.03-14.32.25:636][253]LogAutomationController: Display: Test Completed. Result={Success} Name={Keys} Path={McpLink.Input.State.Keys}
+[2026.09.03-14.32.25:636][253]LogAutomationController: BeginEvents: McpLink.Input.State.Keys
+[2026.09.03-14.32.25:636][253]LogAutomationController: EndEvents: McpLink.Input.State.Keys
+[2026.09.03-14.32.25:637][253]LogAutomationController: Sending StopTestSession to 5AB7F0A44F6CD9A43A8F2FA4A9587460
+[2026.09.03-14.32.25:637][254]LogAutomationCommandLine: Display: ...Automation Test Queue Empty 8 tests performed.
+[2026.09.03-14.32.25:637][254]LogExit: Display: **** TestExit: Automation Test Queue Empty ****
+[2026.09.03-14.32.25:637][254]LogWindows: FPlatformMisc::RequestExit(1, FEngineLoop::Tick.GScopedTestExit)
+[2026.09.03-14.32.25:637][254]LogWindows: FPlatformMisc::RequestExitWithStatus(1, 0, FEngineLoop::Tick.GScopedTestExit)
+[2026.09.03-14.32.25:637][254]LogCore: Engine exit requested (reason: Win RequestExit)

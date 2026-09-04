@@ -1,0 +1,10 @@
+[2026.09.03-14.24.13:803][237]LogAutomationCommandLine: Display: Found 8 automation tests based on 'McpLink'
+[2026.09.03-14.24.13:803][237]LogAutomationCommandLine: Display: 	McpLink.Blueprint.PinType
+[2026.09.03-14.24.13:803][237]LogAutomationCommandLine: Display: 	McpLink.Core.Json.ParseBody
+[2026.09.03-14.24.13:803][237]LogAutomationCommandLine: Display: 	McpLink.Core.LogCapture.Ring
+[2026.09.03-14.24.13:803][237]LogAutomationCommandLine: Display: 	McpLink.Core.Resolve.Class
+[2026.09.03-14.24.13:803][237]LogAutomationCommandLine: Display: 	McpLink.Core.Resolve.Vectors
+[2026.09.03-14.24.13:803][237]LogAutomationCommandLine: Display: 	McpLink.Core.Responder.ExactlyOnce
+[2026.09.03-14.24.13:803][237]LogAutomationCommandLine: Display: 	McpLink.Input.State.AxesAndMouse
+[2026.09.03-14.24.13:803][237]LogAutomationCommandLine: Display: 	McpLink.Input.State.Keys
+[2026.09.03-14.24.13:804][237]LogAutomationController: Sending StopTests to 1A5064F84CA020A6D09FE0AB1139E5C7

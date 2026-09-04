@@ -1,0 +1,37 @@
+[package]
+name = "mcp-unreal"
+version = "0.1.0"
+edition = "2024"
+description = "MCP server giving AI agents full control of Unreal Engine 5.8 — headless builds/tests, editor manipulation via the McpLink plugin, PIE input injection, and engine-source API lookup"
+license = "MIT"
+repository = "https://github.com/HTRMC/mcp-unreal"
+readme = "README.md"
+rust-version = "1.85"
+
+[dependencies]
+rmcp = { version = "=3.2.0", features = ["server", "macros", "schemars", "transport-io"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "io-util", "time", "sync", "signal"] }
+reqwest = { version = "0.12", default-features = false, features = ["json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+schemars = "1"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+regex = "1"
+grep-regex = "0.1"
+grep-searcher = "0.1"
+ignore = "0.4"
+base64 = "0.22"
+dirs = "6"
+
+[target.'cfg(windows)'.dependencies]
+win32job = "2"
+
+[dev-dependencies]
+wiremock = "0.6"
+tempfile = "3"
+
+[profile.release]
+lto = "thin"
+strip = true

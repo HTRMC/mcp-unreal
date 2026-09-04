@@ -1,0 +1,108 @@
+{
+  "name": "sequence_add_key",
+  "description": "Key a channel at display-rate frames; the reply reports each key in frames, seconds and ticks.",
+  "route": "/api/sequences/ops",
+  "tool": "sequence_ops",
+  "request": {
+    "operation": "add_key",
+    "sequence": "/Game/Contract/LS_Contract",
+    "section": "/Game/Contract/LS_Contract.LS_Contract:MovieScene_0.MovieScene3DTransformTrack_0.MovieScene3DTransformSection_0",
+    "channel": "Location.Z",
+    "keys": [
+      {
+        "frame": 0,
+        "value": 0
+      },
+      {
+        "frame": 30,
+        "value": 250
+      }
+    ],
+    "interpolation": "linear"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "path": "/Game/Contract/LS_Contract.LS_Contract:MovieScene_0.MovieScene3DTransformTrack_0.MovieScene3DTransformSection_0",
+      "name": "MovieScene3DTransformSection_0",
+      "class": "MovieScene3DTransformSection",
+      "row_index": 0,
+      "active": true,
+      "range": {
+        "start_frame": 0,
+        "end_frame": 60,
+        "start_seconds": 0,
+        "end_seconds": 2,
+        "start_tick": 0,
+        "end_tick": 48000
+      },
+      "channels": [
+        {
+          "name": "Location.X",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Location.Y",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Location.Z",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 2,
+          "keys": [
+            {
+              "frame": 0,
+              "seconds": 0,
+              "tick": 0,
+              "value": 0
+            },
+            {
+              "frame": 30,
+              "seconds": 1,
+              "tick": 24000,
+              "value": 250
+            }
+          ]
+        },
+        {
+          "name": "Rotation.X",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Rotation.Y",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Rotation.Z",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Scale.X",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Scale.Y",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Scale.Z",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Weight",
+          "type": "MovieSceneFloatChannel",
+          "num_keys": 0
+        }
+      ]
+    }
+  }
+}

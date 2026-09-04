@@ -1,0 +1,17 @@
+{
+  "name": "python_exec_traceback_error",
+  "description": "A Python exception fails the call and returns the interpreter's traceback.",
+  "route": "/api/python/exec",
+  "tool": "python_exec",
+  "request": {
+    "code": "raise ValueError('contract')"
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "python_error",
+      "message": "Traceback (most recent call last):\n\n  File \"<string>\", line 1, in <module>\n\nValueError: contract"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "blueprint_compile",
+  "description": "Compile a Blueprint and report the resulting status.",
+  "route": "/api/blueprints/modify",
+  "tool": "blueprint_modify",
+  "request": {
+    "operation": "compile",
+    "blueprint": "/Game/Contract/WBP_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "compiled": true,
+      "status": 3,
+      "status_text": "up_to_date"
+    }
+  }
+}

@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # The Rust server builds and tests on every host. The McpLink plugin needs an
+  # Unreal Engine install, which GitHub-hosted runners do not have, so the
+  # plugin is built and packaged on a machine with the engine — see
+  # tools/package-plugin.ps1.
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal --no-self-update && rustup default stable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Build
+        run: cargo build --locked --all-targets
+
+      - name: Test
+        run: cargo test --locked
+
+      - name: Server starts and reports its version
+        run: cargo run --locked --quiet -- --version
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy --no-self-update && rustup default stable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: ubuntu-lint-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+  plugin-descriptors:
+    name: plugin descriptors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The .uplugin files gate which engine a user can install the plugin on,
+      # so a malformed or version-less descriptor must not reach a release.
+      - name: Validate .uplugin files
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys
+
+          failures = []
+          descriptors = sorted(pathlib.Path('plugin').glob('*/*.uplugin'))
+          if not descriptors:
+              sys.exit('no .uplugin files found')
+
+          for path in descriptors:
+              try:
+                  data = json.loads(path.read_text(encoding='utf-8'))
+              except json.JSONDecodeError as exc:
+                  failures.append(f'{path}: invalid JSON ({exc})')
+                  continue
+              for key in ('FriendlyName', 'VersionName', 'EngineVersion', 'Modules'):
+                  if key not in data:
+                      failures.append(f'{path}: missing "{key}"')
+              if not data.get('EngineVersion', '').startswith('5.8.'):
+                  failures.append(f'{path}: EngineVersion {data.get("EngineVersion")!r} is not on the 5.8 line')
+              print(f'{path}: {data.get("VersionName")} for UE {data.get("EngineVersion")}')
+
+          if failures:
+              sys.exit('\n'.join(failures))
+          PY

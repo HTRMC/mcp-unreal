@@ -1,0 +1,39 @@
+{
+  "name": "landscape_info",
+  "description": "Landscape extent, resolution and paintable layers; the landscape is implied when the level has exactly one.",
+  "route": "/api/world/landscape",
+  "tool": "landscape_ops",
+  "request": {
+    "operation": "info"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "landscape": "/Game/Maps/TestMap.TestMap:PersistentLevel.Landscape_0",
+      "label": "TestTerrain",
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        100,
+        100,
+        100
+      ],
+      "extent": {
+        "min_x": 0,
+        "min_y": 0,
+        "max_x": 63,
+        "max_y": 63,
+        "vertices_x": 64,
+        "vertices_y": 64
+      },
+      "component_size_quads": 63,
+      "subsection_size_quads": 63,
+      "sections_per_component": 1,
+      "layers": []
+    }
+  }
+}

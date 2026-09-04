@@ -1,0 +1,23 @@
+#include "McpLinkCoreModule.h"
+#include "Modules/ModuleManager.h"
+
+namespace McpLink
+{
+	void RegisterBlueprintRoutes(FMcpLinkCoreModule& Core);
+	void RegisterAnimBlueprintRoutes(FMcpLinkCoreModule& Core);
+	void RegisterWidgetBlueprintRoutes(FMcpLinkCoreModule& Core);
+}
+
+class FMcpLinkBlueprintModule : public IModuleInterface
+{
+public:
+	virtual void StartupModule() override
+	{
+		FMcpLinkCoreModule& Core = FMcpLinkCoreModule::Get();
+		McpLink::RegisterBlueprintRoutes(Core);
+		McpLink::RegisterAnimBlueprintRoutes(Core);
+		McpLink::RegisterWidgetBlueprintRoutes(Core);
+	}
+};
+
+IMPLEMENT_MODULE(FMcpLinkBlueprintModule, McpLinkBlueprint)

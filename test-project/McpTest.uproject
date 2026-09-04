@@ -1,0 +1,54 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.8",
+	"Category": "",
+	"Description": "Minimal test project for the McpLink plugin and mcp-unreal E2E verification.",
+	"Modules": [
+		{
+			"Name": "McpTest",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "McpLink",
+			"Enabled": true
+		},
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		},
+		{
+			"Name": "Niagara",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
+		},
+		{
+			"Name": "PCG",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkNiagara",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkGAS",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkPCG",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkPython",
+			"Enabled": true
+		}
+	]
+}

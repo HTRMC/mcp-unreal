@@ -1,0 +1,20 @@
+{
+  "name": "sequence_binding_not_found_error",
+  "description": "A binding that is not in the sequence fails with the names that are.",
+  "route": "/api/sequences/ops",
+  "tool": "sequence_ops",
+  "request": {
+    "operation": "add_track",
+    "sequence": "/Game/Contract/LS_Contract",
+    "binding": "NoSuchBinding",
+    "track": "Transform"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "binding_not_found",
+      "message": "'NoSuchBinding' is not a binding in this sequence — it has: ContractCube"
+    }
+  }
+}

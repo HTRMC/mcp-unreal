@@ -1,0 +1,54 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"EngineVersion": "5.8.0",
+	"FriendlyName": "McpLink",
+	"Description": "HTTP control surface for the mcp-unreal MCP server: gives AI agents full editor control including PIE input injection.",
+	"Category": "Editor",
+	"CreatedBy": "mcp-unreal",
+	"CreatedByURL": "https://github.com/HTRMC/mcp-unreal",
+	"DocsURL": "https://github.com/HTRMC/mcp-unreal#readme",
+	"SupportURL": "https://github.com/HTRMC/mcp-unreal/issues",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "McpLinkCore",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		},
+		{
+			"Name": "McpLinkEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		},
+		{
+			"Name": "McpLinkInput",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		},
+		{
+			"Name": "McpLinkBlueprint",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		},
+		{
+			"Name": "McpLinkContent",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		},
+		{
+			"Name": "McpLinkWorld",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		}
+	]
+}

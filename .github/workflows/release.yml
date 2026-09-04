@@ -1,0 +1,160 @@
+name: Release
+
+# Tag a release with:  git tag v0.1.0 && git push origin v0.1.0
+#
+# This builds the mcp-unreal server for Windows, macOS and Linux and publishes
+# a GitHub release with the archives and the CHANGELOG section for the tag.
+#
+# The McpLink plugin binaries are NOT built here: packaging a UE plugin needs an
+# Unreal Engine install, which GitHub-hosted runners do not have. Build them on
+# a machine with the engine and attach them to the drafted release with
+# tools/publish-release.ps1.
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build a release for
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Tag matches Cargo.toml version
+        id: version
+        run: |
+          tag="${{ inputs.tag || github.ref_name }}"
+          version="${tag#v}"
+          manifest=$(grep -m1 '^version = ' Cargo.toml | cut -d'"' -f2)
+          if [ "$version" != "$manifest" ]; then
+            echo "::error::tag $tag does not match Cargo.toml version $manifest"
+            exit 1
+          fi
+          if ! grep -q "^## \[$version\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [$version]' section"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: verify
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: mcp-unreal.exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            binary: mcp-unreal
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            binary: mcp-unreal
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary: mcp-unreal
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+          rustup target add ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --locked --release --target ${{ matrix.target }}
+
+      - name: Stage archive
+        shell: bash
+        run: |
+          version="${{ needs.verify.outputs.version }}"
+          stage="mcp-unreal-$version-${{ matrix.target }}"
+          mkdir -p "dist/$stage"
+          cp "target/${{ matrix.target }}/release/${{ matrix.binary }}" "dist/$stage/"
+          cp README.md LICENSE CHANGELOG.md "dist/$stage/"
+          cd dist
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a -tzip "$stage.zip" "$stage" > /dev/null
+            certutil -hashfile "$stage.zip" SHA256 | sed -n 2p | tr -d ' \r' > "$stage.zip.sha256"
+          else
+            tar czf "$stage.tar.gz" "$stage"
+            shasum -a 256 "$stage.tar.gz" | cut -d' ' -f1 > "$stage.tar.gz.sha256"
+          fi
+          rm -rf "$stage"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    needs: [verify, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Extract release notes
+        run: |
+          version="${{ needs.verify.outputs.version }}"
+          awk -v ver="$version" '
+            $0 ~ "^## \\[" ver "\\]" { inside = 1; next }
+            /^## \[/ { inside = 0 }
+            inside { print }
+          ' CHANGELOG.md > notes.md
+          {
+            echo
+            echo '## Install'
+            echo
+            echo 'Download the archive for your platform, unzip it, and point your MCP client at the `mcp-unreal` binary.'
+            echo
+            echo 'The `McpLink-*.zip` asset holds the **precompiled UE 5.8 editor plugin** — unzip it into `<YourProject>/Plugins/`.'
+            echo 'It needs no Visual Studio and no C++ conversion, so Blueprint-only projects can use it.'
+            echo
+            echo 'Full setup: https://github.com/${{ github.repository }}#quick-start'
+          } >> notes.md
+          cat notes.md
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ inputs.tag || github.ref_name }}"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" artifacts/* --clobber
+            gh release edit "$tag" --notes-file notes.md
+          else
+            gh release create "$tag" artifacts/* \
+              --title "$tag" \
+              --notes-file notes.md \
+              --draft
+          fi
+          echo "Release drafted. Attach the McpLink plugin zip with tools/publish-release.ps1, then publish it."

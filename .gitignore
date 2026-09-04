@@ -1,0 +1,25 @@
+# Rust
+/target/
+smoke_out.json
+
+# UE test project transients
+test-project/Binaries/
+test-project/Intermediate/
+test-project/DerivedDataCache/
+test-project/Saved/
+test-project/.vs/
+test-project/*.sln
+
+# Plugin junctions created by tools/setup-dev.ps1 — never commit these,
+# git stores a junction as a symlink (or a plain text file) and it breaks on clone.
+test-project/Plugins/
+
+# Plugin build transients (when built in place)
+plugin/**/Binaries/
+plugin/**/Intermediate/
+
+# Packaged plugin output (tools/package-plugin.ps1)
+/dist/
+
+# OMC session state
+.omc/

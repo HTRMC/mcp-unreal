@@ -1,0 +1,18 @@
+{
+  "name": "object_set_property",
+  "description": "Write a UPROPERTY through engine reflection; the reply is the value as re-read from the object.",
+  "route": "/api/object/set_property",
+  "tool": "set_property",
+  "request": {
+    "object_path": "/Game/Contract/WBP_Contract.WBP_Contract:WidgetTree.Label",
+    "property": "Text",
+    "value": "Rewritten"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "value": "Rewritten"
+    }
+  }
+}

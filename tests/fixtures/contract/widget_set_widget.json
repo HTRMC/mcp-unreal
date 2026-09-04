@@ -1,0 +1,25 @@
+{
+  "name": "widget_set_widget",
+  "description": "Set widget properties from JSON; the reply echoes just the keys that were written.",
+  "route": "/api/widget_blueprints/modify",
+  "tool": "widget_blueprint_modify",
+  "request": {
+    "operation": "set_widget",
+    "blueprint": "/Game/Contract/WBP_Contract",
+    "widget": "Label",
+    "properties": {
+      "Text": "Contract"
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "widget": "Label",
+      "target": "/Game/Contract/WBP_Contract.WBP_Contract:WidgetTree.Label",
+      "properties": {
+        "Text": "Contract"
+      }
+    }
+  }
+}

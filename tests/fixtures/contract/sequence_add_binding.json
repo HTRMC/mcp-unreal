@@ -1,0 +1,22 @@
+{
+  "name": "sequence_add_binding",
+  "description": "Possess a level actor so tracks can animate it; the reply carries the binding GUID the other operations address it by.",
+  "route": "/api/sequences/ops",
+  "tool": "sequence_ops",
+  "request": {
+    "operation": "add_binding",
+    "sequence": "/Game/Contract/LS_Contract",
+    "actor": "ContractCube"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "guid": "FE51D3D3-4A27-C91A-A6C6-FBAEB425A5A7",
+      "name": "ContractCube",
+      "kind": "possessable",
+      "class": "/Script/Engine.StaticMeshActor",
+      "tracks": []
+    }
+  }
+}

@@ -1,0 +1,29 @@
+// McpLinkCore: HTTP server lifecycle, route registry, responder, log capture, status.
+
+using UnrealBuildTool;
+
+public class McpLinkCore : ModuleRules
+{
+	public McpLinkCore(ReadOnlyTargetRules Target) : base(Target)
+	{
+		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		CppStandard = CppStandardVersion.Cpp23;
+
+		PublicDependencyModuleNames.AddRange(new string[]
+		{
+			"Core",
+			"CoreUObject",
+			"Engine",
+			"Json",
+			"HTTPServer"
+		});
+
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"Projects",
+			"UnrealEd",
+			"AssetTools",
+			"AssetRegistry"
+		});
+	}
+}
