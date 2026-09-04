@@ -141,7 +141,8 @@ impl UnrealMcp {
     }
 }
 
-fn default_platform() -> String {
+/// Host platform name UBT/UAT expects, used as the default target platform.
+pub fn default_platform() -> String {
     if cfg!(windows) {
         "Win64".into()
     } else if cfg!(target_os = "macos") {

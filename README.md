@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (59)
+## Tools (62)
 
 | Area | Tools |
 |---|---|
@@ -39,7 +39,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Reflection | `get_property`, `set_property`, `call_function` |
 | Actors | `get_level_actors`, `spawn_actor`, `delete_actors`, `move_actor`, `get_actor_components`, `editor_ops` |
 | Levels & assets | `level_ops`, `search_assets`, `get_asset_info`, `asset_ops` |
-| Editor | `run_console_command`, `get_output_log`, `capture_viewport`, `build_level`, `perf_ops` |
+| Editor | `run_console_command`, `get_output_log`, `capture_viewport`, `build_level`, `perf_ops`, `trace_ops` |
 | Play | `pie_control`, `player_control`, **`input_inject`** |
 | Blueprints | `blueprint_query`, `blueprint_modify`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
 | Content | `material_ops`, `material_graph`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
@@ -47,7 +47,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | AI | `blackboard_ops`, `behavior_tree_ops` |
 | Introspection | `subsystem_query`, `ui_query` |
 | Engine API | `lookup_class`, `search_api` |
-| Project config | `project_ops`, `config_ops`, `cook_project` |
+| Project config | `project_ops`, `config_ops`, `cook_project`, `package_project`, `code_ops` |
 | Interop plugins | `niagara_ops`, `gas_ops`, `pcg_ops`, `python_exec` (need McpLinkNiagara / McpLinkGAS / McpLinkPCG / McpLinkPython enabled) |
 
 Headless tools work with no editor open. Editor tools need the Unreal Editor running with McpLink enabled — call `status` to see what is currently available.
@@ -118,6 +118,12 @@ Times cross the wire as display-rate frames or as seconds, interchangeably, and 
 `build_level` runs the editor's Build menu through its own entry point (`FEditorBuildUtils`): static lighting, navigation mesh, BSP geometry, Hierarchical LODs, reflection captures, texture streaming, virtual textures and landscapes. Everything except lighting finishes before the call returns; lighting hands off to a Lightmass process, so poll `get_output_log` for it.
 
 `perf_ops` is the structured readback `stat fps` cannot give, because that draws to the viewport: it samples the real frame time over a window of frames and returns average, median, min, max and p99 in milliseconds, reads process memory, and starts or stops an Unreal Insights trace.
+
+`trace_ops` reads those traces back. `list` finds the .utrace files in the shared UnrealTrace store and the project's `Saved/Profiling`; `export` runs UnrealInsights headlessly (`-OpenTraceFile -NoUI -AutoQuit`) against one and exports timers, aggregated timer statistics (instance count with inclusive and exclusive time — where to start when something is slow), individual timing events, threads or counters to CSV, returning the first rows inline. `run` passes arbitrary `TimingInsights.*` commands through for anything `export` does not model.
+
+`package_project` goes past `cook_project` to a runnable build: RunUAT BuildCookRun with compile, cook, stage, pak and archive, plus dedicated-server targets, distribution builds and deploy-and-run on a connected device (Launch On). `cook_project` remains the tool for cooked content alone.
+
+`code_ops` scaffolds C++ without the editor. `create_class` writes the header and source from the engine's *own* class templates (`Engine/Content/Editor/Templates`), so the output matches what the editor's New C++ Class wizard would have produced; the base class can be any reflected class in the installed engine, since its header and ancestry come from the same class index `lookup_class` uses. `create_module` writes a module's `Build.cs`, implementation and folders, then registers it in the `.uproject` and the build targets — the `.uproject` is spliced, not reserialised, so the diff is the new entry and nothing else. Both leave compiling to `generate_project_files` and `build_project`.
 
 ### Interop plugins: Niagara, Gameplay Abilities, PCG
 

@@ -12,6 +12,22 @@ installed as a pair.
 
 ### Added
 
+- **`package_project`** — packaging past the end of `cook_project`: RunUAT
+  BuildCookRun through compile, cook, stage, pak and archive, with
+  dedicated-server targets, distribution builds, IoStore, and deploy-and-run on
+  a connected device (Launch On).
+- **`code_ops`** — C++ scaffolding with no editor running. `create_class`
+  substitutes the engine's own class templates, and resolves any reflected
+  engine class as a base (header and ancestry from the class index behind
+  `lookup_class`), so the output matches the New C++ Class wizard's.
+  `create_module` writes a module and registers it in the `.uproject` and the
+  build targets, splicing the descriptor rather than reserialising it.
+- **`trace_ops`** — reading Unreal Insights traces back, which `perf_ops`
+  could only record. Lists the .utrace files on disk, then analyses one
+  headlessly through UnrealInsights and exports timers, aggregated timer
+  statistics, timing events, threads or counters to CSV with the first rows
+  returned inline.
+
 - **`asset_ops`** — the asset lifecycle that was missing entirely: create any
   factory-backed asset class (Data Assets, Curves, Curve Tables, String Tables,
   User-Defined Structs and Enums) with optional factory configuration; import

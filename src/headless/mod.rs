@@ -1,8 +1,11 @@
 pub mod build;
+pub mod code;
 pub mod cook;
 pub mod ini;
 pub mod log;
+pub mod package;
 pub mod parsers;
 pub mod project_ops;
 pub mod runner;
 pub mod tests;
+pub mod trace;

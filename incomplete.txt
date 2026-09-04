@@ -1,0 +1,163 @@
+mcp-unreal — gaps
+=================
+
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (62 tools, 45 plugin routes).
+
+"Cannot" here means "has no dedicated tool". Several of these are reachable
+unstructured through the escape hatches — get_property / set_property /
+call_function (any UPROPERTY / UFUNCTION via reflection), asset_ops create (any
+factory-backed asset shell), run_console_command, and python_exec (anything the
+`unreal` module exposes). What is listed below has no first-class, verified path.
+
+
+ANIMATION & CHARACTERS
+----------------------
+- Animation assets themselves. Anim Blueprints are fully authored, but Montages
+  (sections, slots, notifies), Blend Spaces, Aim Offsets, Anim Composites and
+  notify tracks can only be *referenced*, never created or edited —
+  anim_blueprint_modify takes them as inputs only.
+- Skeletal Meshes / Skeletons: no LOD, socket, virtual bone, morph target or
+  material-slot editing. Only static_mesh_ops exists.
+- IK Rig, IK Retargeter, Control Rig, Pose Search / Motion Matching: nothing.
+- Physics Assets: no bodies, constraints, or ragdoll setup.
+
+
+PHYSICS & DESTRUCTION
+---------------------
+- Chaos: Geometry Collections, fracturing, destruction fields, Chaos Vehicles,
+  Chaos Cloth — none.
+- No constraint authoring. Physics is only reachable as actor/component
+  properties.
+
+
+RENDERING & CINEMATICS OUTPUT
+-----------------------------
+- Movie Render Queue / Movie Render Graph: you can author a Level Sequence but
+  cannot render it to video or an image sequence.
+- No render targets, DrawMaterialToRenderTarget, scene-capture helpers, or
+  asset thumbnail generation.
+- capture_viewport is one JPEG from a windowed editor — no headless capture, no
+  video, no viewport-layout control.
+
+
+MATERIALS & TEXTURES
+--------------------
+- Material Functions and Material Layers: material_graph only edits UMaterial
+  graphs. No function assets, no layer stacks or blends.
+- Textures are read-only (texture_info): no creation, no pixel writes, no render
+  targets. Compression/LOD settings only via set_property.
+- No vertex painting. No decal-specific tooling.
+
+
+NIAGARA
+-------
+- No system or emitter authoring: no emitter stack, modules, scratch pads, or
+  renderer setup. niagara_ops only lists, spawns, and sets user parameters on
+  live components. (Compare pcg_ops, which does get full graph authoring.)
+
+
+AI
+--
+- EQS (Environment Query System): nothing.
+- State Trees, Smart Objects, Mass Entity: nothing.
+- Navigation: build_level navigation builds the mesh, but there are no nav
+  queries, path tests, nav modifiers, or nav-link authoring.
+- AI Perception only via properties.
+
+
+WORLD BUILDING
+--------------
+- World Partition: no data layers, streaming sources, cell/region loading, or
+  actor-to-layer assignment.
+- Sublevels / streaming levels: level_ops handles only the single current level
+  (get_current, list, load, save_current, save_as, save_all, new_level).
+- Level Instances and Packed Level Actors: nothing. No actor merging
+  (MergeActors).
+- Landscape: no splines, no grass-type wiring, no sculpt/erosion brushes (only
+  raw height writes + layer paint), no landscape material tooling.
+- No BSP/geometry editing (only build_level geometry), no modeling-mode tools,
+  no Geometry Script / dynamic meshes, no UV editing or generation beyond
+  lightmap UVs, no procedural mesh creation from scratch.
+
+
+AUDIO
+-----
+- MetaSounds: no support at all. Only Sound Cues are authored.
+- No audio modulation. No submix effect-chain authoring (asset + properties
+  only).
+- No playback verification or audio capture — you cannot "hear" the game.
+
+
+EDITOR WORKFLOW
+---------------
+- Source control: no P4/Git checkout, submit, revert or status. Assets are
+  written and saved directly, which is why the README says to use source control
+  yourself.
+- The editor UI is read-only: ui_query inspects Slate/UMG trees but nothing
+  clicks a button, drags a widget, or opens an asset editor. Input injection is
+  PIE-only, not editor-UI.
+- No Data Validation / asset audit / Map Check / "compile all Blueprints" sweep.
+  No reference viewer or size map (only get_asset_info dependencies).
+- Debugging: no Blueprint breakpoints, stepping or watch values. No Gameplay
+  Debugger, Visual Logger, or network profiler.
+- No Gameplay Tag editor — tags go through config_ops on the ini, or a tag
+  table.
+- No localization: no gather/compile, no culture management.
+- No curve keyframe editing on Curve assets. You can create the asset;
+  FRichCurve keys have no tool.
+
+
+BUILD, PACKAGE, C++
+-------------------
+- No Live Coding / hot-reload trigger.
+- project_ops only reads project info and toggles plugins — no target editing
+  beyond raw ini (code_ops covers module creation).
+
+
+PROFILING
+---------
+- No stat readback beyond perf_ops frame_stats. No memreport, no GPU profile, no
+  LLM / memory-tag stats.
+
+
+ECOSYSTEM PLUGINS WITH NO INTEROP
+---------------------------------
+LiveLink, nDisplay / virtual production, Datasmith / CAD import, Groom (hair),
+Water & Landmass, Take Recorder, RealtimeMesh (third-party, deliberately
+excluded).
+
+
+STRUCTURAL LIMITS
+-----------------
+Not feature gaps, but still "cannot":
+
+- UE 5.8 only. 5.7 and earlier will not compile (5.8 APIs + C++23).
+- The prebuilt plugin is Windows-only; other platforms build from source.
+- Editor tools need a running editor, one per port 8091 — two instances fight
+  over the port.
+- Loopback only, no authentication: cannot drive an editor on another machine.
+- Cannot drive a packaged or standalone build. input_inject and player_control
+  require PIE inside the editor.
+- Headless (-nullrhi) blocks capture_viewport, Niagara spawning, and
+  widget-animation playback.
+
+
+LARGEST COHERENT HOLES
+----------------------
+If picking next work:
+
+1. Niagara authoring (emitters, module stacks)
+2. Animation assets (montages, blend spaces)
+3. World Partition + sublevels
+4. MetaSounds
+5. EQS / State Trees
+
+
+CLOSED
+------
+2026-09-04 — package_project: BuildCookRun through stage/pak/archive, dedicated
+  server, distribution, IoStore and Launch On device.
+2026-09-04 — code_ops: C++ class and module scaffolding from the engine's own
+  templates, any reflected engine class usable as a base.
+2026-09-04 — trace_ops: Unreal Insights traces analysed headlessly and exported
+  to CSV (timers, timer statistics, timing events, threads, counters).
