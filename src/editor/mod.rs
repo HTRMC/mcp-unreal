@@ -16,6 +16,7 @@ pub mod material_graph;
 pub mod mesh;
 pub mod metasound;
 pub mod movierender;
+pub mod eqs;
 pub mod navigation;
 pub mod niagara;
 pub mod object;

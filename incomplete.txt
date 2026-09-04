@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (89 tools, 73 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (90 tools, 76 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -68,9 +68,6 @@ NIAGARA
 
 AI
 --
-- EQS (Environment Query System): nothing. The EQS editor plugin exports no
-  symbols, and its graph — not UEnvQuery::Options — is the source of truth, so
-  authoring options directly would be discarded the next time the asset opens.
 - Smart Objects, Mass Entity: nothing.
 - Nav modifiers and nav-link authoring: nothing (queries and the mesh build are
   covered).
@@ -158,10 +155,9 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. EQS authoring
-2. Source-control changelists, shelving, diff and history
-3. Chaos Vehicles and Chaos Cloth
-4. Texture baking for fractured interiors
+1. Source-control changelists, shelving, diff and history
+2. Chaos Vehicles and Chaos Cloth
+3. Texture baking for fractured interiors
 
 
 CLOSED
@@ -239,3 +235,7 @@ CLOSED
   worker thread. The assert that had this written off was the engine's path
   parser on a malformed selector, not the headless editor; a windowed editor is
   still needed, because widgets are located through arranged geometry.
+2026-09-04 — eqs_ops: Environment Queries — create, options with a generator,
+  tests, enable/disable, compile and save. The graph classes export no symbols,
+  but reflection plus virtual dispatch on their exported AIGraph bases builds
+  the real graph, so the asset survives being opened in the editor.

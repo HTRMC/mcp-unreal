@@ -1,0 +1,27 @@
+{
+  "name": "eqs_ops_list_classes",
+  "description": "generators and tests an option can be built from",
+  "route": "/api/ai/eqs",
+  "tool": "eqs_ops",
+  "request": {
+    "operation": "list_classes",
+    "name_filter": "Grid"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "generators": [
+        {
+          "class": "/Script/AIModule.EnvQueryGenerator_PathingGrid",
+          "name": "EnvQueryGenerator_PathingGrid"
+        },
+        {
+          "class": "/Script/AIModule.EnvQueryGenerator_SimpleGrid",
+          "name": "EnvQueryGenerator_SimpleGrid"
+        }
+      ],
+      "tests": []
+    }
+  }
+}

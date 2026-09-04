@@ -1,0 +1,19 @@
+{
+  "name": "eqs_ops_bad_generator_error",
+  "description": "a generator class that is not one",
+  "route": "/api/ai/eqs",
+  "tool": "eqs_ops",
+  "request": {
+    "operation": "add_option",
+    "query": "/Game/AI/EQS_McpCover",
+    "generator": "NotAGenerator"
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "bad_generator",
+      "message": "'NotAGenerator' is not an EnvQueryGenerator — list_classes names them"
+    }
+  }
+}

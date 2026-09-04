@@ -1,0 +1,35 @@
+{
+  "name": "eqs_ops_info",
+  "description": "an Environment Query's options, its tests and the object paths that edit them",
+  "route": "/api/ai/eqs",
+  "tool": "eqs_ops",
+  "request": {
+    "operation": "info",
+    "query": "/Game/AI/EQS_McpCover"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "query": "/Game/AI/EQS_McpCover.EQS_McpCover",
+      "options": [
+        {
+          "index": 0,
+          "generator": "EnvQueryGenerator_SimpleGrid",
+          "object_path": "/Game/AI/EQS_McpCover.EQS_McpCover:EnvQueryGenerator_SimpleGrid_0",
+          "tests": [
+            {
+              "index": 0,
+              "test": "EnvQueryTest_Distance",
+              "object_path": "/Game/AI/EQS_McpCover.EQS_McpCover:EnvQueryTest_Distance_0",
+              "enabled": true
+            }
+          ]
+        }
+      ],
+      "compiled_options": 1,
+      "has_graph": true,
+      "note": "set_property on an option's or test's object_path edits it, exactly as the details panel does; call compile afterwards"
+    }
+  }
+}

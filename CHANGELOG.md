@@ -43,6 +43,18 @@ installed as a pair.
 
 ### Added
 
+- **`eqs_ops`** — Environment Query System authoring: create a query, add
+  options with a generator, add, reorder-by-adding, disable and remove their
+  tests, compile and save. This was previously written off as impossible
+  because the EQS graph is the source of truth (a query whose options are
+  written directly is discarded the next time the asset is opened) and the
+  graph classes live in an editor plugin that exports no symbols to link
+  against. They do not need to be linked against: their UClasses are in the
+  reflection system, and every entry point that matters is a virtual override
+  of an exported AIGraph base, so `NewObject` plus virtual dispatch builds the
+  real graph and `UpdateAsset` compiles it. Generator and test settings are
+  ordinary properties, edited through `set_property` on the paths `info`
+  reports.
 - **Editor UI automation.** `ui_ops` gained `find_widgets`, `click`,
   `double_click`, `hover`, `focus`, `type`, `press_key` and `scroll`, so the
   editor's own interface is drivable and not only readable. This was previously

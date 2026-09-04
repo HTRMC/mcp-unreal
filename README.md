@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (89)
+## Tools (90)
 
 | Area | Tools |
 |---|---|
@@ -45,7 +45,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Animation | `anim_asset_ops`, `anim_notify_ops`, `skeleton_ops`, `skeletal_mesh_ops`, `physics_asset_ops` |
 | Content | `material_ops`, `material_graph`, `material_function`, `material_layers`, `render_ops`, `texture_info`, `texture_ops`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
 | World building | `landscape_ops`, `foliage_ops`, `sublevel_ops`, `world_partition_ops`, `level_instance_ops` |
-| AI | `blackboard_ops`, `behavior_tree_ops`, `state_tree_ops`, `nav_ops` |
+| AI | `blackboard_ops`, `behavior_tree_ops`, `state_tree_ops`, `eqs_ops`, `nav_ops` |
 | Editor workflow | `source_control_ops`, `validate_ops`, `gameplay_tag_ops`, `curve_ops`, `reference_ops`, `localization_ops` |
 | Introspection | `subsystem_query`, `ui_query`, `ui_ops` |
 | Engine API | `lookup_class`, `search_api` |
@@ -57,6 +57,8 @@ Headless tools work with no editor open. Editor tools need the Unreal Editor run
 `ui_ops` drives the editor's own UI. `find_widgets` locates Slate widgets by driver id or type path — `<SWindow>//<SDockTab>` is every dock tab under any window — and reports each one's text, visibility, whether it can be interacted with and where it is on screen; `click`, `double_click`, `hover`, `focus`, `type`, `press_key` and `scroll` then act on one of them by `index` into that same list. It goes through the engine's AutomationDriver, which has to run off the game thread (its synchronous API blocks on work it posts *to* the game thread), so the response is deferred while a worker drives. It needs a windowed editor: widgets are found through arranged geometry, which `-nullrhi` never produces.
 
 `ui_ops` also opens, closes and lists asset editors, which is worth having for more than the window: some assets are only finished off when their editor constructs them — a freshly created Material Layer gets its input and output nodes that way — so opening one can be the step that completes an asset.
+
+`eqs_ops` authors Environment Queries — how an AI picks where to stand or what to shoot. A query is a list of *options*, each one a **generator** that produces candidate items (a grid of points around the querier, every actor of a class) plus ordered **tests** that score and filter them (distance, line of sight, dot product). The graph is the source of truth: the runtime `Options` array is rebuilt from it, and opening an asset whose graph is missing creates an empty one rather than reconstructing it, so options written directly would be thrown away. The graph classes ship in an editor plugin that exports no symbols, so McpLink reaches them through reflection and virtual dispatch on their exported AIGraph bases instead of linking. Generator and test settings are ordinary properties — `info` reports each one's `object_path` and `set_property` edits it, exactly as the details panel would.
 
 ### Engine API lookup
 
