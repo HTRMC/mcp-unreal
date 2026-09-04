@@ -1,0 +1,20 @@
+{
+  "name": "material_layers_wrong_usage_error",
+  "description": "a layer function in a blend slot is a 400",
+  "route": "/api/materials/layers",
+  "tool": "material_layers",
+  "request": {
+    "operation": "set_blend",
+    "asset": "/Game/Materials/M_McpLayered",
+    "index": 1,
+    "blend": "/Game/Materials/ML_McpRock"
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "wrong_usage",
+      "message": "'/Game/Materials/ML_McpRock' is a Material Layer function, but a layer stack needs a Material Layer Blend there — material_layers create_layer and create_blend make the right kind"
+    }
+  }
+}

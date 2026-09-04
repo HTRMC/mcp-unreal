@@ -27,6 +27,12 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`material_layers`** — Material Layers and layer blends: create the two
+  function assets (seeded with the inputs and output the Material Editor would
+  add on first open), then build the stack on a Material or override it per
+  instance — add, replace, reorder, rename, hide and remove layers and the
+  blends between them. `material_graph`'s graph report now also covers the
+  Material Attributes input, which is what a layer stack connects to.
 - **`localization_ops`** — the Localization Dashboard's pipeline: targets and
   their cultures, the native (source) culture, which sources are gathered from,
   regenerating the commandlet config scripts, and running `gather` and `compile`

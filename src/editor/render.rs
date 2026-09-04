@@ -115,6 +115,92 @@ pub enum MaterialFunctionOp {
     Save { function: String },
 }
 
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum MaterialLayerOp {
+    /// New Material Layer asset — a Material Function that produces one layer's
+    /// material attributes. Comes with the MaterialAttributes input and layer
+    /// output the Material Editor would add; author the body with
+    /// `material_function`.
+    CreateLayer {
+        /// e.g. /Game/Materials/ML_Rock.
+        path: String,
+        description: Option<String>,
+        expose_to_library: Option<bool>,
+        /// Skip the input/output nodes (default false).
+        seed_nodes: Option<bool>,
+    },
+    /// New Material Layer Blend asset — how one layer combines with what is
+    /// under it. Comes with "Top Layer" and "Bottom Layer" inputs.
+    CreateBlend {
+        /// e.g. /Game/Materials/MLB_HeightBlend.
+        path: String,
+        description: Option<String>,
+        expose_to_library: Option<bool>,
+        seed_nodes: Option<bool>,
+    },
+    /// The stack on a Material or Material Instance: each layer with its blend,
+    /// name and visibility.
+    Info {
+        /// A Material or Material Instance path.
+        asset: String,
+        /// Only for a material with more than one layers node.
+        expression: Option<String>,
+    },
+    /// Add a layer on top of the stack, with the blend that combines it with
+    /// everything below. The first layer added is the background layer and
+    /// takes no blend.
+    AddLayer {
+        asset: String,
+        expression: Option<String>,
+        /// A Material Layer asset; an empty slot when omitted.
+        layer: Option<String>,
+        /// A Material Layer Blend asset; required in practice for layer 1 up.
+        blend: Option<String>,
+        /// The label the stack shows.
+        name: Option<String>,
+    },
+    /// Swap the layer function at an index.
+    SetLayer {
+        asset: String,
+        expression: Option<String>,
+        index: i32,
+        layer: String,
+    },
+    /// Swap the blend function under a layer. Layer 0 has none.
+    SetBlend {
+        asset: String,
+        expression: Option<String>,
+        index: i32,
+        blend: String,
+    },
+    RemoveLayer {
+        asset: String,
+        expression: Option<String>,
+        index: i32,
+    },
+    /// Reorder a layer. The background layer stays at the bottom.
+    MoveLayer {
+        asset: String,
+        expression: Option<String>,
+        from_index: i32,
+        to_index: i32,
+    },
+    SetLayerName {
+        asset: String,
+        expression: Option<String>,
+        index: i32,
+        name: String,
+    },
+    SetLayerVisibility {
+        asset: String,
+        expression: Option<String>,
+        index: i32,
+        visible: bool,
+    },
+}
+
 #[tool_router(router = render_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
@@ -141,5 +227,17 @@ impl UnrealMcp {
         self.call_plugin("/api/materials/function", body)
             .await
             .map(Json)
+    }
+
+    #[tool(
+        description = "Material Layers — the layer/blend stack. Create the Material Layer and Material Layer Blend assets (they are Material Functions, so material_function authors their bodies), then build the stack on a Material (in its Material Attribute Layers node, placed with material_graph add_expression) or override it per instance on a Material Instance. Layer 0 is the background layer and has no blend under it; every layer above is combined with what is below by its blend function."
+    )]
+    async fn material_layers(
+        &self,
+        Parameters(op): Parameters<MaterialLayerOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/materials/layers", body).await.map(Json)
     }
 }

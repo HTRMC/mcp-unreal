@@ -206,7 +206,10 @@ namespace McpLink
 				MP_BaseColor, MP_Metallic, MP_Specular, MP_Roughness, MP_Anisotropy, MP_EmissiveColor,
 				MP_Opacity, MP_OpacityMask, MP_Normal, MP_Tangent, MP_WorldPositionOffset,
 				MP_SubsurfaceColor, MP_AmbientOcclusion, MP_Refraction, MP_PixelDepthOffset,
-				MP_ShadingModel, MP_CustomData0, MP_CustomData1};
+				MP_ShadingModel, MP_CustomData0, MP_CustomData1,
+				// The one input a material with bUseMaterialAttributes on uses
+				// instead of all the others — a layer stack connects here.
+				MP_MaterialAttributes};
 			const UEnum* Enum = StaticEnum<EMaterialProperty>();
 			const TSharedRef<FJsonObject> Connections = MakeShared<FJsonObject>();
 			for (EMaterialProperty Property : Properties)
@@ -218,6 +221,7 @@ namespace McpLink
 				}
 			}
 			Data->SetObjectField(TEXT("material_inputs"), Connections);
+			Data->SetBoolField(TEXT("uses_material_attributes"), Material->bUseMaterialAttributes);
 			Data->SetStringField(TEXT("shading_model"),
 				StaticEnum<EMaterialShadingModel>()->GetNameStringByValue(Material->GetShadingModels().GetFirstShadingModel()));
 			Data->SetStringField(TEXT("blend_mode"),

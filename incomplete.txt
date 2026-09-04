@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (83 tools, 67 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (84 tools, 68 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -39,8 +39,9 @@ RENDERING & CINEMATICS OUTPUT
 
 MATERIALS & TEXTURES
 --------------------
-- Material Layers and layer blends: material_function covers Material
-  Functions, not the layer stack.
+- No Material Layer *parameters*: a stack is edited whole, and the per-layer
+  parameter overrides the material instance editor exposes are not surfaced.
+- Substrate materials have no dedicated tooling.
 - Textures: no import-free authoring from raw pixels, and no pixel writes to an
   existing texture (render targets bake into one instead). Compression/LOD
   settings only via set_property.
@@ -144,9 +145,9 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Material Layers and layer blends
-2. Blueprint debugging (breakpoints, stepping, watch values)
-3. Chaos destruction (Geometry Collections, fracturing)
+1. Blueprint debugging (breakpoints, stepping, watch values)
+2. Chaos destruction (Geometry Collections, fracturing)
+3. Texture authoring from raw pixels
 4. Translation editing (archive entries, PO import/export)
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
@@ -190,3 +191,6 @@ CLOSED
 2026-09-04 — localization_ops: the Localization Dashboard pipeline — targets,
   supported and native cultures, commandlet config generation, and gather and
   compile producing a manifest, per-culture archives and .locres files.
+2026-09-04 — material_layers: Material Layers and layer blends — the two
+  function assets, and the layer stack on a material or overridden per
+  instance (add, replace, reorder, rename, hide, remove).

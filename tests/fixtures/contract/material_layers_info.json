@@ -1,0 +1,38 @@
+{
+  "name": "material_layers_info",
+  "description": "the layer stack on a material: each layer with its blend, name and visibility",
+  "route": "/api/materials/layers",
+  "tool": "material_layers",
+  "request": {
+    "operation": "info",
+    "asset": "/Game/Materials/M_McpLayered"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "layer_count": 2,
+      "layers": [
+        {
+          "index": 0,
+          "layer": "/Game/Materials/ML_McpRock.ML_McpRock",
+          "name": "Background",
+          "visible": true
+        },
+        {
+          "index": 1,
+          "layer": "/Game/Materials/ML_McpMoss.ML_McpMoss",
+          "blend": "/Game/Materials/MLB_McpHeight.MLB_McpHeight",
+          "name": "Moss",
+          "visible": true
+        }
+      ],
+      "asset": "/Game/Materials/M_McpLayered.M_McpLayered",
+      "kind": "material",
+      "expression": "/Game/Materials/M_McpLayered.M_McpLayered:MaterialExpressionMaterialAttributeLayers_0",
+      "layers_nodes": [
+        "MaterialExpressionMaterialAttributeLayers_0"
+      ]
+    }
+  }
+}

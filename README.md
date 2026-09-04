@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (83)
+## Tools (84)
 
 | Area | Tools |
 |---|---|
@@ -43,7 +43,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Play | `pie_control`, `player_control`, **`input_inject`** |
 | Blueprints | `blueprint_query`, `blueprint_modify`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
 | Animation | `anim_asset_ops`, `anim_notify_ops`, `skeleton_ops`, `skeletal_mesh_ops`, `physics_asset_ops` |
-| Content | `material_ops`, `material_graph`, `material_function`, `render_ops`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
+| Content | `material_ops`, `material_graph`, `material_function`, `material_layers`, `render_ops`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
 | World building | `landscape_ops`, `foliage_ops`, `sublevel_ops`, `world_partition_ops`, `level_instance_ops` |
 | AI | `blackboard_ops`, `behavior_tree_ops`, `state_tree_ops`, `nav_ops` |
 | Editor workflow | `source_control_ops`, `validate_ops`, `gameplay_tag_ops`, `curve_ops`, `reference_ops`, `localization_ops` |
@@ -193,6 +193,8 @@ Character movement tuning needs no dedicated tool: `get_property`/`set_property`
 ### Render targets, textures and Material Functions
 
 `render_ops` is the other direction from `capture_viewport`: create a Render Target 2D, clear it, draw a material across it (procedural masks, gradients, noise), read a pixel back to check the result, export it to PNG/EXR/HDR, or bake it into a Texture2D asset — overwriting an existing one in place, which keeps everything referencing it. It also renders an asset's thumbnail, to a PNG file or into the asset's package where the content browser shows it. All of it needs a windowed editor; under `-nullrhi` there is no RHI to draw with, and the tool says so rather than returning black.
+
+`material_layers` builds the layer stack. Material Layers and Material Layer Blends are Material Functions with a usage flag, so `create_layer` and `create_blend` make them — with the MaterialAttributes inputs and layer output the Material Editor would add on first open, since a headless pipeline never opens the asset — and `material_function` authors their bodies. The stack itself lives on a Material, in the Material Attribute Layers node `material_graph add_expression` places, or as a per-instance override on a Material Instance; the same operations edit both. Layer 0 is the background layer and has no blend under it, so every layer above is combined with what is below by its own blend function.
 
 `material_function` authors the reusable sub-graphs a material calls into: create the asset, add expressions (FunctionInput and FunctionOutput are its parameters and results), wire them, lay the graph out, then update to recompile the function and every material using it.
 

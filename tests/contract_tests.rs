@@ -123,6 +123,7 @@ fn wire_body(fixture: &Fixture) -> Option<Value> {
         "physics_asset_ops" => to_json::<animation::PhysicsAssetOp>(&fixture.name, req),
         "material_graph" => to_json::<material_graph::MaterialGraphOp>(&fixture.name, req),
         "material_function" => to_json::<render::MaterialFunctionOp>(&fixture.name, req),
+        "material_layers" => to_json::<render::MaterialLayerOp>(&fixture.name, req),
         "render_ops" => to_json::<render::RenderOp>(&fixture.name, req),
         "sequence_ops" => to_json::<sequences::SequenceOp>(&fixture.name, req),
         "landscape_ops" => to_json::<world::LandscapeOp>(&fixture.name, req),
