@@ -21,8 +21,14 @@ ANIMATION & CHARACTERS
 
 PHYSICS & DESTRUCTION
 ---------------------
-- Chaos: destruction fields, Chaos Vehicles and Chaos Cloth are not exposed
-  (Geometry Collections and fracturing are, via chaos_ops).
+- Chaos Vehicles and Chaos Cloth are not exposed.
+- Destruction fields have no dedicated tool, but they do not need one: spawn a
+  FieldSystemActor and drive its component with call_function
+  (ApplyStrainField, ApplyRadialForce, ApplyPhysicsField are all
+  BlueprintCallable), and break a collection directly with call_function on
+  its GeometryCollectionComponent (ApplyExternalStrain, ApplyInternalStrain,
+  CrumbleCluster). What is missing is authoring a persistent UFieldSystem
+  *asset* — a field node graph — rather than issuing one-off commands.
 - Geometry Collections: no per-bone damage thresholds beyond set_property on
   the asset, no embedded geometry, and no auto-UV or material assignment for
   the interior faces a fracture creates.
@@ -164,9 +170,9 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Chaos Vehicles, Chaos Cloth and destruction fields
-2. Source-control changelists, shelving, diff and history
-3. Interior materials and UVs for fractured geometry
+1. Source-control changelists, shelving, diff and history
+2. Interior materials and UVs for fractured geometry
+3. Chaos Vehicles and Chaos Cloth
 4. Widget clicking (needs a windowed editor; see EDITOR WORKFLOW)
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
