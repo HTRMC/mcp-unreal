@@ -15,6 +15,20 @@ pub struct ProjectStatus {
     pub name: String,
 }
 
+/// What the background update run last concluded. Reported here rather than
+/// checked here: `status` never goes to the network.
+#[derive(serde::Serialize, schemars::JsonSchema)]
+pub struct UpdateReport {
+    /// `apply`, `check` or `off`, from `MCP_UNREAL_AUTO_UPDATE`.
+    pub channel: String,
+    pub current: String,
+    pub latest: Option<String>,
+    /// `up_to_date`, `update_available`, `staged`, `applied`, `blocked`,
+    /// `unavailable`, or `checking` when no run has finished yet.
+    pub state: String,
+    pub detail: Option<String>,
+}
+
 #[derive(serde::Serialize, schemars::JsonSchema)]
 pub struct StatusOutput {
     pub server_version: String,
@@ -36,6 +50,7 @@ pub struct StatusOutput {
     pub features: Vec<String>,
     /// Remediation hints for anything offline.
     pub hints: Vec<String>,
+    pub update: UpdateReport,
 }
 
 #[tool_router(router = status_router, vis = "pub(crate)")]
@@ -154,6 +169,24 @@ impl UnrealMcp {
                 }
             }
         }
+        // The server and the plugin are one contract, so a mismatched pair
+        // fails as a 404 on a route the server is sure exists. Say which is
+        // behind rather than letting it surface that way.
+        let server_version = env!("CARGO_PKG_VERSION");
+        if let Some(plugin_version) = plugin_status
+            .as_ref()
+            .and_then(|v| v.get("plugin_version"))
+            .and_then(|v| v.as_str())
+            && plugin_version != server_version
+        {
+            hints.push(format!(
+                "version mismatch: this server is {server_version}, the McpLink plugin \
+                 in the editor is {plugin_version} — they ship as a pair, so install \
+                 both from the same release; a tool whose route only exists on one \
+                 side of the pair will fail"
+            ));
+        }
+
         if cfg.engine_root.join("Engine").join("Source").exists() {
             features.push(if self.docs.is_ready() {
                 "engine_source_lookup".to_string()
@@ -167,14 +200,25 @@ impl UnrealMcp {
             ));
         }
 
+        let update_env = crate::update::UpdateEnv::from_config(cfg);
+        // A state file written before the updater was switched off describes a
+        // world that is no longer being kept current, so it is not reported.
+        let update_state = match update_env.channel {
+            crate::update::Channel::Off => None,
+            _ => crate::update::read_state(&update_env),
+        };
+        if let Some(state) = &update_state
+            && let Some(detail) = &state.detail
+            && matches!(state.state.as_str(), "update_available" | "blocked")
+        {
+            hints.push(detail.clone());
+        }
+
         Ok(Json(StatusOutput {
-            server_version: env!("CARGO_PKG_VERSION").to_string(),
+            server_version: server_version.to_string(),
             engine_root: cfg.engine_root.display().to_string(),
             engine_root_source: cfg.engine_root_source.as_str().to_string(),
-            engine_installs_found: installs
-                .iter()
-                .map(|p| p.display().to_string())
-                .collect(),
+            engine_installs_found: installs.iter().map(|p| p.display().to_string()).collect(),
             engine_version,
             editor_cmd_found,
             project: cfg.project.as_ref().map(|p| ProjectStatus {
@@ -186,6 +230,22 @@ impl UnrealMcp {
             plugin_status,
             features,
             hints,
+            update: UpdateReport {
+                channel: update_env.channel.as_str().to_string(),
+                current: server_version.to_string(),
+                latest: update_state.as_ref().and_then(|s| s.latest.clone()),
+                // Nothing is being checked when the updater is switched off,
+                // and a stale state file from before it was switched off is
+                // not what is happening now either.
+                state: match update_env.channel {
+                    crate::update::Channel::Off => "off".to_string(),
+                    _ => update_state
+                        .as_ref()
+                        .map(|s| s.state.clone())
+                        .unwrap_or_else(|| "checking".to_string()),
+                },
+                detail: update_state.as_ref().and_then(|s| s.detail.clone()),
+            },
         }))
     }
 }

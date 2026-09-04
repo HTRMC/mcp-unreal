@@ -26,6 +26,13 @@ async fn main() {
         env!("CARGO_PKG_VERSION")
     );
 
+    // A previous self-update leaves the old binary behind, because Windows
+    // will not delete a running image. It is deletable now.
+    mcp_unreal::update::clean_previous_binary();
+    // Checks and installs in the background: an update must never delay, or
+    // fail, the session that discovers it.
+    mcp_unreal::update::spawn(&cfg);
+
     let server = mcp_unreal::UnrealMcp::new(cfg);
     match server.serve(rmcp::transport::stdio()).await {
         Ok(service) => {

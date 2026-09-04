@@ -82,6 +82,19 @@ jobs:
       - name: Scan for unity-build name collisions
         run: python3 tools/scan-unity-collisions.py
 
+      # The plugin's version must come from its descriptor, which
+      # tools/bump-version.ps1 rewrites on every release. A second copy in C++
+      # is invisible to that script, so it goes stale at the first bump and
+      # every version comparison against it becomes a comparison with a
+      # constant. That shipped once; this is so it cannot ship twice.
+      - name: Plugin version is not hardcoded in C++
+        run: |
+          if grep -rn 'define MCPLINK_VERSION' plugin/; then
+            echo "::error::the plugin version belongs in McpLink.uplugin, read via IPluginManager — not a #define"
+            exit 1
+          fi
+          echo "no hardcoded plugin version"
+
       # The .uplugin files gate which engine a user can install the plugin on,
       # so a malformed or version-less descriptor must not reach a release.
       - name: Validate .uplugin files

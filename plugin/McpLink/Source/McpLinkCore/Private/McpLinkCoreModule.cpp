@@ -16,8 +16,7 @@
 #include "Misc/ScopeExit.h"
 #include "Misc/App.h"
 #include "Misc/EngineVersion.h"
-
-#define MCPLINK_VERSION TEXT("0.1.0")
+#include "Interfaces/IPluginManager.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogMcpLink, Log, All);
 
@@ -29,6 +28,22 @@ static TAutoConsoleVariable<int32> CVarMcpLinkPort(
 
 namespace
 {
+	/// The plugin's own version, read from McpLink.uplugin rather than kept as
+	/// a second copy here. tools/bump-version.ps1 rewrites the descriptor on
+	/// every release and would never have found a hardcoded #define, so the
+	/// copy went stale the moment a version was cut — and the server's update
+	/// check compares its version against this one, so a stale answer is worse
+	/// than no answer.
+	const FString& McpLinkVersion()
+	{
+		static const FString Version = []
+		{
+			const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("McpLink"));
+			return Plugin.IsValid() ? Plugin->GetDescriptor().VersionName : FString(TEXT("unknown"));
+		}();
+		return Version;
+	}
+
 	ELogVerbosity::Type ParseVerbosity(const FString& Name)
 	{
 		if (Name.Equals(TEXT("error"), ESearchCase::IgnoreCase)) { return ELogVerbosity::Error; }
@@ -50,7 +65,7 @@ void FMcpLinkCoreModule::StartupModule()
 		[this](const TSharedRef<FJsonObject>& /*Body*/, TSharedRef<McpLink::FMcpResponder> Responder)
 		{
 			const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
-			Data->SetStringField(TEXT("plugin_version"), MCPLINK_VERSION);
+			Data->SetStringField(TEXT("plugin_version"), McpLinkVersion());
 			const FEngineVersion& Ver = FEngineVersion::Current();
 			Data->SetStringField(
 				TEXT("engine_version"),
@@ -182,7 +197,7 @@ void FMcpLinkCoreModule::StartHttpServer()
 		PreTickHandle = FSlateApplication::Get().OnPreTick().AddRaw(this, &FMcpLinkCoreModule::PumpWhileHalted);
 	}
 
-	UE_LOG(LogMcpLink, Display, TEXT("McpLink %s listening on http://127.0.0.1:%u"), MCPLINK_VERSION, Port);
+	UE_LOG(LogMcpLink, Display, TEXT("McpLink %s listening on http://127.0.0.1:%u"), *McpLinkVersion(), Port);
 }
 
 bool FMcpLinkCoreModule::IsHaltedAtBreakpoint()

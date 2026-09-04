@@ -10,7 +10,44 @@ installed as a pair.
 
 ## [Unreleased]
 
+### Added
+
+- **Auto-update.** The server checks the releases page once a day in the
+  background and installs a newer release the next time it starts with the
+  editor closed, which is the only window in which the plugin's DLLs are not
+  locked. The update takes effect on the start after that: an MCP client owns
+  the server's stdio, so exiting to re-exec would read as a crash.
+
+  The server and the plugin move together or not at all. They are one contract,
+  so a server that ran ahead of its plugin would fail as a 404 on a route it is
+  sure exists — the breakage that updating by hand avoids, since whoever
+  downloads by hand takes both from the same release. When the plugin cannot be
+  replaced the server is left alone too, and `status` says why: the plugin
+  folder is a junction into a source checkout, it has no `Binaries/` and was
+  therefore compiled rather than installed, the engine is not the line the
+  release was built for, or the host is not Windows.
+
+  Assets are verified against the sha256 GitHub records for them. Only plugin
+  folders that are already installed are replaced, so a release carrying more
+  interop plugins does not install the rest. `MCP_UNREAL_AUTO_UPDATE=check`
+  reports without writing anything, `off` makes no network requests at all, and
+  `status` reports the outcome under `update`.
+
+- `status` now reports a **server/plugin version mismatch** as a hint. The pair
+  ships from one release, and a mismatched pair fails as a missing route rather
+  than as anything that names a version.
+
 ### Fixed
+
+- **The plugin reported a hardcoded version that could never be right.**
+  `MCPLINK_VERSION` was a `#define` in `McpLinkCoreModule.cpp`, and
+  `tools/bump-version.ps1` — which rewrites `Cargo.toml`, every `.uplugin` and
+  the CHANGELOG — had no idea it existed. The first release cut after 0.1.0
+  would have shipped a plugin still calling itself 0.1.0 in `/api/status` and
+  in its startup log, and any version comparison against it would have been
+  comparing against a constant. The version is now read from the plugin
+  descriptor at runtime, so it cannot drift from the file the release process
+  already maintains.
 
 - **Use-after-free when a one-shot delegate unbound itself.** A multicast
   delegate's `Remove()` destroys the bound lambda *immediately*, even when

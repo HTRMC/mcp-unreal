@@ -6,6 +6,7 @@ pub mod error;
 pub mod headless;
 pub mod schema;
 pub mod status;
+pub mod update;
 
 use std::sync::Arc;
 

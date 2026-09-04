@@ -11,7 +11,9 @@ rust-version = "1.85"
 [dependencies]
 rmcp = { version = "=3.2.0", features = ["server", "macros", "schemars", "transport-io"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "io-util", "time", "sync", "signal"] }
-reqwest = { version = "0.12", default-features = false, features = ["json"] }
+# rustls-tls is here only for the update check: every other request this
+# server makes is plaintext loopback to the editor plugin.
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 schemars = "1"
@@ -24,6 +26,11 @@ grep-searcher = "0.1"
 ignore = "0.4"
 base64 = "0.22"
 dirs = "6"
+# Release archives: .zip on Windows, .tar.gz elsewhere, plus the plugin zip.
+zip = { version = "2", default-features = false, features = ["deflate"] }
+tar = "0.4"
+flate2 = "1"
+sha2 = "0.10"
 
 [target.'cfg(windows)'.dependencies]
 win32job = "2"

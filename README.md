@@ -248,6 +248,22 @@ If `status` says the engine root is a *fallback guess*, discovery found no insta
 | `MCP_UNREAL_PROJECT` | walk up from cwd | `.uproject` file or its folder |
 | `PLUGIN_PORT` | `8091` | McpLink HTTP port (CVar `McpLink.Port` in the editor) |
 | `MCP_UNREAL_LOG_LEVEL` | `info` | tracing filter (stderr only) |
+| `MCP_UNREAL_AUTO_UPDATE` | `apply` | `apply`, `check` (report only) or `off` (no network) |
+| `MCP_UNREAL_UPDATE_TOKEN` | unset | GitHub token, only needed for a private fork |
+
+## Staying up to date
+
+The server keeps itself and the plugin current. It checks the releases page once a day in the background, and installs the new version the next time it starts **with the editor closed** — Windows keeps a loaded DLL locked, so that is the only moment the plugin can be replaced. The update takes effect on the following start; nothing changes underneath a running session.
+
+Both halves move together or neither does. They are one contract — a server that runs ahead of its plugin fails as a 404 on a route it is sure exists — so if the plugin cannot be replaced, the server is left alone too and `status` says why. It refuses when:
+
+- the plugin folder is a **junction or symlink** (how `tools/setup-dev.ps1` wires a source checkout — an update must never write through one),
+- the plugin has **no `Binaries/`**, meaning it was compiled rather than installed from a release,
+- the engine is not the line the release was built for, or the host is not Windows (the prebuilt plugin is Windows-only).
+
+Downloads are checked against the sha256 GitHub records for each release asset, and only the plugin folders you already have are replaced — a release carrying more interop plugins does not install the rest.
+
+Set `MCP_UNREAL_AUTO_UPDATE=check` to be told about new versions without anything being written, or `off` to make no network requests at all. Either way `status` reports what it knows under `update`, and it flags a server/plugin version mismatch whether or not the updater is on.
 
 ## Security
 
@@ -255,6 +271,7 @@ McpLink is a **development tool that gives an agent full control of your editor*
 
 - The plugin listens on loopback only (UE's HTTP server defaults to `BindAddress=localhost`) and has **no authentication**. Any process on your machine can drive the editor while it is running — and with `McpLinkPython` enabled, that means running arbitrary Python inside the editor. Don't enable it on a shared machine, and don't set `[HTTPServer.Listeners] DefaultBindAddress=any` in a project that has McpLink.
 - An agent can delete actors, overwrite assets and save packages. **Use source control** on any project you point it at.
+- Auto-update **downloads and installs code from the releases page without asking**, into your project's `Plugins/` and over the server binary. Each asset is checked against the sha256 GitHub recorded for it, which catches a corrupted download but is not a signature — it is only as trustworthy as the release itself. `MCP_UNREAL_AUTO_UPDATE=off` turns it off entirely.
 - Ship your game without these plugins: everything here is editor-only and never gets cooked into a build.
 
 ## Development
