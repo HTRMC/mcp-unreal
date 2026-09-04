@@ -104,6 +104,7 @@ impl UnrealMcp {
                 .unwrap_or_default();
             for (prefix, feature) in [
                 ("/api/audio/metasound", "metasounds"),
+                ("/api/render/movie", "movie_render_queue"),
                 ("/api/niagara/", "niagara"),
                 ("/api/gas/", "gameplay_abilities"),
                 ("/api/pcg/", "pcg"),

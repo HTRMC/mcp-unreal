@@ -14,6 +14,7 @@ pub mod levels;
 pub mod material_graph;
 pub mod metasound;
 pub mod mesh;
+pub mod movierender;
 pub mod navigation;
 pub mod niagara;
 pub mod object;

@@ -27,6 +27,10 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`movie_render`** (new `McpLinkMovieRender` interop plugin) — Movie Render
+  Queue: build a render config, tune its settings, and render a Level Sequence
+  to an image sequence or video. `sequence_ops` could author a sequence but not
+  render one, which left the cinematic pipeline a step short of any output.
 - **`render_ops` / `material_function`** — render targets (create, clear,
   draw a material into, read pixels, export to PNG/EXR/HDR, bake to a
   Texture2D), asset thumbnail rendering, and Material Function authoring.

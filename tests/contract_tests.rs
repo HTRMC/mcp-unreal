@@ -112,6 +112,7 @@ fn wire_body(fixture: &Fixture) -> Option<Value> {
             to_json::<anim_blueprints::AnimBlueprintModify>(&fixture.name, req)
         }
         "metasound_ops" => to_json::<metasound::MetaSoundOp>(&fixture.name, req),
+        "movie_render" => to_json::<movierender::MovieRenderOp>(&fixture.name, req),
         "nav_ops" => to_json::<navigation::NavigationOp>(&fixture.name, req),
         "state_tree_ops" => to_json::<navigation::StateTreeOp>(&fixture.name, req),
         "niagara_author" => to_json::<niagara::NiagaraAuthorOp>(&fixture.name, req),

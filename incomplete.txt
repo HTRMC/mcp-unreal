@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (81 tools, 64 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (82 tools, 65 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -29,11 +29,12 @@ PHYSICS & DESTRUCTION
 
 RENDERING & CINEMATICS OUTPUT
 -----------------------------
-- Movie Render Queue / Movie Render Graph: you can author a Level Sequence but
-  cannot render it to video or an image sequence.
+- Movie Render Graph (the newer node-based pipeline) is not exposed; the
+  queue-and-config pipeline is.
 - No scene-capture helpers (SceneCapture2D actors are properties only).
 - capture_viewport is one JPEG from a windowed editor — no headless capture, no
   video, no viewport-layout control.
+- Rendering needs a windowed editor: the Movie Render Queue runs through PIE.
 
 
 MATERIALS & TEXTURES
@@ -140,10 +141,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Movie Render Queue (rendering a sequence to disk)
-2. Localization
-3. Material Layers and layer blends
-4. Blueprint debugging (breakpoints, stepping, watch values)
+1. Localization (gather/compile, culture management)
+2. Material Layers and layer blends
+3. Blueprint debugging (breakpoints, stepping, watch values)
+4. Chaos destruction (Geometry Collections, fracturing)
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -181,3 +182,5 @@ CLOSED
 2026-09-04 — render_ops, material_function: render targets (create, clear,
   draw a material, read pixels, export, bake to Texture2D), asset thumbnail
   rendering, and Material Function authoring.
+2026-09-04 — movie_render: Movie Render Queue — render configs, settings, and
+  rendering a Level Sequence to an image sequence or video through PIE.

@@ -55,6 +55,14 @@
 			"Enabled": true
 		},
 		{
+			"Name": "McpLinkMovieRender",
+			"Enabled": true
+		},
+		{
+			"Name": "MovieRenderPipeline",
+			"Enabled": true
+		},
+		{
 			"Name": "Metasound",
 			"Enabled": true
 		}

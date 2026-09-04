@@ -1,0 +1,40 @@
+{
+  "name": "movie_render_config_info",
+  "description": "a Movie Pipeline config's settings, output directory and resolution",
+  "route": "/api/render/movie",
+  "tool": "movie_render",
+  "request": {
+    "operation": "config_info",
+    "config": "/Game/Cinematics/MRQ_McpPreview"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "config": "/Game/Cinematics/MRQ_McpPreview.MRQ_McpPreview",
+      "settings": [
+        {
+          "class": "MoviePipelineDeferredPassBase",
+          "enabled": true,
+          "path": "/Game/Cinematics/MRQ_McpPreview.MRQ_McpPreview:MoviePipelineDeferredPassBase_0"
+        },
+        {
+          "class": "MoviePipelineImageSequenceOutput_PNG",
+          "enabled": true,
+          "path": "/Game/Cinematics/MRQ_McpPreview.MRQ_McpPreview:MoviePipelineImageSequenceOutput_PNG_0"
+        },
+        {
+          "class": "MoviePipelineOutputSetting",
+          "enabled": true,
+          "path": "/Game/Cinematics/MRQ_McpPreview.MRQ_McpPreview:DefaultOutputSetting"
+        }
+      ],
+      "output_directory": "{project_dir}/Saved/MovieRenders/",
+      "file_name_format": "{sequence_name}.{frame_number}",
+      "resolution": [
+        320,
+        180
+      ]
+    }
+  }
+}

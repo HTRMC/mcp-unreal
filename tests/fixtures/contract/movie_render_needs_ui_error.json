@@ -1,0 +1,19 @@
+{
+  "name": "movie_render_needs_ui_error",
+  "description": "rendering from an editor without an RHI is a 409 explaining why",
+  "route": "/api/render/movie",
+  "tool": "movie_render",
+  "request": {
+    "operation": "render",
+    "config": "/Game/Cinematics/MRQ_McpPreview",
+    "sequence": "/Game/Cinematics/LS_McpShot"
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "no_rendering",
+      "message": "Movie Render Queue renders through PIE, which an editor without rendering (-nullrhi) cannot start — run a windowed editor"
+    }
+  }
+}

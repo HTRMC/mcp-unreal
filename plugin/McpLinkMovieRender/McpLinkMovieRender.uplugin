@@ -1,0 +1,33 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"EngineVersion": "5.8.0",
+	"FriendlyName": "McpLink Movie Render",
+	"Description": "McpLink interop for the Movie Render Queue: configure and run sequence renders from the mcp-unreal MCP server.",
+	"Category": "Editor",
+	"CreatedBy": "mcp-unreal",
+	"CreatedByURL": "https://github.com/HTRMC/mcp-unreal",
+	"DocsURL": "https://github.com/HTRMC/mcp-unreal#readme",
+	"SupportURL": "https://github.com/HTRMC/mcp-unreal/issues",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "McpLinkMovieRender",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "McpLink",
+			"Enabled": true
+		},
+		{
+			"Name": "MovieRenderPipeline",
+			"Enabled": true
+		}
+	]
+}
