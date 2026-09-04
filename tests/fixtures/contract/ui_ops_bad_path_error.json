@@ -1,0 +1,18 @@
+{
+  "name": "ui_ops_bad_path_error",
+  "description": "a widget path the engine's parser would assert on, refused first",
+  "route": "/api/editor/ui_ops",
+  "tool": "ui_ops",
+  "request": {
+    "operation": "click",
+    "path": "/SWindow/SButton"
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "bad_locator",
+      "message": "widget path '/SWindow/SButton' starts with '/' — paths are relative and must begin with a matcher, e.g. \"#SomeId/SButton\" or \"SWindow//SButton\""
+    }
+  }
+}

@@ -54,7 +54,9 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 Headless tools work with no editor open. Editor tools need the Unreal Editor running with McpLink enabled — call `status` to see what is currently available.
 
-`ui_ops` opens, closes and lists asset editors. That is worth having for more than the window: some assets are only finished off when their editor constructs them — a freshly created Material Layer gets its input and output nodes that way — so opening one can be the step that completes an asset. Clicking widgets is not available; see `incomplete.txt` for what the AutomationDriver does when asked.
+`ui_ops` drives the editor's own UI. `find_widgets` locates Slate widgets by driver id or type path — `<SWindow>//<SDockTab>` is every dock tab under any window — and reports each one's text, visibility, whether it can be interacted with and where it is on screen; `click`, `double_click`, `hover`, `focus`, `type`, `press_key` and `scroll` then act on one of them by `index` into that same list. It goes through the engine's AutomationDriver, which has to run off the game thread (its synchronous API blocks on work it posts *to* the game thread), so the response is deferred while a worker drives. It needs a windowed editor: widgets are found through arranged geometry, which `-nullrhi` never produces.
+
+`ui_ops` also opens, closes and lists asset editors, which is worth having for more than the window: some assets are only finished off when their editor constructs them — a freshly created Material Layer gets its input and output nodes that way — so opening one can be the step that completes an asset.
 
 ### Engine API lookup
 

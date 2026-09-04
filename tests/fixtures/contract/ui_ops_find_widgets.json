@@ -1,0 +1,146 @@
+{
+  "name": "ui_ops_find_widgets",
+  "description": "widgets a type path resolves to, with text, visibility and screen rect",
+  "route": "/api/editor/ui_ops",
+  "tool": "ui_ops",
+  "request": {
+    "operation": "find_widgets",
+    "path": "<SWindow>//<SDockTab>"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "count": 9,
+      "widgets": [
+        {
+          "text": "Details",
+          "visible": true,
+          "interactable": true,
+          "hovered": false,
+          "focused": false,
+          "scrollable": false,
+          "rect": [
+            2046.25,
+            477.25,
+            200,
+            31.25
+          ]
+        },
+        {
+          "text": "Outliner",
+          "visible": true,
+          "interactable": true,
+          "hovered": true,
+          "focused": false,
+          "scrollable": false,
+          "rect": [
+            2046.25,
+            127.25,
+            200,
+            31.25
+          ]
+        },
+        {
+          "text": "Content Browser",
+          "visible": true,
+          "interactable": true,
+          "hovered": false,
+          "focused": false,
+          "scrollable": false,
+          "rect": [
+            5,
+            754.75,
+            200,
+            31.25
+          ]
+        },
+        {
+          "text": "Output Log",
+          "visible": true,
+          "interactable": true,
+          "hovered": false,
+          "focused": false,
+          "scrollable": false,
+          "rect": [
+            207.5,
+            754.75,
+            200,
+            31.25
+          ]
+        },
+        {
+          "text": "Message Log",
+          "visible": true,
+          "interactable": true,
+          "hovered": false,
+          "focused": false,
+          "scrollable": false,
+          "rect": [
+            410,
+            754.75,
+            200,
+            31.25
+          ]
+        },
+        {
+          "text": "Home Panel",
+          "visible": true,
+          "interactable": true,
+          "hovered": false,
+          "focused": false,
+          "scrollable": false,
+          "rect": [
+            81.25,
+            31.25,
+            40,
+            38.5
+          ]
+        },
+        {
+          "text": "TestMap",
+          "visible": true,
+          "interactable": true,
+          "hovered": false,
+          "focused": false,
+          "scrollable": false,
+          "rect": [
+            123.75,
+            31.25,
+            262.5,
+            38.5
+          ]
+        },
+        {
+          "text": "Editor Preferences",
+          "visible": true,
+          "interactable": true,
+          "hovered": false,
+          "focused": false,
+          "scrollable": false,
+          "rect": [
+            388.75,
+            31.25,
+            262.5,
+            38.5
+          ]
+        },
+        {
+          "text": "Project Settings",
+          "visible": true,
+          "interactable": true,
+          "hovered": false,
+          "focused": false,
+          "scrollable": false,
+          "rect": [
+            653.75,
+            31.25,
+            262.5,
+            38.5
+          ]
+        }
+      ],
+      "operation": "find_widgets"
+    }
+  }
+}

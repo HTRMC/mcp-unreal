@@ -43,6 +43,16 @@ installed as a pair.
 
 ### Added
 
+- **Editor UI automation.** `ui_ops` gained `find_widgets`, `click`,
+  `double_click`, `hover`, `focus`, `type`, `press_key` and `scroll`, so the
+  editor's own interface is drivable and not only readable. This was previously
+  written off because the AutomationDriver asserted on the first call and took
+  the editor with it — that turned out to be the engine's path parser choking on
+  a malformed selector of ours (a leading `/` indexes an empty array), not a
+  headless limitation, so malformed paths are now refused with an explanation
+  instead. The driver runs on a worker thread, since its synchronous API blocks
+  on work it posts to the game thread. It needs a windowed editor: widgets are
+  located through arranged geometry, which `-nullrhi` never produces.
 - **Blueprint stepping.** `blueprint_debug` gained `halt_status`, `resume`,
   `step_into`, `step_over`, `step_out` and `abort`, so a breakpoint is now
   something an agent can actually drive rather than only set. A halt parks the
@@ -73,7 +83,8 @@ installed as a pair.
   and sockets; and ragdoll generation with per-body and per-constraint editing.
 - **`ui_ops`** — open, close and list asset editors. Opening one is sometimes
   the step that finishes an asset, because part of the work lives in the
-  editor's own construction.
+  editor's own construction. Widget driving is covered under Editor UI
+  automation above.
 - **`visual_log_ops`** — the Visual Logger, read back as data rather than drawn
   on a timeline: record a play session and query the engine's own `UE_VLOG`
   entries by actor, category or game time, with their log lines, status blocks

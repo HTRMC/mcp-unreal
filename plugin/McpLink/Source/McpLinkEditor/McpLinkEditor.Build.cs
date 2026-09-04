@@ -22,6 +22,8 @@ public class McpLinkEditor : ModuleRules
 			"Json",
 			"JsonUtilities",
 			"McpLinkCore",
+			"AutomationDriver",
+			"InputCore",
 			"UnrealEd",
 			"AssetRegistry",
 			"AssetTools",

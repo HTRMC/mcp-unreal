@@ -103,15 +103,6 @@ AUDIO
 
 EDITOR WORKFLOW
 ---------------
-- Nothing clicks or drags an editor widget. The engine's AutomationDriver is
-  the right mechanism and its threading works out (it dispatches to the game
-  thread and blocks, so it has to run on a worker thread with the HTTP
-  response deferred — which FMcpResponder supports), but in a headless editor
-  the very first call, IDriverElement::Exists(), asserts inside the driver
-  ("Assertion failed: (Index >= 0) & (Index < ArrayNum)", Array.h:1339) and
-  takes the editor with it, because it resolves elements through platform
-  windows that -nullrhi never creates. A windowed editor would be needed to
-  take this further. Opening and closing asset editors is covered by ui_ops.
 - Input injection is PIE-only, not editor-UI.
 - No Gameplay Debugger: its categories build their output as strings at draw
   time, into a canvas context, so there is nothing structured to read without
@@ -167,11 +158,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Source-control changelists, shelving, diff and history
-2. Chaos Vehicles and Chaos Cloth
-3. Texture baking for fractured interiors
-4. Widget clicking (needs a windowed editor; see EDITOR WORKFLOW)
-5. EQS (needs the EQS editor plugin's unexported graph classes)
+1. EQS authoring
+2. Source-control changelists, shelving, diff and history
+3. Chaos Vehicles and Chaos Cloth
+4. Texture baking for fractured interiors
 
 
 CLOSED
@@ -244,3 +234,8 @@ CLOSED
   step_over, step_out and abort. A halted editor stays answerable because the
   HTTP server is pumped from Slate's pre-tick, which still runs inside the
   debugging loop; headless halting works too, so the old refusal is gone.
+2026-09-04 — ui_ops: widget driving — find_widgets, click, double_click,
+  hover, focus, type, press_key and scroll, through the AutomationDriver on a
+  worker thread. The assert that had this written off was the engine's path
+  parser on a malformed selector, not the headless editor; a windowed editor is
+  still needed, because widgets are located through arranged geometry.
