@@ -143,38 +143,39 @@ pub(crate) fn parse_build_version(text: &str) -> Option<(u64, u64, u64)> {
 }
 
 /// Engine installs recorded by the Epic Games Launcher.
-#[cfg(windows)]
 fn launcher_installs() -> Vec<PathBuf> {
-    let program_data = env::var_os("PROGRAMDATA")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(r"C:\ProgramData"));
-    read_launcher_manifest(
-        &program_data
-            .join("Epic")
-            .join("UnrealEngineLauncher")
-            .join("LauncherInstalled.dat"),
-    )
-}
-
-#[cfg(target_os = "macos")]
-fn launcher_installs() -> Vec<PathBuf> {
-    read_launcher_manifest(Path::new(
-        "/Users/Shared/Epic Games/UnrealEngineLauncher/LauncherInstalled.dat",
-    ))
-}
-
-/// No Epic Launcher on Linux — installs are source builds found by convention.
-#[cfg(all(not(windows), not(target_os = "macos")))]
-fn launcher_installs() -> Vec<PathBuf> {
-    Vec::new()
-}
-
-#[cfg(any(windows, target_os = "macos"))]
-fn read_launcher_manifest(path: &Path) -> Vec<PathBuf> {
-    std::fs::read_to_string(path)
+    let Some(manifest) = launcher_manifest_path() else {
+        return Vec::new();
+    };
+    std::fs::read_to_string(manifest)
         .ok()
         .map(|text| parse_launcher_manifest(&text))
         .unwrap_or_default()
+}
+
+/// Where the Epic Games Launcher records what it installed. There is no
+/// launcher on Linux, where installs are source builds found by convention.
+///
+/// The platform choice is a runtime `cfg!` rather than `#[cfg]` so the manifest
+/// parser stays compiled — and unit-tested — on every platform.
+fn launcher_manifest_path() -> Option<PathBuf> {
+    if cfg!(windows) {
+        let program_data = env::var_os("PROGRAMDATA")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(r"C:\ProgramData"));
+        Some(
+            program_data
+                .join("Epic")
+                .join("UnrealEngineLauncher")
+                .join("LauncherInstalled.dat"),
+        )
+    } else if cfg!(target_os = "macos") {
+        Some(PathBuf::from(
+            "/Users/Shared/Epic Games/UnrealEngineLauncher/LauncherInstalled.dat",
+        ))
+    } else {
+        None
+    }
 }
 
 /// Install locations of engine artifacts (`UE_5.8`, ...) in the launcher

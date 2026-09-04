@@ -51,6 +51,7 @@ Rust MCP server (rmcp 3.2) + UE 5.8 C++23 editor plugin (`McpLink`, HTTP on 127.
 - 5.8 automation log shape: `Test Completed. Result={Success|Fail} Name={Short} Path={Full.Dotted.Path}`; per-test events follow completion inside `BeginEvents: <path>` / `EndEvents:`; `Automation List` output is `LogAutomationCommandLine: Display: <tab>Name`.
 
 ## Build & test
+- CI lints on Linux, so a `#[cfg(windows)]`-gated helper whose only callers are also gated becomes dead code there and fails `-D warnings`. Prefer a runtime `cfg!` so every branch stays compiled, and check before pushing with `cargo clippy --lib --target x86_64-unknown-linux-gnu -- -D warnings` (no linker needed for a lib check).
 - Rust: `cargo build`, `cargo test` (28 tests: parser fixtures in `tests/fixtures/`, `*_ue58.log` captured from the real toolchain; contract fixtures in `tests/fixtures/contract/`).
 - Plugin automation tests live in each module's `Private/Tests/` (`McpLink.*`, 14 tests). Run them through the tool itself: `run_tests {"filter": "McpLink"}` (~20s headless). Kill any headless editor first — two plugin instances fight over port 8091.
 - Plugin: `"<UE>\Engine\Build\BatchFiles\Build.bat" McpTestEditor Win64 Development -Project="<repo>\test-project\McpTest.uproject" -WaitMutex`
