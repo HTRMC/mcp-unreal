@@ -13,6 +13,7 @@
 #include "LandscapeInfo.h"
 #include "LandscapeLayerInfoObject.h"
 #include "LandscapeProxy.h"
+#include "Materials/MaterialInterface.h"
 #include "McpAssetUtils.h"
 #include "McpLandscapeUtils.h"
 #include "McpJson.h"

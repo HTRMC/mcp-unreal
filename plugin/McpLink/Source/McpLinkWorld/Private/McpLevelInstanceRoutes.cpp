@@ -5,6 +5,7 @@
 // own level, a Packed Level Actor bakes them into ISM components, and merging
 // collapses them into a single Static Mesh asset.
 
+#include "Components/PrimitiveComponent.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Editor.h"
