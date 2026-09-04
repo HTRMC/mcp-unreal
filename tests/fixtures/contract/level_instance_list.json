@@ -1,0 +1,17 @@
+{
+  "name": "level_instance_list",
+  "description": "level instance actors in the world",
+  "route": "/api/world/instances",
+  "tool": "level_instance_ops",
+  "request": {
+    "operation": "list"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "count": 0,
+      "instances": []
+    }
+  }
+}

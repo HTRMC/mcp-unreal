@@ -27,6 +27,11 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`sublevel_ops` / `world_partition_ops` / `level_instance_ops`** — the world
+  beyond the one level `level_ops` opens. Streaming sublevels (create, add,
+  remove, visibility, locking, current level, level transform, moving actors
+  between levels); World Partition data layers and editor region loading; and
+  Level Instances, Packed Level Actors and actor merging.
 - **`package_project`** — packaging past the end of `cook_project`: RunUAT
   BuildCookRun through compile, cook, stage, pak and archive, with
   dedicated-server targets, distribution builds, IoStore, and deploy-and-run on

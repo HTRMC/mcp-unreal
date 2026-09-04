@@ -120,6 +120,9 @@ fn wire_body(fixture: &Fixture) -> Option<Value> {
         "material_graph" => to_json::<material_graph::MaterialGraphOp>(&fixture.name, req),
         "sequence_ops" => to_json::<sequences::SequenceOp>(&fixture.name, req),
         "landscape_ops" => to_json::<world::LandscapeOp>(&fixture.name, req),
+        "sublevel_ops" => to_json::<world::SublevelOp>(&fixture.name, req),
+        "world_partition_ops" => to_json::<world::WorldPartitionOp>(&fixture.name, req),
+        "level_instance_ops" => to_json::<world::LevelInstanceOp>(&fixture.name, req),
         "foliage_ops" => to_json::<world::FoliageOp>(&fixture.name, req),
         "python_exec" => to_json::<python::PythonExecInput>(&fixture.name, req),
         // `status` probes the plugin with no body of its own.

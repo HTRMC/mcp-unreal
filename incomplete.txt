@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (68 tools, 51 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (71 tools, 54 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -65,12 +65,10 @@ AI
 
 WORLD BUILDING
 --------------
-- World Partition: no data layers, streaming sources, cell/region loading, or
-  actor-to-layer assignment.
-- Sublevels / streaming levels: level_ops handles only the single current level
-  (get_current, list, load, save_current, save_as, save_all, new_level).
-- Level Instances and Packed Level Actors: nothing. No actor merging
-  (MergeActors).
+- World Partition: no streaming sources, no runtime cell inspection, no
+  conversion of a plain map into a partitioned one.
+- Level Instance creation needs a windowed editor (the engine hardcodes a Save
+  As dialog); editing a level instance in place is not exposed.
 - Landscape: no splines, no grass-type wiring, no sculpt/erosion brushes (only
   raw height writes + layer paint), no landscape material tooling.
 - No BSP/geometry editing (only build_level geometry), no modeling-mode tools,
@@ -144,11 +142,11 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. World Partition + sublevels
-2. MetaSounds
-3. EQS / State Trees
-4. Movie Render Queue (rendering a sequence to disk)
-5. Source control
+1. MetaSounds
+2. EQS / State Trees
+3. Movie Render Queue (rendering a sequence to disk)
+4. Source control
+5. Data validation / Map Check / compile-all-Blueprints
 
 
 CLOSED
@@ -167,3 +165,6 @@ CLOSED
   notifies, notify states, tracks, sync markers and curves; skeleton sockets,
   virtual bones and slot groups; skeletal-mesh LODs, material slots and
   sockets; ragdoll generation with per-body and per-constraint editing.
+2026-09-04 — sublevel_ops, world_partition_ops, level_instance_ops: streaming
+  sublevels end to end, World Partition data layers and editor region loading,
+  Level Instances, Packed Level Actors and actor merging.

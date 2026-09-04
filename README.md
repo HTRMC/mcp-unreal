@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (68)
+## Tools (71)
 
 | Area | Tools |
 |---|---|
@@ -44,7 +44,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Blueprints | `blueprint_query`, `blueprint_modify`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
 | Animation | `anim_asset_ops`, `anim_notify_ops`, `skeleton_ops`, `skeletal_mesh_ops`, `physics_asset_ops` |
 | Content | `material_ops`, `material_graph`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
-| World building | `landscape_ops`, `foliage_ops` |
+| World building | `landscape_ops`, `foliage_ops`, `sublevel_ops`, `world_partition_ops`, `level_instance_ops` |
 | AI | `blackboard_ops`, `behavior_tree_ops` |
 | Introspection | `subsystem_query`, `ui_query` |
 | Engine API | `lookup_class`, `search_api` |
@@ -91,6 +91,14 @@ Times cross the wire as display-rate frames or as seconds, interchangeably, and 
 `landscape_ops` creates a landscape at a chosen resolution (quads per section x sections per component x components) and scale, reads and writes heights over any vertex rect, and adds or paints the weightmap layers the landscape material blends. Heights are centimetres of Z relative to the landscape actor in both directions — the uint16 heightmap encoding never crosses the wire — and a sculpt takes either one flat height or one value per vertex, row-major from `min_y`. Writing heights also rebuilds the collision heightfield, so a line trace (or a foliage scatter) sees the new terrain immediately.
 
 `foliage_ops` makes foliage types from Static Meshes, then places instances either at explicit transforms or by scattering a count over an area — each point is dropped onto whatever has collision beneath it, with optional alignment to the surface normal, random yaw, and a scale range with a fixed seed for a repeatable result. Instances can be removed inside a sphere or wholesale. Foliage type settings are ordinary properties on the reported `type` path, so `set_property` edits them.
+
+### Sublevels, World Partition and level instances
+
+`sublevel_ops` is the Levels panel: list the streaming levels under the persistent level with their visibility, lock state, actor count and transform; create a new sublevel or add an existing level asset as always-loaded or dynamic; remove one; choose which level new actors spawn into; move a sublevel and its loaded contents in world space; and move existing actors into it.
+
+`world_partition_ops` handles the other kind of world. It reports whether a map is partitioned at all (safe to ask on any map), creates and deletes data layers — making the Data Layer asset when the path is empty — moves actors in and out of them, sets a layer's editor visibility and loading and its initial runtime state, and loads a world-space region so a partitioned map's actors are actually in memory, which they mostly are not when it first opens.
+
+`level_instance_ops` covers the three ways to treat a group of actors as one: a Level Instance, a Packed Level Actor (contents baked into instanced-mesh components), or `merge_actors`, which collapses their meshes into one Static Mesh and leaves the sources alone. `create` needs a windowed editor — `ULevelInstanceSubsystem` hardcodes a Save As dialog for the new level, and a `-nullrhi` editor is refused rather than left wedged on a dialog it cannot draw.
 
 ### Asset lifecycle
 

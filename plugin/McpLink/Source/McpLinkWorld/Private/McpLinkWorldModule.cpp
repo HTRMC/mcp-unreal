@@ -5,6 +5,9 @@ namespace McpLink
 {
 	void RegisterLandscapeRoutes(FMcpLinkCoreModule& Core);
 	void RegisterFoliageRoutes(FMcpLinkCoreModule& Core);
+	void RegisterStreamingRoutes(FMcpLinkCoreModule& Core);
+	void RegisterPartitionRoutes(FMcpLinkCoreModule& Core);
+	void RegisterLevelInstanceRoutes(FMcpLinkCoreModule& Core);
 }
 
 class FMcpLinkWorldModule : public IModuleInterface
@@ -15,6 +18,9 @@ public:
 		FMcpLinkCoreModule& Core = FMcpLinkCoreModule::Get();
 		McpLink::RegisterLandscapeRoutes(Core);
 		McpLink::RegisterFoliageRoutes(Core);
+		McpLink::RegisterStreamingRoutes(Core);
+		McpLink::RegisterPartitionRoutes(Core);
+		McpLink::RegisterLevelInstanceRoutes(Core);
 	}
 };
 

@@ -1,4 +1,5 @@
-// McpLinkWorld: world-building routes — landscape terrain and foliage scatter.
+// McpLinkWorld: world-building routes — landscape terrain, foliage scatter,
+// sublevels, World Partition data layers, Level Instances and actor merging.
 
 using UnrealBuildTool;
 
@@ -25,7 +26,10 @@ public class McpLinkWorld : ModuleRules
 			"AssetRegistry",
 			"AssetTools",
 			"Landscape",
-			"Foliage"
+			"Foliage",
+			"DataLayerEditor",
+			"MeshMergeUtilities",
+			"MeshUtilities"
 		});
 	}
 }

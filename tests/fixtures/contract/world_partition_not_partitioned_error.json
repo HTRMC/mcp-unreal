@@ -1,0 +1,18 @@
+{
+  "name": "world_partition_not_partitioned_error",
+  "description": "a data layer op on a non-partitioned map is a 409 pointing at sublevel_ops",
+  "route": "/api/world/partition",
+  "tool": "world_partition_ops",
+  "request": {
+    "operation": "create_data_layer",
+    "asset": "/Game/DataLayers/DL_Props"
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "not_partitioned",
+      "message": "'TestMap' is not a World Partition map — its sublevels are the streaming unit, see sublevel_ops"
+    }
+  }
+}

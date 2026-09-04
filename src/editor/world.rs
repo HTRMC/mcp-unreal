@@ -150,6 +150,162 @@ pub enum FoliageOp {
     },
 }
 
+/// Sublevels — the streaming levels layered under the persistent level.
+/// `level_ops` handles the one level open in the editor; this handles the rest.
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum SublevelOp {
+    /// Every streaming level of the world, with its visibility, lock state,
+    /// actor count and level transform.
+    List { world: Option<String> },
+    /// Create a new sublevel and add it to the world.
+    Create {
+        /// Package path for the new level, e.g. /Game/Maps/Sub_Props.
+        path: String,
+        /// "always_loaded" (default) or "dynamic".
+        streaming: Option<String>,
+        location: Option<[f64; 3]>,
+        /// [Pitch, Yaw, Roll].
+        rotation: Option<[f64; 3]>,
+        world: Option<String>,
+    },
+    /// Add an existing level asset to the world as a sublevel.
+    Add {
+        path: String,
+        streaming: Option<String>,
+        location: Option<[f64; 3]>,
+        rotation: Option<[f64; 3]>,
+        world: Option<String>,
+    },
+    Remove {
+        /// Package path or short name from `list`.
+        level: String,
+        world: Option<String>,
+    },
+    SetVisible {
+        level: String,
+        visible: bool,
+        world: Option<String>,
+    },
+    SetLocked {
+        level: String,
+        locked: bool,
+        world: Option<String>,
+    },
+    /// Make this the level new actors are spawned into.
+    SetCurrent { level: String, world: Option<String> },
+    /// Move the sublevel — and everything loaded in it — in world space.
+    SetTransform {
+        level: String,
+        location: Option<[f64; 3]>,
+        rotation: Option<[f64; 3]>,
+        world: Option<String>,
+    },
+    /// Move existing actors out of their level and into this one.
+    MoveActors {
+        level: String,
+        /// Actor paths or editor labels.
+        actors: Vec<String>,
+        world: Option<String>,
+    },
+}
+
+/// World Partition: data layers, and loading regions of a partitioned world.
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum WorldPartitionOp {
+    /// Whether the world is partitioned, its streaming state, and its data
+    /// layers. Safe to call on a non-partitioned world — it says so.
+    Info { world: Option<String> },
+    /// Add a data layer to the world, creating the Data Layer asset if the
+    /// path does not already hold one.
+    CreateDataLayer {
+        /// Data Layer asset path, e.g. /Game/DataLayers/DL_Props.
+        asset: String,
+        world: Option<String>,
+    },
+    DeleteDataLayer {
+        /// Data layer name or asset path, from `info`.
+        data_layer: String,
+        world: Option<String>,
+    },
+    SetDataLayerState {
+        data_layer: String,
+        visible: Option<bool>,
+        /// Whether the layer's actors load in the editor.
+        loaded_in_editor: Option<bool>,
+        /// "Unloaded", "Loaded" or "Activated" at game start.
+        initial_runtime_state: Option<String>,
+        world: Option<String>,
+    },
+    AddActors {
+        data_layer: String,
+        actors: Vec<String>,
+        world: Option<String>,
+    },
+    RemoveActors {
+        data_layer: String,
+        actors: Vec<String>,
+        world: Option<String>,
+    },
+    /// Load the partition cells inside a world-space box so their actors
+    /// become reachable — a partitioned map starts with almost nothing loaded.
+    LoadRegion {
+        min: [f64; 3],
+        max: [f64; 3],
+        world: Option<String>,
+    },
+    /// Release every region this session loaded.
+    UnloadRegion { world: Option<String> },
+}
+
+/// Level Instances, Packed Level Actors and actor merging.
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum LevelInstanceOp {
+    /// Level instance actors in the world.
+    List { world: Option<String> },
+    /// Move actors into their own level and leave an instance behind.
+    /// Needs a windowed editor: the engine hardcodes a Save As dialog for the
+    /// new level, so a `-nullrhi` editor refuses rather than exiting on it.
+    Create {
+        /// Package path for the new level, e.g. /Game/Maps/LI_Shed.
+        path: String,
+        /// Actor paths or editor labels.
+        actors: Vec<String>,
+        /// "level_instance" (default) or "packed" for a Packed Level Actor,
+        /// which bakes the contents into instanced-mesh components.
+        kind: Option<String>,
+        /// Store the level's actors as one file each (World Partition style).
+        external_actors: Option<bool>,
+        world: Option<String>,
+    },
+    /// Dissolve an instance, moving its actors back into the current level.
+    Break {
+        actor: String,
+        /// How many nested levels of instance to break (default 1).
+        levels: Option<i32>,
+        world: Option<String>,
+    },
+    /// Collapse actors' meshes into one Static Mesh asset. The source actors
+    /// are left alone; save the result with asset_ops save.
+    MergeActors {
+        /// Package path for the merged mesh, e.g. /Game/Meshes/SM_Merged.
+        path: String,
+        actors: Vec<String>,
+        /// Carry collision across (default true).
+        merge_physics: Option<bool>,
+        /// Bake the materials into one (default false).
+        merge_materials: Option<bool>,
+        merge_sockets: Option<bool>,
+        generate_lightmap_uvs: Option<bool>,
+        world: Option<String>,
+    },
+}
+
 #[tool_router(router = world_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
@@ -176,5 +332,47 @@ impl UnrealMcp {
         let body =
             serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
         self.call_plugin("/api/world/foliage", body).await.map(Json)
+    }
+
+    #[tool(
+        description = "Sublevels: list the streaming levels under the persistent level with their visibility, lock state and transform; create a new one or add an existing level asset (always-loaded or dynamic streaming); remove one; toggle visibility and locking; choose which level new actors spawn into; move a sublevel and its contents in world space; and move existing actors into it. A World Partition map has no sublevels — use world_partition_ops there."
+    )]
+    async fn sublevel_ops(
+        &self,
+        Parameters(op): Parameters<SublevelOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/world/streaming", body)
+            .await
+            .map(Json)
+    }
+
+    #[tool(
+        description = "World Partition: report whether a world is partitioned and how it streams, create and delete data layers (making the Data Layer asset when needed), move actors in and out of them, set a layer's editor visibility/loading and its initial runtime state, and load or unload a world-space region so a partitioned map's actors are actually in memory — which they largely are not when it first opens."
+    )]
+    async fn world_partition_ops(
+        &self,
+        Parameters(op): Parameters<WorldPartitionOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/world/partition", body)
+            .await
+            .map(Json)
+    }
+
+    #[tool(
+        description = "Level Instances, Packed Level Actors and actor merging — the three ways to treat a group of actors as one thing. create moves actors into their own level and leaves an instance behind (or a Packed Level Actor, which bakes them into instanced-mesh components) — it needs a windowed editor, since the engine always opens a Save As dialog for the new level; break dissolves one again; merge_actors collapses their meshes into a single Static Mesh asset, leaving the sources untouched."
+    )]
+    async fn level_instance_ops(
+        &self,
+        Parameters(op): Parameters<LevelInstanceOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/world/instances", body)
+            .await
+            .map(Json)
     }
 }

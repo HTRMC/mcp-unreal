@@ -1,0 +1,18 @@
+{
+  "name": "world_partition_info_unpartitioned",
+  "description": "info on a plain map says it is not partitioned rather than failing",
+  "route": "/api/world/partition",
+  "tool": "world_partition_ops",
+  "request": {
+    "operation": "info"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "world": "TestMap",
+      "partitioned": false,
+      "note": "not a World Partition map — sublevel_ops handles its streaming"
+    }
+  }
+}

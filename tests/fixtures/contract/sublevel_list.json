@@ -1,0 +1,19 @@
+{
+  "name": "sublevel_list",
+  "description": "the streaming levels under a persistent level",
+  "route": "/api/world/streaming",
+  "tool": "sublevel_ops",
+  "request": {
+    "operation": "list"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "persistent_level": "/Game/Maps/TestMap",
+      "world_partition": false,
+      "count": 0,
+      "levels": []
+    }
+  }
+}
