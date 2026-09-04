@@ -14,6 +14,7 @@
 #include "AnimStateTransitionNode.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "McpResolve.h"
+#include "Misc/PackageName.h"
 #include "UObject/UnrealType.h"
 
 namespace McpLink

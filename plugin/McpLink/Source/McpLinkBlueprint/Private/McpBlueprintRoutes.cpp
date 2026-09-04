@@ -30,6 +30,7 @@
 #include "Misc/PackageName.h"
 #include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
+#include "UObject/Package.h"
 #include "UObject/SavePackage.h"
 
 namespace McpLink

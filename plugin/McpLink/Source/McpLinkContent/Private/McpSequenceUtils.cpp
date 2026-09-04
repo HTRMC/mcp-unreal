@@ -17,6 +17,7 @@
 #include "LevelSequence.h"
 #include "McpAssetUtils.h"
 #include "McpResolve.h"
+#include "Misc/PackageName.h"
 #include "MovieScene.h"
 #include "MovieSceneBinding.h"
 #include "MovieScenePossessable.h"

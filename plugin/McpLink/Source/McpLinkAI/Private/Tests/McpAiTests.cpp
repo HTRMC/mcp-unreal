@@ -23,6 +23,7 @@
 #include "GameFramework/Actor.h"
 #include "McpAiUtils.h"
 #include "McpTestFlags.h"
+#include "Misc/PackageName.h"
 #include "UObject/Package.h"
 
 namespace

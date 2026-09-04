@@ -23,6 +23,7 @@
 #include "McpResolve.h"
 #include "McpResponder.h"
 #include "McpSequenceUtils.h"
+#include "Misc/PackageName.h"
 #include "MovieScene.h"
 #include "MovieSceneBinding.h"
 #include "MovieScenePossessable.h"

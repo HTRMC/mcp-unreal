@@ -16,6 +16,7 @@
 #include "McpLinkEditorRoutes.h"
 #include "McpResolve.h"
 #include "McpResponder.h"
+#include "UObject/Package.h"
 
 namespace McpLink
 {

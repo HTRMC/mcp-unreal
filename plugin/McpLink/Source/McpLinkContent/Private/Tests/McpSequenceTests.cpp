@@ -27,6 +27,7 @@
 #include "Tracks/MovieScene3DTransformTrack.h"
 #include "Tracks/MovieSceneFloatTrack.h"
 #include "Tracks/MovieSceneVectorTrack.h"
+#include "UObject/Package.h"
 #include "WidgetBlueprint.h"
 #include "WidgetBlueprintOperationUtils.h"
 #include "McpTestFlags.h"

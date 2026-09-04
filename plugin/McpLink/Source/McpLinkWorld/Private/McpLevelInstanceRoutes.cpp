@@ -10,6 +10,7 @@
 #include "Editor.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/Actor.h"
 #include "IMeshMergeUtilities.h"
 #include "LevelInstance/LevelInstanceActor.h"

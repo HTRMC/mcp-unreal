@@ -7,6 +7,7 @@
 #include "McpLinkEditorRoutes.h"
 #include "McpResolve.h"
 #include "McpResponder.h"
+#include "Misc/PackageName.h"
 #include "Modules/ModuleManager.h"
 #include "UObject/SoftObjectPath.h"
 

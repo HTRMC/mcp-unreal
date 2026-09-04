@@ -18,6 +18,7 @@
 #include "McpLinkCoreModule.h"
 #include "McpResolve.h"
 #include "McpResponder.h"
+#include "Misc/PackageName.h"
 #include "ScopedTransaction.h"
 #include "Sound/SoundCue.h"
 #include "Sound/SoundNode.h"

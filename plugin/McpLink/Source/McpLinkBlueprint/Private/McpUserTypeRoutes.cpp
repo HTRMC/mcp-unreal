@@ -20,6 +20,7 @@
 #include "McpLinkCoreModule.h"
 #include "McpResolve.h"
 #include "McpResponder.h"
+#include "Misc/PackageName.h"
 #include "ScopedTransaction.h"
 #include "StructUtils/UserDefinedStruct.h"
 #include "UserDefinedStructure/UserDefinedStructEditorData.h"

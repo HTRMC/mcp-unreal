@@ -20,6 +20,7 @@
 #include "McpResponder.h"
 #include "Misc/PackageName.h"
 #include "ScopedTransaction.h"
+#include "UObject/UObjectIterator.h"
 #include "WorldPartition/DataLayer/DataLayerAsset.h"
 #include "WorldPartition/DataLayer/DataLayerInstance.h"
 #include "WorldPartition/DataLayer/DataLayerManager.h"

@@ -10,6 +10,7 @@
 #include "Materials/MaterialFunctionMaterialLayerBlend.h"
 #include "Materials/MaterialLayersFunctions.h"
 #include "McpTestFlags.h"
+#include "UObject/Package.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FMcpMaterialLayerStackTest, "McpLink.Material.LayerStack", McpTestFlags)

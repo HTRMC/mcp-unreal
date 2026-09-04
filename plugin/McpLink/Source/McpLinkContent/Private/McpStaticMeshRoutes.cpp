@@ -19,6 +19,7 @@
 #include "McpLinkCoreModule.h"
 #include "McpResolve.h"
 #include "McpResponder.h"
+#include "Misc/PackageName.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "ScopedTransaction.h"
 #include "StaticMeshEditorSubsystem.h"
