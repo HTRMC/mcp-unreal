@@ -173,9 +173,11 @@ The plugin ships its own automation tests (`McpLink.*`, in each module's `Privat
 CI builds and tests the server on Windows, macOS and Linux. It cannot build the plugin — that needs an Unreal install, which GitHub-hosted runners do not have — so plugin binaries are packaged locally and attached to the release.
 
 ```powershell
-# 1. bump the version in Cargo.toml and plugin/*/*.uplugin, write the CHANGELOG section
-git tag v0.1.0 && git push origin v0.1.0    # Release workflow drafts the release
-pwsh -File tools/publish-release.ps1 -Publish
+# write the release notes under "## [Unreleased]" in CHANGELOG.md first
+pwsh -File tools/bump-version.ps1 0.2.0      # Cargo.toml, every .uplugin, CHANGELOG
+git commit -am "Release v0.2.0"
+git tag v0.2.0 && git push origin main v0.2.0   # Release workflow drafts the release
+pwsh -File tools/publish-release.ps1 -Publish   # packages the plugin, attaches it, publishes
 ```
 
 `tools/package-plugin.ps1` runs `RunUAT BuildPlugin` on each plugin (passing McpLink as a dependency for the interop ones), drops the debug symbols and produces the zip users install.
