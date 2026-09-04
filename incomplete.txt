@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (71 tools, 54 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (76 tools, 59 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -86,21 +86,14 @@ AUDIO
 
 EDITOR WORKFLOW
 ---------------
-- Source control: no P4/Git checkout, submit, revert or status. Assets are
-  written and saved directly, which is why the README says to use source control
-  yourself.
 - The editor UI is read-only: ui_query inspects Slate/UMG trees but nothing
   clicks a button, drags a widget, or opens an asset editor. Input injection is
   PIE-only, not editor-UI.
-- No Data Validation / asset audit / Map Check / "compile all Blueprints" sweep.
-  No reference viewer or size map (only get_asset_info dependencies).
 - Debugging: no Blueprint breakpoints, stepping or watch values. No Gameplay
   Debugger, Visual Logger, or network profiler.
-- No Gameplay Tag editor — tags go through config_ops on the ini, or a tag
-  table.
 - No localization: no gather/compile, no culture management.
-- No curve keyframe editing on Curve assets. You can create the asset;
-  FRichCurve keys have no tool.
+- Source control: no changelist management, no shelving, no diff/history
+  (status, checkout, add, delete, revert, sync and submit are covered).
 
 
 BUILD, PACKAGE, C++
@@ -145,8 +138,8 @@ If picking next work:
 1. MetaSounds
 2. EQS / State Trees
 3. Movie Render Queue (rendering a sequence to disk)
-4. Source control
-5. Data validation / Map Check / compile-all-Blueprints
+4. Render targets / texture creation / thumbnails
+5. Material Functions and Material Layers
 
 
 CLOSED
@@ -168,3 +161,7 @@ CLOSED
 2026-09-04 — sublevel_ops, world_partition_ops, level_instance_ops: streaming
   sublevels end to end, World Partition data layers and editor region loading,
   Level Instances, Packed Level Actors and actor merging.
+2026-09-04 — source_control_ops, validate_ops, gameplay_tag_ops, curve_ops,
+  reference_ops: provider-agnostic source control, Data Validation, Map Check,
+  compile-all-Blueprints, gameplay tags in the project ini, Curve asset keys,
+  and the reference viewer / size map as data.

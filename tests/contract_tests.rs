@@ -124,6 +124,11 @@ fn wire_body(fixture: &Fixture) -> Option<Value> {
         "world_partition_ops" => to_json::<world::WorldPartitionOp>(&fixture.name, req),
         "level_instance_ops" => to_json::<world::LevelInstanceOp>(&fixture.name, req),
         "foliage_ops" => to_json::<world::FoliageOp>(&fixture.name, req),
+        "source_control_ops" => to_json::<workflow::SourceControlOp>(&fixture.name, req),
+        "validate_ops" => to_json::<workflow::ValidateOp>(&fixture.name, req),
+        "gameplay_tag_ops" => to_json::<workflow::GameplayTagOp>(&fixture.name, req),
+        "curve_ops" => to_json::<workflow::CurveOp>(&fixture.name, req),
+        "reference_ops" => to_json::<workflow::ReferenceOp>(&fixture.name, req),
         "python_exec" => to_json::<python::PythonExecInput>(&fixture.name, req),
         // `status` probes the plugin with no body of its own.
         "status" => return None,

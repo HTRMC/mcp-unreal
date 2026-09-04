@@ -1,0 +1,19 @@
+{
+  "name": "validate_map_check",
+  "description": "Map Check error and warning counts for the current level",
+  "route": "/api/workflow/validate",
+  "tool": "validate_ops",
+  "request": {
+    "operation": "map_check"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "world": "TestMap",
+      "errors": 0,
+      "warnings": 0,
+      "message": "counts come from the MapCheck message log; get_output_log shows the text"
+    }
+  }
+}

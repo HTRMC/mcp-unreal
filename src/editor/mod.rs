@@ -23,4 +23,5 @@ pub mod sequences;
 pub mod user_types;
 pub mod utils;
 pub mod widget_blueprints;
+pub mod workflow;
 pub mod world;

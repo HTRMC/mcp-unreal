@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (71)
+## Tools (76)
 
 | Area | Tools |
 |---|---|
@@ -46,6 +46,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Content | `material_ops`, `material_graph`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
 | World building | `landscape_ops`, `foliage_ops`, `sublevel_ops`, `world_partition_ops`, `level_instance_ops` |
 | AI | `blackboard_ops`, `behavior_tree_ops` |
+| Editor workflow | `source_control_ops`, `validate_ops`, `gameplay_tag_ops`, `curve_ops`, `reference_ops` |
 | Introspection | `subsystem_query`, `ui_query` |
 | Engine API | `lookup_class`, `search_api` |
 | Project config | `project_ops`, `config_ops`, `cook_project`, `package_project`, `code_ops` |
@@ -152,6 +153,18 @@ Three optional sibling plugins add route groups for engine systems a project may
 - `niagara_author` builds systems rather than just driving them: create system and emitter assets, add/remove/rename/enable emitters, read the full stack (every emitter's four script stacks with their ordered modules and typed inputs, plus renderers), add and remove modules anywhere in a stack, set literal module input values, and add or remove renderers. `compile` reports each script's status and the actual compile errors — run it after authoring, since that is what surfaces a broken stack. (`ready_to_run` is always false under `-nullrhi`; `compiled` and `errors` are the signal.)
 - `gas_ops` reads an actor's attribute sets (current and base), granted abilities, active effects and owned tags, grants and activates abilities, applies and removes gameplay effects, sets attribute base values and adds loose tags.
 - `pcg_ops` authors PCG graphs (create, add nodes from any of the ~200 settings classes, connect pins, save), attaches components to actors, sets graph, seed and parameters, generates asynchronously and reports the result. Per-node options are ordinary properties on the reported `settings_path`, so `set_property` edits them.
+
+### Editor workflow
+
+`source_control_ops` drives whatever provider the project configured — status per file, check out, mark for add or delete, revert, sync, submit. McpLink writes and saves assets directly, so this is what stops those edits being invisible to a team. `status` is safe to call with source control off; it reports that rather than failing, and every other operation says the same.
+
+`validate_ops` is the pre-ship sweep an agent otherwise has no way to run: Data Validation over named assets or a whole folder, Map Check on the current level, and compiling every Blueprint under a path with the failures named and counted.
+
+`gameplay_tag_ops` lists, adds, renames and removes gameplay tags. They live in the project's tag ini, and only the editor's tag module keeps that ini, the tag manager and the tag sources in step — which is why `config_ops` is the wrong tool for them.
+
+`curve_ops` fills in the Curve assets `asset_ops create` can already make: keys with times, values and per-key interpolation on every channel of a CurveFloat, CurveVector or CurveLinearColor.
+
+`reference_ops` is the Reference Viewer and Size Map as data — what references an asset (what breaks if it goes), what it depends on, and the deduplicated on-disk size of its whole dependency tree with the largest contributors named.
 
 ### Contract fixtures
 

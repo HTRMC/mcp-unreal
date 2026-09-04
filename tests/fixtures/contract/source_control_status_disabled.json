@@ -1,0 +1,20 @@
+{
+  "name": "source_control_status_disabled",
+  "description": "status reports source control being off rather than failing",
+  "route": "/api/workflow/source_control",
+  "tool": "source_control_ops",
+  "request": {
+    "operation": "status"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "enabled": false,
+      "provider": "None",
+      "available": false,
+      "status_text": "Revision control is disabled",
+      "message": "source control is off for this project; every other operation here will say so too"
+    }
+  }
+}

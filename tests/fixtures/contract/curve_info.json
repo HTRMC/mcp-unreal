@@ -1,0 +1,36 @@
+{
+  "name": "curve_info",
+  "description": "a curve asset's channels and their keys",
+  "route": "/api/workflow/curves",
+  "tool": "curve_ops",
+  "request": {
+    "operation": "info",
+    "curve": "/Game/Curves/C_McpDamage"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "curve": "/Game/Curves/C_McpDamage.C_McpDamage",
+      "class": "CurveFloat",
+      "channels": [
+        {
+          "channel": 0,
+          "name": "Value",
+          "keys": [
+            {
+              "time": 0,
+              "value": 0,
+              "interp": "cubic"
+            },
+            {
+              "time": 1,
+              "value": 100,
+              "interp": "linear"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

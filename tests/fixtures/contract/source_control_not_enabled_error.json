@@ -1,0 +1,20 @@
+{
+  "name": "source_control_not_enabled_error",
+  "description": "an operation with no provider is a 409 naming how to connect one",
+  "route": "/api/workflow/source_control",
+  "tool": "source_control_ops",
+  "request": {
+    "operation": "check_out",
+    "files": [
+      "/Game/Anims/AM_McpWalk"
+    ]
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "not_enabled",
+      "message": "source control is not enabled for this project — connect a provider in the editor (Revision Control > Connect), or set it in Saved/Config"
+    }
+  }
+}

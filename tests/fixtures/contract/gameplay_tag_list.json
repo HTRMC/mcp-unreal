@@ -1,0 +1,22 @@
+{
+  "name": "gameplay_tag_list",
+  "description": "gameplay tags filtered by name",
+  "route": "/api/workflow/tags",
+  "tool": "gameplay_tag_ops",
+  "request": {
+    "operation": "list",
+    "name_contains": "McpLink"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "total": 3,
+      "tags": [
+        "McpLink",
+        "McpLink.Test",
+        "McpLink.Test.Alpha"
+      ]
+    }
+  }
+}

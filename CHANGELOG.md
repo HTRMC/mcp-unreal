@@ -27,6 +27,12 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`source_control_ops` / `validate_ops` / `gameplay_tag_ops` / `curve_ops` /
+  `reference_ops`** (new `McpLinkWorkflow` module) — the editor's own
+  housekeeping. Source control through whichever provider the project uses;
+  Data Validation, Map Check and a compile-every-Blueprint sweep; gameplay tags
+  in the project ini; keyframes on Curve assets; and the reference graph behind
+  the Reference Viewer and Size Map.
 - **`sublevel_ops` / `world_partition_ops` / `level_instance_ops`** — the world
   beyond the one level `level_ops` opens. Streaming sublevels (create, add,
   remove, visibility, locking, current level, level transform, moving actors

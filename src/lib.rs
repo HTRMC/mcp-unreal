@@ -66,7 +66,8 @@ impl UnrealMcp {
                 + Self::material_graph_router()
                 + Self::widget_blueprint_router()
                 + Self::sequence_router()
-                + Self::world_router(),
+                + Self::world_router()
+                + Self::workflow_router(),
         }
     }
 
