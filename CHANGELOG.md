@@ -38,6 +38,10 @@ installed as a pair.
   notifies, notify states, notify tracks, sync markers and curves; skeleton
   sockets, virtual bones and slot groups; skeletal-mesh LODs, material slots
   and sockets; and ragdoll generation with per-body and per-constraint editing.
+- **`visual_log_ops`** — the Visual Logger, read back as data rather than drawn
+  on a timeline: record a play session and query the engine's own `UE_VLOG`
+  entries by actor, category or game time, with their log lines, status blocks
+  and shapes.
 - **`texture_ops`** — import-free texture authoring: create a Texture2D from
   base64 BGRA8 pixels or a solid fill, and read, write or flood-fill a
   rectangle of an existing one. Masks, gradients, palettes and lookup tables

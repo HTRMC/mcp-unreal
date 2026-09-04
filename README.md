@@ -29,7 +29,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 
 `pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
 
-## Tools (87)
+## Tools (88)
 
 | Area | Tools |
 |---|---|
@@ -39,7 +39,7 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Reflection | `get_property`, `set_property`, `call_function` |
 | Actors | `get_level_actors`, `spawn_actor`, `delete_actors`, `move_actor`, `get_actor_components`, `editor_ops` |
 | Levels & assets | `level_ops`, `search_assets`, `get_asset_info`, `asset_ops` |
-| Editor | `run_console_command`, `get_output_log`, `capture_viewport`, `build_level`, `perf_ops`, `trace_ops` |
+| Editor | `run_console_command`, `get_output_log`, `capture_viewport`, `build_level`, `perf_ops`, `trace_ops`, `visual_log_ops` |
 | Play | `pie_control`, `player_control`, **`input_inject`** |
 | Blueprints | `blueprint_query`, `blueprint_modify`, `blueprint_debug`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
 | Animation | `anim_asset_ops`, `anim_notify_ops`, `skeleton_ops`, `skeletal_mesh_ops`, `physics_asset_ops` |
@@ -142,6 +142,8 @@ Times cross the wire as display-rate frames or as seconds, interchangeably, and 
 ### Audio
 
 `sound_cue_ops` builds the node tree a Sound Cue plays: `list_node_classes` for what is available with each node's child capacity, then `add_node` (wave players, random, mixer, modulator, attenuation, concatenator, ...) wired under a parent or as the cue's output, plus `connect`, `set_root` and `remove_node`. Node settings are properties on the reported node path. Sound Classes, Submixes, Attenuation and Concurrency assets need no tool of their own — `asset_ops create` plus `set_property` covers them.
+
+`visual_log_ops` reads the Visual Logger as data. `UE_VLOG` is how engine AI, navigation and movement explain themselves — per-actor, per-frame entries carrying log lines, named status blocks and the shapes the Visual Logger window draws — and this exposes that stream instead of the window: start recording, run PIE, then query by actor, category or game time. Only code that calls `UE_VLOG` shows up, and only during a play session; a long line (Mass logs its whole processor graph in one) is cut with the dropped length reported.
 
 ### Builds and performance
 

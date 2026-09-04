@@ -113,6 +113,7 @@ fn wire_body(fixture: &Fixture) -> Option<Value> {
             to_json::<anim_blueprints::AnimBlueprintModify>(&fixture.name, req)
         }
         "chaos_ops" => to_json::<chaos::ChaosOp>(&fixture.name, req),
+        "visual_log_ops" => to_json::<visuallog::VisualLogOp>(&fixture.name, req),
         "texture_ops" => to_json::<content::TextureOp>(&fixture.name, req),
         "metasound_ops" => to_json::<metasound::MetaSoundOp>(&fixture.name, req),
         "movie_render" => to_json::<movierender::MovieRenderOp>(&fixture.name, req),

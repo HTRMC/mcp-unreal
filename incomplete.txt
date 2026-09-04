@@ -1,7 +1,7 @@
 mcp-unreal — gaps
 =================
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (87 tools, 71 plugin routes).
+What this MCP cannot do in UE5 yet, as of 2026-09-04 (88 tools, 72 plugin routes).
 
 "Cannot" here means "has no dedicated tool". Several of these are reachable
 unstructured through the escape hatches — get_property / set_property /
@@ -103,7 +103,11 @@ EDITOR WORKFLOW
   transport: a breakpoint hit enters Slate's debugging loop, which stops
   ticking the HTTP server, so the request that would step or resume can never
   arrive. Breakpoints, watches and live watch values during PIE are covered.
-- No Gameplay Debugger, Visual Logger, or network profiler.
+- No Gameplay Debugger: its categories build their output as strings at draw
+  time, into a canvas context, so there is nothing structured to read without
+  a viewport. No network profiler.
+- Visual Logger entries are read live from a running editor; .bvlog files
+  recorded elsewhere cannot be loaded, and nothing here writes entries.
 - Localization gather/compile run as commandlets (a separate editor process),
   so they cannot be driven from inside a running editor session.
 - Dialogue scripts and their PO import/export are not exposed (text archives
@@ -153,10 +157,10 @@ LARGEST COHERENT HOLES
 ----------------------
 If picking next work:
 
-1. Gameplay Debugger / Visual Logger
-2. Clustering and convex-hull tools for Geometry Collections
-3. Editor UI automation (clicking, dragging, opening asset editors)
-4. Chaos Vehicles, Chaos Cloth and destruction fields
+1. Clustering and convex-hull tools for Geometry Collections
+2. Editor UI automation (clicking, dragging, opening asset editors)
+3. Chaos Vehicles, Chaos Cloth and destruction fields
+4. Source-control changelists, shelving, diff and history
 5. EQS (needs the EQS editor plugin's unexported graph classes)
 
 
@@ -215,3 +219,6 @@ CLOSED
 2026-09-04 — localization_ops: translation editing — list a culture's
   gathered strings with their translations, set one, and export and import
   PO files for translators working outside the editor.
+2026-09-04 — visual_log_ops: the Visual Logger as data — record a play
+  session and query the engine's own UE_VLOG entries by actor, category or
+  game time, with their log lines, status blocks and shapes.

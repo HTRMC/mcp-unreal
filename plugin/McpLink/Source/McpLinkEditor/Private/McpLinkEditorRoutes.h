@@ -12,6 +12,7 @@ namespace McpLink
 	void RegisterConsoleRoutes(FMcpLinkCoreModule& Core);
 	void RegisterEditorOpsRoutes(FMcpLinkCoreModule& Core);
 	void RegisterPerfRoutes(FMcpLinkCoreModule& Core);
+	void RegisterVisualLogRoutes(FMcpLinkCoreModule& Core);
 	void RegisterPieRoutes(FMcpLinkCoreModule& Core);
 	void RegisterCaptureRoutes(FMcpLinkCoreModule& Core);
 	void RegisterIntrospectRoutes(FMcpLinkCoreModule& Core);

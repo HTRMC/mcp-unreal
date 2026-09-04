@@ -1,0 +1,22 @@
+{
+  "name": "visual_log_status",
+  "description": "whether the visual logger is recording and what is buffered",
+  "route": "/api/debug/visual_log",
+  "tool": "visual_log_ops",
+  "request": {
+    "operation": "status"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "recording": true,
+      "listening": true,
+      "entry_count": 3,
+      "dropped": 0,
+      "capacity": 4000,
+      "first_time": 6.223435200750828,
+      "last_time": 6.293247502297163
+    }
+  }
+}

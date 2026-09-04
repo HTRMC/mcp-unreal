@@ -26,6 +26,7 @@ pub mod python;
 pub mod render;
 pub mod sequences;
 pub mod user_types;
+pub mod visuallog;
 pub mod utils;
 pub mod widget_blueprints;
 pub mod workflow;
