@@ -10,6 +10,8 @@ installed as a pair.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-05
+
 ### Added
 
 - **Auto-update.** The server checks the releases page once a day in the
@@ -36,49 +38,6 @@ installed as a pair.
 - `status` now reports a **server/plugin version mismatch** as a hint. The pair
   ships from one release, and a mismatched pair fails as a missing route rather
   than as anything that names a version.
-
-### Fixed
-
-- **The plugin reported a hardcoded version that could never be right.**
-  `MCPLINK_VERSION` was a `#define` in `McpLinkCoreModule.cpp`, and
-  `tools/bump-version.ps1` — which rewrites `Cargo.toml`, every `.uplugin` and
-  the CHANGELOG — had no idea it existed. The first release cut after 0.1.0
-  would have shipped a plugin still calling itself 0.1.0 in `/api/status` and
-  in its startup log, and any version comparison against it would have been
-  comparing against a constant. The version is now read from the plugin
-  descriptor at runtime, so it cannot drift from the file the release process
-  already maintains.
-
-- **Use-after-free when a one-shot delegate unbound itself.** A multicast
-  delegate's `Remove()` destroys the bound lambda *immediately*, even when
-  called from inside that delegate's own broadcast — `FDelegateBase::Unbind`
-  runs the instance's destructor there and then, and only the invocation
-  list's compaction is deferred. Both `pie_control`'s wait-for-PIE handler and
-  `capture_viewport`'s screenshot handler unbound themselves and then went on
-  using their own captures, which by that point lived in freed storage. The
-  crash surfaced as an access violation at `0xffffffffffffffff` inside
-  `FMcpResponder::Send`, which made it look like the responder had been freed;
-  the responder was fine, the `TSharedRef` pointing at it was not. Whether it
-  faulted depended on whether the allocator had reused the memory yet, so a
-  PIE restart — which churns allocations — is where it showed up. The captures
-  are now taken by value or copied to locals before the unbind.
-- Engine discovery also looks in `<drive>:\Epic Games` and at drive roots, so
-  an install moved out of `Program Files` (`D:\UE_5.8`) is found. When nothing
-  is found at all, `status` now says the engine root is a *fallback guess*
-  rather than reporting it like a detection, lists everywhere it searched, and
-  reports `engine_root_source` plus `engine_installs_found` so a wrong root is
-  visible immediately instead of surfacing as a file-not-found from every
-  headless tool in turn.
-- Every route handler now runs with `GIsRunningUnattendedScript` set. Editor
-  code that prompts — asset rename when class defaults or soft references point
-  at the asset, save prompts, "are you sure" — took the modal path, which
-  blocks the game thread forever: the responder never fires, and the request
-  that would cancel it cannot be served either, because the HTTP server ticks
-  on that same thread. A prompt now takes its default answer, so the operation
-  is declined and reported instead of wedging the editor. `asset_ops rename`
-  says so explicitly when that is why it failed.
-
-### Added
 
 - **`eqs_ops`** — Environment Query System authoring: create a query, add
   options with a generator, add, reorder-by-adding, disable and remove their
@@ -264,6 +223,45 @@ installed as a pair.
 
 ### Fixed
 
+- **The plugin reported a hardcoded version that could never be right.**
+  `MCPLINK_VERSION` was a `#define` in `McpLinkCoreModule.cpp`, and
+  `tools/bump-version.ps1` — which rewrites `Cargo.toml`, every `.uplugin` and
+  the CHANGELOG — had no idea it existed. The first release cut after 0.1.0
+  would have shipped a plugin still calling itself 0.1.0 in `/api/status` and
+  in its startup log, and any version comparison against it would have been
+  comparing against a constant. The version is now read from the plugin
+  descriptor at runtime, so it cannot drift from the file the release process
+  already maintains.
+
+- **Use-after-free when a one-shot delegate unbound itself.** A multicast
+  delegate's `Remove()` destroys the bound lambda *immediately*, even when
+  called from inside that delegate's own broadcast — `FDelegateBase::Unbind`
+  runs the instance's destructor there and then, and only the invocation
+  list's compaction is deferred. Both `pie_control`'s wait-for-PIE handler and
+  `capture_viewport`'s screenshot handler unbound themselves and then went on
+  using their own captures, which by that point lived in freed storage. The
+  crash surfaced as an access violation at `0xffffffffffffffff` inside
+  `FMcpResponder::Send`, which made it look like the responder had been freed;
+  the responder was fine, the `TSharedRef` pointing at it was not. Whether it
+  faulted depended on whether the allocator had reused the memory yet, so a
+  PIE restart — which churns allocations — is where it showed up. The captures
+  are now taken by value or copied to locals before the unbind.
+- Engine discovery also looks in `<drive>:\Epic Games` and at drive roots, so
+  an install moved out of `Program Files` (`D:\UE_5.8`) is found. When nothing
+  is found at all, `status` now says the engine root is a *fallback guess*
+  rather than reporting it like a detection, lists everywhere it searched, and
+  reports `engine_root_source` plus `engine_installs_found` so a wrong root is
+  visible immediately instead of surfacing as a file-not-found from every
+  headless tool in turn.
+- Every route handler now runs with `GIsRunningUnattendedScript` set. Editor
+  code that prompts — asset rename when class defaults or soft references point
+  at the asset, save prompts, "are you sure" — took the modal path, which
+  blocks the game thread forever: the responder never fires, and the request
+  that would cancel it cannot be served either, because the HTTP server ticks
+  on that same thread. A prompt now takes its default answer, so the operation
+  is declined and reported instead of wedging the editor. `asset_ops rename`
+  says so explicitly when that is why it failed.
+
 - `spawn_actor` on a volume class (Nav Mesh Bounds, Trigger, Blocking,
   Post Process, ...) produced a brush-less actor that enclosed nothing: a Nav
   Mesh Bounds Volume placed that way built an empty nav mesh, and Map Check
@@ -319,5 +317,6 @@ versions is planned.
   systems or play widget animations; `status` and the affected tools say so.
 - One editor at a time — a second instance cannot bind port 8091.
 
-[Unreleased]: https://github.com/HTRMC/mcp-unreal/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/HTRMC/mcp-unreal/compare/v0.2.0...HEAD
 [0.1.0]: https://github.com/HTRMC/mcp-unreal/releases/tag/v0.1.0
+[0.2.0]: https://github.com/HTRMC/mcp-unreal/releases/tag/v0.2.0
