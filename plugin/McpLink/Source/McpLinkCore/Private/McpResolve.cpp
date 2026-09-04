@@ -1,5 +1,7 @@
 #include "McpResolve.h"
 
+#include "McpResponder.h"
+
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Editor.h"
@@ -51,6 +53,18 @@ namespace McpLink
 			return GEditor->PlayWorld.Get();
 		}
 		return GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+	}
+
+	UWorld* ResolveWorldOrError(
+		const TSharedRef<FJsonObject>& Body, const TSharedRef<FMcpResponder>& Responder)
+	{
+		UWorld* World = ResolveWorld(Body);
+		if (World == nullptr)
+		{
+			Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("pie_not_running"),
+				TEXT("world 'pie' requested but no PIE session is running — start one with pie_control"));
+		}
+		return World;
 	}
 
 	AActor* ResolveActor(UWorld* World, const FString& Spec)

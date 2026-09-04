@@ -24,11 +24,10 @@
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "McpTestFlags.h"
 
 namespace
 {
-	constexpr EAutomationTestFlags McpTestFlags =
-		EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
 
 	const TCHAR* ContractSubPath = TEXT("tests/fixtures/contract");
 

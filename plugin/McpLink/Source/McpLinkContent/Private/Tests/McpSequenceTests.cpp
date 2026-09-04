@@ -29,11 +29,10 @@
 #include "Tracks/MovieSceneVectorTrack.h"
 #include "WidgetBlueprint.h"
 #include "WidgetBlueprintOperationUtils.h"
+#include "McpTestFlags.h"
 
 namespace
 {
-	constexpr EAutomationTestFlags McpTestFlags =
-		EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
 
 	TSharedPtr<FJsonValue> ArrayEntry(const TSharedRef<FJsonObject>& Object, const TCHAR* Field, int32 Index)
 	{

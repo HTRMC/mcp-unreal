@@ -1,10 +1,93 @@
-//! Actor tools: discover, spawn, delete, transform, inspect components.
+//! Actor tools: discover, spawn, delete, transform, inspect components, and
+//! the editor workflow around them (selection, attachment, folders, undo).
 
 use rmcp::handler::server::wrapper::{Json, Parameters};
 use rmcp::{ErrorData, tool, tool_router};
 use serde_json::{Value, json};
 
 use crate::UnrealMcp;
+
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum EditorOp {
+    /// Undo the last transaction — every McpLink edit is one.
+    Undo {},
+    Redo {},
+    /// What undo and redo would do next, and how deep the buffer is.
+    GetHistory {},
+    /// The actors selected in the editor.
+    GetSelection {},
+    /// Select exactly these actors.
+    Select {
+        world: Option<String>,
+        /// Object paths or editor labels.
+        actors: Vec<String>,
+    },
+    ClearSelection {},
+    /// Attach actors to a parent actor, optionally at one of its sockets.
+    Attach {
+        world: Option<String>,
+        actors: Vec<String>,
+        /// Actor to attach to.
+        parent: String,
+        /// Socket or bone on the parent.
+        socket: Option<String>,
+        /// Keep each actor where it is in the world (default true).
+        keep_world_transform: Option<bool>,
+    },
+    Detach {
+        world: Option<String>,
+        actors: Vec<String>,
+        keep_world_transform: Option<bool>,
+    },
+    /// Add a component to one actor *instance*. To give every instance of a
+    /// Blueprint one, use blueprint_modify add_component instead.
+    AddComponent {
+        world: Option<String>,
+        actor: String,
+        /// e.g. "StaticMeshComponent", "PointLightComponent".
+        class: String,
+        name: Option<String>,
+        /// Attach under this existing scene component instead of the root.
+        attach_to: Option<String>,
+    },
+    RemoveComponent {
+        world: Option<String>,
+        actor: String,
+        /// Component name from get_actor_components.
+        component: String,
+    },
+    /// Copy actors, optionally several times with a cumulative offset.
+    Duplicate {
+        world: Option<String>,
+        actors: Vec<String>,
+        /// Offset applied to copy N as offset * N.
+        offset: Option<[f64; 3]>,
+        /// How many copies (default 1).
+        count: Option<i32>,
+    },
+    /// Move actors into an outliner folder ("Lights/Interior"); pass no folder
+    /// to move them back to the root.
+    SetFolder {
+        world: Option<String>,
+        actors: Vec<String>,
+        folder: Option<String>,
+    },
+    /// Rename an actor's editor label.
+    SetLabel {
+        world: Option<String>,
+        actor: String,
+        label: String,
+    },
+    /// Drop actors onto whatever has collision below them.
+    SnapToFloor {
+        world: Option<String>,
+        actors: Vec<String>,
+        /// How far down to look, in cm (default 100000).
+        trace_distance: Option<f64>,
+    },
+}
 
 /// Which world to act on: "auto" (PIE if playing, else editor), "pie", "editor".
 #[derive(serde::Deserialize, schemars::JsonSchema)]
@@ -68,6 +151,18 @@ pub struct ActorComponentsInput {
 
 #[tool_router(router = actor_router, vis = "pub(crate)")]
 impl UnrealMcp {
+    #[tool(
+        description = "Editor workflow on actors: undo and redo (every McpLink edit is a transaction), read and set the selection, attach and detach actors, add or remove a component on one actor instance, duplicate actors, move them into outliner folders, rename them, and snap them to the floor."
+    )]
+    async fn editor_ops(
+        &self,
+        Parameters(op): Parameters<EditorOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/editor/ops", body).await.map(Json)
+    }
+
     #[tool(
         description = "List actors in the current level with class, path, and transform. Use this to discover actor paths for the other tools."
     )]

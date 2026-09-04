@@ -20,12 +20,7 @@
 #include "UObject/UnrealType.h"
 #include "WidgetBlueprint.h"
 #include "WidgetBlueprintOperationUtils.h"
-
-namespace
-{
-	constexpr EAutomationTestFlags McpTestFlags =
-		EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
-}
+#include "McpTestFlags.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FMcpWidgetTreeTest, "McpLink.WidgetBlueprint.TreeAuthoring", McpTestFlags)

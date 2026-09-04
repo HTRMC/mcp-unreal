@@ -27,7 +27,9 @@ input_inject {"operation": "inject_action", "action": "/Game/Input/IA_Move", "va
 input_inject {"operation": "get_state"}   // includes what the engine reports as actually down
 ```
 
-## Tools (50)
+`pie_control start` also takes the Play settings a networked test needs — `players` (client windows), `net_mode` (`standalone`, `listen_server`, `client`), `dedicated_server` and `one_process` — plus a spawn `location` / `rotation`, so multi-client sessions are reachable by the same tools.
+
+## Tools (59)
 
 | Area | Tools |
 |---|---|
@@ -35,13 +37,14 @@ input_inject {"operation": "get_state"}   // includes what the engine reports as
 | Build (headless) | `build_project`, `generate_project_files` |
 | Tests (headless) | `run_tests`, `run_visual_tests`, `list_tests`, `get_test_log` |
 | Reflection | `get_property`, `set_property`, `call_function` |
-| Actors | `get_level_actors`, `spawn_actor`, `delete_actors`, `move_actor`, `get_actor_components` |
-| Levels & assets | `level_ops`, `search_assets`, `get_asset_info` |
-| Editor | `run_console_command`, `get_output_log`, `capture_viewport` |
+| Actors | `get_level_actors`, `spawn_actor`, `delete_actors`, `move_actor`, `get_actor_components`, `editor_ops` |
+| Levels & assets | `level_ops`, `search_assets`, `get_asset_info`, `asset_ops` |
+| Editor | `run_console_command`, `get_output_log`, `capture_viewport`, `build_level`, `perf_ops` |
 | Play | `pie_control`, `player_control`, **`input_inject`** |
 | Blueprints | `blueprint_query`, `blueprint_modify`, `anim_blueprint_query`, `anim_blueprint_modify`, `widget_blueprint_query`, `widget_blueprint_modify` |
-| Content | `material_ops`, `material_graph`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops` |
+| Content | `material_ops`, `material_graph`, `texture_info`, `data_table_ops`, `input_asset_ops`, `ism_ops`, `sequence_ops`, `static_mesh_ops`, `sound_cue_ops`, `user_type_ops` |
 | World building | `landscape_ops`, `foliage_ops` |
+| AI | `blackboard_ops`, `behavior_tree_ops` |
 | Introspection | `subsystem_query`, `ui_query` |
 | Engine API | `lookup_class`, `search_api` |
 | Project config | `project_ops`, `config_ops`, `cook_project` |
@@ -60,7 +63,11 @@ search_api   {"pattern": "InjectInputForAction", "module": "EnhancedInput"}
 
 ### Blueprint editing
 
-`blueprint_modify` spawns nodes through `FGraphNodeCreator` and configures them before finalizing, so a `call_function` node comes back with the target function's real pins. Connections go through the graph schema, so type-incompatible links are refused with a reason rather than silently corrupting the graph. Every edit is undo-able in the editor.
+`blueprint_modify` spawns nodes through `FGraphNodeCreator` and configures them *before* finalizing, so a node comes back with real pins: a `call_function` with the target function's signature, a `make_struct` with one pin per member, a `switch_enum` with one case per enumerator, a `macro` with the macro's tunnel pins. The vocabulary covers calls and parent calls, variable get/set, event overrides, custom events and component-bound events, branch, sequence, select and the four switches, macros from any library (`ForEachLoop`, `DoOnce`, `IsValid`, ... — an unknown name comes back with the list), casts, spawn actor, struct make/break, array/set/map literals, timelines, the delegate family, reroutes and comments.
+
+Structure is editable too: components on the construction-script tree, function parameters and return values (the return node is created on demand), local variables, interfaces, event dispatchers with their signatures, the parent class, and variable types including containers (`array<int>`, `set<name>`, `map<name,float>`), structs, enums and soft references.
+
+Connections go through the graph schema, so type-incompatible links are refused with a reason rather than silently corrupting the graph. Every edit is undo-able in the editor.
 
 ### Animation Blueprints
 
@@ -83,6 +90,34 @@ Times cross the wire as display-rate frames or as seconds, interchangeably, and 
 `landscape_ops` creates a landscape at a chosen resolution (quads per section x sections per component x components) and scale, reads and writes heights over any vertex rect, and adds or paints the weightmap layers the landscape material blends. Heights are centimetres of Z relative to the landscape actor in both directions — the uint16 heightmap encoding never crosses the wire — and a sculpt takes either one flat height or one value per vertex, row-major from `min_y`. Writing heights also rebuilds the collision heightfield, so a line trace (or a foliage scatter) sees the new terrain immediately.
 
 `foliage_ops` makes foliage types from Static Meshes, then places instances either at explicit transforms or by scattering a count over an area — each point is dropped onto whatever has collision beneath it, with optional alignment to the surface normal, random yaw, and a scale range with a fixed seed for a repeatable result. Instances can be removed inside a sphere or wholesale. Foliage type settings are ordinary properties on the reported `type` path, so `set_property` edits them.
+
+### Asset lifecycle
+
+`asset_ops` is the content browser as an API. `create` makes an empty asset of any class that has a "create new" factory — Data Assets, Curve assets, Curve Tables, String Tables, User-Defined Structs and Enums — and `factory_properties` configures the factory first (a Blueprint's `ParentClass`, a Data Asset's `DataAssetClass`). `import` runs the automated importer on files from disk (FBX, glTF, OBJ, images, audio, CSV) with no dialog, and `reimport` re-runs one from its recorded source or a new file. `rename`, `move`, `duplicate` and `delete` go through `IAssetTools` so every reference is fixed up, and `fixup_redirectors` clears the redirectors a rename leaves behind. Folders, metadata tags, `export` and `save` / `save_all` round it out.
+
+### Editor workflow
+
+`editor_ops` covers what a person does with the mouse: `undo` and `redo` (every McpLink edit is a transaction, and `get_history` names what each would do), reading and setting the **selection**, `attach` / `detach` between actors with a socket, `add_component` / `remove_component` on one actor *instance*, `duplicate` with a repeated offset, outliner `set_folder`, `set_label`, and `snap_to_floor`, which drops actors onto whatever has collision beneath them and reports the ones that had nothing below.
+
+### AI: Behavior Trees and Blackboards
+
+`blackboard_ops` creates a Blackboard and adds, retypes and removes keys — `bool`, `int`, `float`, `string`, `name`, `vector`, `rotator`, `object:<Class>`, `class:<Class>`, `enum:<Enum>` — and can point one at a parent blackboard to inherit keys.
+
+`behavior_tree_ops` authors the tree the way the Behavior Tree editor does: it builds the asset's `BTGraph` (with its Root node) and lets `UBehaviorTreeGraph::UpdateAsset` compile that into the runtime tree, because a runtime tree written directly is discarded the next time the asset is opened. `list_node_classes` enumerates every task, composite, decorator and service the project has, native or Blueprint — start there. Composites and tasks are wired as children; decorators and services attach to a node as sub-nodes. `compile` reports whether the graph actually produced a root, which is the difference between a tree that runs and one that silently does nothing. Node settings are properties on the `instance` path `get_tree` reports.
+
+### Static meshes
+
+`static_mesh_ops` drives `UStaticMeshEditorSubsystem`, so LOD generation runs the real reduction module and `add_convex_collision` runs the real convex decomposition. It reports LODs with vertex counts and screen sizes, material slots, sockets, Nanite settings and collision counts; generates or removes a LOD chain or applies a project LOD group; adds simple (box/sphere/capsule/K-DOP) or convex collision; toggles Nanite and lightmap UV generation; and adds, moves and removes sockets.
+
+### Audio
+
+`sound_cue_ops` builds the node tree a Sound Cue plays: `list_node_classes` for what is available with each node's child capacity, then `add_node` (wave players, random, mixer, modulator, attenuation, concatenator, ...) wired under a parent or as the cue's output, plus `connect`, `set_root` and `remove_node`. Node settings are properties on the reported node path. Sound Classes, Submixes, Attenuation and Concurrency assets need no tool of their own — `asset_ops create` plus `set_property` covers them.
+
+### Builds and performance
+
+`build_level` runs the editor's Build menu through its own entry point (`FEditorBuildUtils`): static lighting, navigation mesh, BSP geometry, Hierarchical LODs, reflection captures, texture streaming, virtual textures and landscapes. Everything except lighting finishes before the call returns; lighting hands off to a Lightmass process, so poll `get_output_log` for it.
+
+`perf_ops` is the structured readback `stat fps` cannot give, because that draws to the viewport: it samples the real frame time over a window of frames and returns average, median, min, max and p99 in milliseconds, reads process memory, and starts or stops an Unreal Insights trace.
 
 ### Interop plugins: Niagara, Gameplay Abilities, PCG
 

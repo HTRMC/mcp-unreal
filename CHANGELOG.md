@@ -10,6 +10,61 @@ installed as a pair.
 
 ## [Unreleased]
 
+### Added
+
+- **`asset_ops`** — the asset lifecycle that was missing entirely: create any
+  factory-backed asset class (Data Assets, Curves, Curve Tables, String Tables,
+  User-Defined Structs and Enums) with optional factory configuration; import
+  and reimport source files from disk through the automated importer, so no
+  dialog appears; rename, move, duplicate and delete with full reference
+  fixup; save individual assets or every dirty package; create, rename, list
+  and delete content folders; fix up redirectors; export; read and write
+  metadata tags.
+- **`user_type_ops`** — members of User-Defined Structs and entries of
+  User-Defined Enums: add, rename, retype, default and remove.
+- **`blackboard_ops` / `behavior_tree_ops`** (new `McpLinkAI` module) — author
+  Blackboards (keys of every type, parent inheritance) and Behavior Trees. The
+  tree is built through the editor graph and compiled into the runtime tree the
+  way the Behavior Tree editor does, so the result survives being reopened;
+  `list_node_classes` discovers every task, composite, decorator and service the
+  project has.
+- **`sound_cue_ops`** — Sound Cue node trees: discover SoundNode classes, add
+  and wire nodes, choose the output node.
+- **`static_mesh_ops`** — LOD generation and LOD groups, simple and
+  convex-decomposition collision, Nanite settings, lightmap UV generation,
+  sockets and material slots, through `UStaticMeshEditorSubsystem`.
+- **`editor_ops`** — undo and redo (with the name of the transaction each would
+  affect), selection, actor attach/detach, per-instance components, duplication
+  with offsets, outliner folders, labels, and snap-to-floor.
+- **`build_level`** — the editor's Build menu through `FEditorBuildUtils`:
+  lighting, navigation, geometry, HLOD, reflection captures, texture streaming,
+  virtual textures and landscapes.
+- **`perf_ops`** — the structured performance readback `stat fps` cannot give:
+  real frame-time distribution (average, median, min, max, p99), process
+  memory, and Unreal Insights trace start/stop.
+- **`blueprint_modify`** node vocabulary grown from 5 node types to more than
+  30 — casts, macros from any library, spawn actor, struct make/break,
+  containers, select, all four switches, timelines, event overrides,
+  component-bound events, the delegate family, reroutes and comments — plus
+  Blueprint structure: components on the construction-script tree, function
+  parameters and return values, local variables, interfaces, event dispatchers
+  with signatures, and reparenting.
+- Blueprint variable types now cover containers (`array<int>`, `set<name>`,
+  `map<name,float>`), structs, enums, soft object/class and interface
+  references.
+- `pie_control start` takes multiplayer options — client count, net mode,
+  dedicated server, one-process — and a spawn transform.
+- `tools/scan-unity-collisions.py`, run in CI: catches two files in one plugin
+  module declaring the same anonymous-namespace helper, which adaptive unity
+  builds turn into an error that appears only on some machines.
+
+### Fixed
+
+- Duplicate anonymous-namespace helpers (`McpTestFlags`, `IntOr`) broke the
+  plugin build depending on which files had been edited most recently. They now
+  live in `McpLinkCore` (`McpTestFlags.h`, `McpJson.h`), along with a shared
+  `ResolveWorldOrError`.
+
 ## [0.1.0] - 2026-09-04
 
 First public release. Requires **Unreal Engine 5.8**; support for other UE 5

@@ -8,12 +8,7 @@
 
 #include "InputCoreTypes.h"
 #include "McpInputState.h"
-
-namespace
-{
-	constexpr EAutomationTestFlags McpTestFlags =
-		EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
-}
+#include "McpTestFlags.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMcpInputKeysTest, "McpLink.Input.State.Keys", McpTestFlags)
 bool FMcpInputKeysTest::RunTest(const FString& Parameters)

@@ -24,11 +24,10 @@
 #include "McpAnimBlueprintUtils.h"
 #include "McpBlueprintUtils.h"
 #include "UObject/Package.h"
+#include "McpTestFlags.h"
 
 namespace
 {
-	constexpr EAutomationTestFlags McpTestFlags =
-		EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
 
 	const TCHAR* TutorialSkeleton =
 		TEXT("/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_Skeleton.TutorialTPP_Skeleton");

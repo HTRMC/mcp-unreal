@@ -13,12 +13,7 @@
 #include "Landscape.h"
 #include "LandscapeInfo.h"
 #include "McpLandscapeUtils.h"
-
-namespace
-{
-	constexpr EAutomationTestFlags McpTestFlags =
-		EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
-}
+#include "McpTestFlags.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FMcpLandscapeTest, "McpLink.World.Landscape", McpTestFlags)

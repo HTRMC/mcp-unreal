@@ -69,11 +69,18 @@ jobs:
       - name: Clippy
         run: cargo clippy --locked --all-targets -- -D warnings
 
-  plugin-descriptors:
-    name: plugin descriptors
+  plugin-source:
+    name: plugin source checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Adaptive unity builds merge whichever plugin .cpp files were not edited
+      # recently into one translation unit, so two anonymous-namespace helpers
+      # sharing a name break the build on some machines and not others. Catch
+      # that here rather than on whoever builds next.
+      - name: Scan for unity-build name collisions
+        run: python3 tools/scan-unity-collisions.py
 
       # The .uplugin files gate which engine a user can install the plugin on,
       # so a malformed or version-less descriptor must not reach a release.

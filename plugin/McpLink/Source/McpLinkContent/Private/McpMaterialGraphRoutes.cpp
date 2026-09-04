@@ -225,7 +225,7 @@ namespace McpLink
 			return Data;
 		}
 
-		void MarkChanged(UMaterial* Material)
+		void MarkMaterialChanged(UMaterial* Material)
 		{
 			Material->MarkPackageDirty();
 		}
@@ -311,7 +311,7 @@ namespace McpLink
 							TEXT("CreateMaterialExpression returned null"));
 						return;
 					}
-					MarkChanged(Material);
+					MarkMaterialChanged(Material);
 					const TSharedRef<FJsonObject> Data = ExpressionToJson(Expression);
 					Data->SetStringField(TEXT("message"),
 						TEXT("set its options with set_property on 'path' (e.g. Constant, DefaultValue, ParameterName, Texture)"));
@@ -325,7 +325,7 @@ namespace McpLink
 					if (!Expression) { return; }
 					const FString Name = Expression->GetName();
 					UMaterialEditingLibrary::DeleteMaterialExpression(Material, Expression);
-					MarkChanged(Material);
+					MarkMaterialChanged(Material);
 					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
 					Data->SetStringField(TEXT("removed"), Name);
 					Responder->Ok(Data);
@@ -386,7 +386,7 @@ namespace McpLink
 								*To->GetName(), *ToInput, *To->GetName(), *FString::Join(InputNames, TEXT(", "))));
 						return;
 					}
-					MarkChanged(Material);
+					MarkMaterialChanged(Material);
 					Responder->Ok(ExpressionToJson(To));
 					return;
 				}
@@ -430,7 +430,7 @@ namespace McpLink
 						Input->Expression = nullptr;
 						Input->OutputIndex = 0;
 					}
-					MarkChanged(Material);
+					MarkMaterialChanged(Material);
 					Responder->Ok(GraphToJson(Material));
 					return;
 				}
@@ -438,7 +438,7 @@ namespace McpLink
 				if (Operation == TEXT("layout"))
 				{
 					UMaterialEditingLibrary::LayoutMaterialExpressions(Material);
-					MarkChanged(Material);
+					MarkMaterialChanged(Material);
 					Responder->Ok(GraphToJson(Material));
 					return;
 				}

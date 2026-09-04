@@ -6,6 +6,9 @@
 // MakeLinkTo directly, and wraps every mutation in a transaction.
 
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "BlueprintEditorLibrary.h"
+#include "Components/ActorComponent.h"
+#include "Components/SceneComponent.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "EdGraph/EdGraph.h"
@@ -15,11 +18,8 @@
 #include "Engine/Blueprint.h"
 #include "Engine/SCS_Node.h"
 #include "Engine/SimpleConstructionScript.h"
-#include "K2Node_CallFunction.h"
-#include "K2Node_CustomEvent.h"
-#include "K2Node_IfThenElse.h"
-#include "K2Node_VariableGet.h"
-#include "K2Node_VariableSet.h"
+#include "K2Node_FunctionEntry.h"
+#include "K2Node_FunctionResult.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "McpBlueprintUtils.h"
@@ -72,6 +72,13 @@ namespace McpLink
 						*GraphName, *Blueprint->GetName()));
 			}
 			return Graph;
+		}
+
+		FString StringOr(
+			const TSharedRef<FJsonObject>& Body, const TCHAR* Field, const TCHAR* Default)
+		{
+			FString Value;
+			return Body->TryGetStringField(Field, Value) && !Value.IsEmpty() ? Value : FString(Default);
 		}
 
 		void MarkModified(UBlueprint* Blueprint, bool bStructural)
@@ -202,6 +209,24 @@ namespace McpLink
 						}
 					}
 					Data->SetArrayField(TEXT("components"), Components);
+
+					TArray<TSharedPtr<FJsonValue>> Interfaces;
+					for (const FBPInterfaceDescription& Interface : Blueprint->ImplementedInterfaces)
+					{
+						if (const UClass* Class = Interface.Interface.Get())
+						{
+							Interfaces.Add(MakeShared<FJsonValueString>(Class->GetPathName()));
+						}
+					}
+					Data->SetArrayField(TEXT("interfaces"), Interfaces);
+
+					TArray<TSharedPtr<FJsonValue>> Dispatchers;
+					for (const FName& Name : UBlueprintEditorLibrary::ListEventDispatchers(Blueprint))
+					{
+						Dispatchers.Add(MakeShared<FJsonValueString>(Name.ToString()));
+					}
+					Data->SetArrayField(TEXT("event_dispatchers"), Dispatchers);
+
 					Responder->Ok(Data);
 					return;
 				}
@@ -405,111 +430,17 @@ namespace McpLink
 					UEdGraph* Graph = GraphOrError(Blueprint, Body, Responder);
 					if (!Graph) { return; }
 
-					FString NodeType;
-					Body->TryGetStringField(TEXT("node_type"), NodeType);
-					const int32 PosX = static_cast<int32>(
-						Body->HasTypedField<EJson::Number>(TEXT("x")) ? Body->GetNumberField(TEXT("x")) : 0.0);
-					const int32 PosY = static_cast<int32>(
-						Body->HasTypedField<EJson::Number>(TEXT("y")) ? Body->GetNumberField(TEXT("y")) : 0.0);
-
-					UEdGraphNode* Created = nullptr;
+					// The node vocabulary lives in McpBlueprintNodes.cpp.
 					FString Failure;
-
-					if (NodeType.Equals(TEXT("call_function"), ESearchCase::IgnoreCase))
-					{
-						FString FunctionName, ClassSpec;
-						Body->TryGetStringField(TEXT("function"), FunctionName);
-						Body->TryGetStringField(TEXT("class"), ClassSpec);
-						UClass* OwnerClass = ClassSpec.IsEmpty()
-							? (Blueprint->GeneratedClass ? Blueprint->GeneratedClass.Get()
-														 : Blueprint->ParentClass.Get())
-							: ResolveClass(ClassSpec);
-						UFunction* Function =
-							OwnerClass ? OwnerClass->FindFunctionByName(FName(*FunctionName)) : nullptr;
-						if (Function == nullptr && !ClassSpec.IsEmpty())
-						{
-							Failure = FString::Printf(
-								TEXT("class '%s' has no function '%s'"), *ClassSpec, *FunctionName);
-						}
-						else if (Function == nullptr)
-						{
-							Failure = FString::Printf(
-								TEXT("no function '%s' on this Blueprint or its parent — pass 'class' to target another type"),
-								*FunctionName);
-						}
-						else
-						{
-							FGraphNodeCreator<UK2Node_CallFunction> Creator(*Graph);
-							UK2Node_CallFunction* Node = Creator.CreateNode();
-							// Configure BEFORE Finalize so pins are allocated
-							// from the real signature.
-							Node->SetFromFunction(Function);
-							Creator.Finalize();
-							Created = Node;
-						}
-					}
-					else if (NodeType.Equals(TEXT("variable_get"), ESearchCase::IgnoreCase)
-						|| NodeType.Equals(TEXT("variable_set"), ESearchCase::IgnoreCase))
-					{
-						FString VarName;
-						Body->TryGetStringField(TEXT("variable"), VarName);
-						UClass* Scope = Blueprint->GeneratedClass
-							? Blueprint->GeneratedClass.Get()
-							: Blueprint->ParentClass.Get();
-						if (VarName.IsEmpty())
-						{
-							Failure = TEXT("'variable' is required for variable_get/variable_set");
-						}
-						else if (NodeType.Equals(TEXT("variable_get"), ESearchCase::IgnoreCase))
-						{
-							FGraphNodeCreator<UK2Node_VariableGet> Creator(*Graph);
-							UK2Node_VariableGet* Node = Creator.CreateNode();
-							Node->VariableReference.SetSelfMember(FName(*VarName));
-							Creator.Finalize();
-							Created = Node;
-						}
-						else
-						{
-							FGraphNodeCreator<UK2Node_VariableSet> Creator(*Graph);
-							UK2Node_VariableSet* Node = Creator.CreateNode();
-							Node->VariableReference.SetSelfMember(FName(*VarName));
-							Creator.Finalize();
-							Created = Node;
-						}
-						(void)Scope;
-					}
-					else if (NodeType.Equals(TEXT("branch"), ESearchCase::IgnoreCase))
-					{
-						FGraphNodeCreator<UK2Node_IfThenElse> Creator(*Graph);
-						UK2Node_IfThenElse* Node = Creator.CreateNode();
-						Creator.Finalize();
-						Created = Node;
-					}
-					else if (NodeType.Equals(TEXT("custom_event"), ESearchCase::IgnoreCase))
-					{
-						FString EventName;
-						Body->TryGetStringField(TEXT("name"), EventName);
-						FGraphNodeCreator<UK2Node_CustomEvent> Creator(*Graph);
-						UK2Node_CustomEvent* Node = Creator.CreateNode();
-						Node->CustomFunctionName = FName(*(EventName.IsEmpty() ? TEXT("NewEvent") : EventName));
-						Creator.Finalize();
-						Created = Node;
-					}
-					else
-					{
-						Failure = FString::Printf(
-							TEXT("unknown node_type '%s' — use call_function, variable_get, variable_set, branch, or custom_event"),
-							*NodeType);
-					}
-
+					UEdGraphNode* Created = CreateGraphNode(Blueprint, Graph, Body, Failure);
 					if (Created == nullptr)
 					{
 						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("node_not_created"),
 							Failure.IsEmpty() ? TEXT("node creation failed") : Failure);
 						return;
 					}
-					Created->NodePosX = PosX;
-					Created->NodePosY = PosY;
+					Created->NodePosX = IntOr(Body, TEXT("x"), 0);
+					Created->NodePosY = IntOr(Body, TEXT("y"), 0);
 					MarkModified(Blueprint, true);
 					Responder->Ok(NodeToJson(Created));
 					return;
@@ -642,11 +573,451 @@ namespace McpLink
 					return;
 				}
 
+				// ---- components (the Simple Construction Script tree) ----
+				if (Operation == TEXT("add_component") || Operation == TEXT("remove_component"))
+				{
+					USimpleConstructionScript* Scs = Blueprint->SimpleConstructionScript;
+					if (Scs == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("no_component_tree"),
+							TEXT("only Actor Blueprints have a component tree"));
+						return;
+					}
+					FString Name;
+					if (!Body->TryGetStringField(TEXT("name"), Name) || Name.IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'name' is required — the component's variable name"));
+						return;
+					}
+
+					if (Operation == TEXT("remove_component"))
+					{
+						USCS_Node* Node = Scs->FindSCSNode(FName(*Name));
+						if (Node == nullptr)
+						{
+							Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("component_not_found"),
+								FString::Printf(TEXT("no component '%s' — blueprint_query inspect lists them"), *Name));
+							return;
+						}
+						Scs->RemoveNodeAndPromoteChildren(Node);
+						MarkModified(Blueprint, true);
+						const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+						Data->SetStringField(TEXT("removed"), Name);
+						Responder->Ok(Data);
+						return;
+					}
+
+					FString ClassSpec;
+					if (!Body->TryGetStringField(TEXT("class"), ClassSpec) || ClassSpec.IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'class' is required, e.g. StaticMeshComponent, /Script/Engine.PointLightComponent"));
+						return;
+					}
+					UClass* ComponentClass = ResolveClass(ClassSpec);
+					if (ComponentClass == nullptr
+						|| !ComponentClass->IsChildOf(UActorComponent::StaticClass())
+						|| ComponentClass->HasAnyClassFlags(CLASS_Abstract))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_class"),
+							FString::Printf(
+								TEXT("'%s' is not a concrete ActorComponent subclass"), *ClassSpec));
+						return;
+					}
+					// Resolve the parent first: a failed lookup after CreateNode
+					// would leave an orphaned node behind.
+					USCS_Node* Parent = nullptr;
+					FString ParentName;
+					if (Body->TryGetStringField(TEXT("parent"), ParentName) && !ParentName.IsEmpty())
+					{
+						Parent = Scs->FindSCSNode(FName(*ParentName));
+						if (Parent == nullptr)
+						{
+							Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("component_not_found"),
+								FString::Printf(TEXT("no parent component '%s'"), *ParentName));
+							return;
+						}
+						if (!ComponentClass->IsChildOf(USceneComponent::StaticClass()))
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_parent"),
+								TEXT("only scene components can be attached to another component"));
+							return;
+						}
+					}
+					USCS_Node* NewNode = Scs->CreateNode(ComponentClass, FName(*Name));
+					if (NewNode == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("add_failed"),
+							FString::Printf(TEXT("could not create a %s component"), *ClassSpec));
+						return;
+					}
+					if (Parent != nullptr)
+					{
+						Parent->AddChildNode(NewNode);
+					}
+					else
+					{
+						Scs->AddNode(NewNode);
+					}
+					MarkModified(Blueprint, true);
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					// CreateNode uniquifies the name, so report what it settled on.
+					Data->SetStringField(TEXT("component"), NewNode->GetVariableName().ToString());
+					Data->SetStringField(TEXT("class"), ComponentClass->GetPathName());
+					Data->SetStringField(TEXT("template"),
+						NewNode->ComponentTemplate ? NewNode->ComponentTemplate->GetPathName() : TEXT(""));
+					if (Parent != nullptr)
+					{
+						Data->SetStringField(TEXT("parent"), Parent->GetVariableName().ToString());
+					}
+					Responder->Ok(Data);
+					return;
+				}
+
+				// ---- parent class ----
+				if (Operation == TEXT("set_parent_class"))
+				{
+					FString ClassSpec;
+					if (!Body->TryGetStringField(TEXT("parent_class"), ClassSpec) || ClassSpec.IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'parent_class' is required"));
+						return;
+					}
+					UClass* NewParent = ResolveClass(ClassSpec);
+					if (NewParent == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("unknown_class"),
+							FString::Printf(TEXT("no class '%s'"), *ClassSpec));
+						return;
+					}
+					if (Blueprint->GeneratedClass != nullptr
+						&& NewParent->IsChildOf(Blueprint->GeneratedClass))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("circular_parent"),
+							TEXT("a Blueprint cannot inherit from itself or one of its own children"));
+						return;
+					}
+					if (!FKismetEditorUtilities::CanCreateBlueprintOfClass(NewParent))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_parent"),
+							FString::Printf(
+								TEXT("'%s' cannot be a Blueprint parent"), *NewParent->GetName()));
+						return;
+					}
+					UBlueprintEditorLibrary::ReparentBlueprint(Blueprint, NewParent);
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("parent_class"),
+						Blueprint->ParentClass ? Blueprint->ParentClass->GetPathName() : TEXT(""));
+					Responder->Ok(Data);
+					return;
+				}
+
+				// ---- variable type ----
+				if (Operation == TEXT("set_variable_type"))
+				{
+					FString VarName, TypeName;
+					Body->TryGetStringField(TEXT("name"), VarName);
+					Body->TryGetStringField(TEXT("type"), TypeName);
+					if (VarName.IsEmpty() || TypeName.IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'name' and 'type' are required"));
+						return;
+					}
+					FEdGraphPinType PinType;
+					FString TypeError;
+					if (!MakePinType(TypeName, PinType, TypeError))
+					{
+						Responder->Error(
+							EHttpServerResponseCodes::BadRequest, TEXT("unknown_type"), TypeError);
+						return;
+					}
+					UBlueprintEditorLibrary::ChangeMemberVariableType(Blueprint, FName(*VarName), PinType);
+					MarkModified(Blueprint, true);
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("variable"), VarName);
+					Data->SetStringField(TEXT("type"), TypeName);
+					Responder->Ok(Data);
+					return;
+				}
+
+				// ---- interfaces ----
+				if (Operation == TEXT("add_interface") || Operation == TEXT("remove_interface"))
+				{
+					FString ClassSpec;
+					if (!Body->TryGetStringField(TEXT("interface"), ClassSpec) || ClassSpec.IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'interface' is required, e.g. /Script/Engine.AbilitySystemInterface or a BPI asset path"));
+						return;
+					}
+					UClass* Interface = ResolveClass(ClassSpec);
+					if (Interface == nullptr || !Interface->HasAnyClassFlags(CLASS_Interface))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_interface"),
+							FString::Printf(TEXT("'%s' is not an interface class"), *ClassSpec));
+						return;
+					}
+					if (Operation == TEXT("remove_interface"))
+					{
+						const bool bPreserve = BoolOr(Body, TEXT("preserve_functions"), false);
+						FBlueprintEditorUtils::RemoveInterface(
+							Blueprint, Interface->GetClassPathName(), bPreserve);
+						MarkModified(Blueprint, true);
+						const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+						Data->SetStringField(TEXT("removed"), Interface->GetPathName());
+						Responder->Ok(Data);
+						return;
+					}
+					if (!FBlueprintEditorUtils::ImplementNewInterface(
+						Blueprint, Interface->GetClassPathName()))
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("add_failed"),
+							FString::Printf(
+								TEXT("could not implement '%s' — it may already be implemented, or conflict with a member name"),
+								*Interface->GetName()));
+						return;
+					}
+					MarkModified(Blueprint, true);
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("interface"), Interface->GetPathName());
+					Responder->Ok(Data);
+					return;
+				}
+
+				// ---- event dispatchers (multicast delegates) ----
+				if (Operation == TEXT("add_event_dispatcher")
+					|| Operation == TEXT("remove_event_dispatcher"))
+				{
+					FString Name;
+					if (!Body->TryGetStringField(TEXT("name"), Name) || Name.IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'name' is required"));
+						return;
+					}
+					const bool bAdd = Operation == TEXT("add_event_dispatcher");
+					const bool bOk = bAdd
+						? UBlueprintEditorLibrary::AddEventDispatcher(Blueprint, FName(*Name))
+						: UBlueprintEditorLibrary::RemoveEventDispatcher(Blueprint, FName(*Name));
+					if (!bOk)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("dispatcher_failed"),
+							bAdd
+								? FString::Printf(TEXT("could not add '%s' — the name is already in use"), *Name)
+								: FString::Printf(TEXT("no event dispatcher '%s'"), *Name));
+						return;
+					}
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(bAdd ? TEXT("dispatcher") : TEXT("removed"), Name);
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("add_dispatcher_parameter")
+					|| Operation == TEXT("remove_dispatcher_parameter"))
+				{
+					FString Dispatcher, Name;
+					Body->TryGetStringField(TEXT("dispatcher"), Dispatcher);
+					Body->TryGetStringField(TEXT("name"), Name);
+					if (Dispatcher.IsEmpty() || Name.IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'dispatcher' and 'name' are required"));
+						return;
+					}
+					bool bOk = false;
+					if (Operation == TEXT("remove_dispatcher_parameter"))
+					{
+						bOk = UBlueprintEditorLibrary::RemoveEventDispatcherParameter(
+							Blueprint, FName(*Dispatcher), FName(*Name));
+					}
+					else
+					{
+						FString TypeName;
+						Body->TryGetStringField(TEXT("type"), TypeName);
+						FEdGraphPinType PinType;
+						FString TypeError;
+						if (!MakePinType(TypeName, PinType, TypeError))
+						{
+							Responder->Error(
+								EHttpServerResponseCodes::BadRequest, TEXT("unknown_type"), TypeError);
+							return;
+						}
+						bOk = UBlueprintEditorLibrary::AddEventDispatcherParameter(
+							Blueprint, FName(*Dispatcher), FName(*Name), PinType);
+					}
+					if (!bOk)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("parameter_failed"),
+							FString::Printf(
+								TEXT("could not change '%s' on dispatcher '%s' — check both names"),
+								*Name, *Dispatcher));
+						return;
+					}
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("dispatcher"), Dispatcher);
+					Data->SetStringField(TEXT("parameter"), Name);
+					Responder->Ok(Data);
+					return;
+				}
+
+				// ---- function signature and locals ----
+				if (Operation == TEXT("add_function_parameter")
+					|| Operation == TEXT("remove_function_parameter")
+					|| Operation == TEXT("add_local_variable")
+					|| Operation == TEXT("remove_local_variable"))
+				{
+					UEdGraph* Graph = GraphOrError(Blueprint, Body, Responder);
+					if (!Graph) { return; }
+					FString Name;
+					if (!Body->TryGetStringField(TEXT("name"), Name) || Name.IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'name' is required"));
+						return;
+					}
+
+					if (Operation.EndsWith(TEXT("local_variable")))
+					{
+						if (Operation == TEXT("remove_local_variable"))
+						{
+							UStruct* Scope = Blueprint->SkeletonGeneratedClass != nullptr
+								? Blueprint->SkeletonGeneratedClass->FindFunctionByName(Graph->GetFName())
+								: nullptr;
+							if (Scope == nullptr)
+							{
+								Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("no_scope"),
+									TEXT("the function has not been compiled yet — call compile first"));
+								return;
+							}
+							FBlueprintEditorUtils::RemoveLocalVariable(Blueprint, Scope, FName(*Name));
+							MarkModified(Blueprint, true);
+							const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+							Data->SetStringField(TEXT("removed"), Name);
+							Responder->Ok(Data);
+							return;
+						}
+						FString TypeName, DefaultValue;
+						Body->TryGetStringField(TEXT("type"), TypeName);
+						Body->TryGetStringField(TEXT("default"), DefaultValue);
+						FEdGraphPinType PinType;
+						FString TypeError;
+						if (!MakePinType(TypeName, PinType, TypeError))
+						{
+							Responder->Error(
+								EHttpServerResponseCodes::BadRequest, TEXT("unknown_type"), TypeError);
+							return;
+						}
+						if (!FBlueprintEditorUtils::AddLocalVariable(
+							Blueprint, Graph, FName(*Name), PinType, DefaultValue))
+						{
+							Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("add_failed"),
+								FString::Printf(
+									TEXT("could not add local '%s' to '%s' — locals only exist on function graphs, ")
+									TEXT("and the name must be free"),
+									*Name, *Graph->GetName()));
+							return;
+						}
+						MarkModified(Blueprint, true);
+						const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+						Data->SetStringField(TEXT("local_variable"), Name);
+						Data->SetStringField(TEXT("graph"), Graph->GetName());
+						Responder->Ok(Data);
+						return;
+					}
+
+					TArray<UK2Node_FunctionEntry*> Entries;
+					Graph->GetNodesOfClass(Entries);
+					if (Entries.IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("not_a_function"),
+							FString::Printf(
+								TEXT("graph '%s' has no function entry node — parameters only exist on function graphs"),
+								*Graph->GetName()));
+						return;
+					}
+					UK2Node_FunctionEntry* Entry = Entries[0];
+					const bool bOutput =
+						StringOr(Body, TEXT("direction"), TEXT("input")).Equals(TEXT("output"), ESearchCase::IgnoreCase);
+
+					if (Operation == TEXT("remove_function_parameter"))
+					{
+						Entry->Modify();
+						Entry->RemoveUserDefinedPinByName(FName(*Name));
+						TArray<UK2Node_FunctionResult*> Results;
+						Graph->GetNodesOfClass(Results);
+						for (UK2Node_FunctionResult* Result : Results)
+						{
+							Result->Modify();
+							Result->RemoveUserDefinedPinByName(FName(*Name));
+						}
+						MarkModified(Blueprint, true);
+						const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+						Data->SetStringField(TEXT("removed"), Name);
+						Responder->Ok(Data);
+						return;
+					}
+
+					FString TypeName;
+					Body->TryGetStringField(TEXT("type"), TypeName);
+					FEdGraphPinType PinType;
+					FString TypeError;
+					if (!MakePinType(TypeName, PinType, TypeError))
+					{
+						Responder->Error(
+							EHttpServerResponseCodes::BadRequest, TEXT("unknown_type"), TypeError);
+						return;
+					}
+					UEdGraphPin* NewPin = nullptr;
+					if (bOutput)
+					{
+						// The result node is created on demand, the way the
+						// details panel's "New Parameter" button does it.
+						UK2Node_FunctionResult* Result =
+							FBlueprintEditorUtils::FindOrCreateFunctionResultNode(Entry);
+						if (Result == nullptr)
+						{
+							Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("no_result_node"),
+								TEXT("could not create the function's return node"));
+							return;
+						}
+						Result->Modify();
+						NewPin = Result->CreateUserDefinedPin(FName(*Name), PinType, EGPD_Input);
+					}
+					else
+					{
+						Entry->Modify();
+						// An input parameter is an *output* pin of the entry node.
+						NewPin = Entry->CreateUserDefinedPin(FName(*Name), PinType, EGPD_Output);
+					}
+					if (NewPin == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("add_failed"),
+							FString::Printf(
+								TEXT("could not add parameter '%s' — the name may already be taken"), *Name));
+						return;
+					}
+					MarkModified(Blueprint, true);
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("parameter"), NewPin->PinName.ToString());
+					Data->SetStringField(TEXT("direction"), bOutput ? TEXT("output") : TEXT("input"));
+					Data->SetStringField(TEXT("graph"), Graph->GetName());
+					Responder->Ok(Data);
+					return;
+				}
+
 				Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_operation"),
 					FString::Printf(
 						TEXT("unknown operation '%s' — use create, add_variable, remove_variable, ")
-						TEXT("add_function, remove_function, add_node, delete_node, connect_pins, ")
-						TEXT("disconnect_pins, set_pin_value, compile, or save"),
+						TEXT("set_variable_type, add_function, remove_function, add_function_parameter, ")
+						TEXT("remove_function_parameter, add_local_variable, remove_local_variable, ")
+						TEXT("add_component, remove_component, set_parent_class, add_interface, ")
+						TEXT("remove_interface, add_event_dispatcher, remove_event_dispatcher, ")
+						TEXT("add_dispatcher_parameter, remove_dispatcher_parameter, add_node, ")
+						TEXT("delete_node, connect_pins, disconnect_pins, set_pin_value, compile, or save"),
 						*Operation));
 			});
 	}

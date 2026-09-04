@@ -1,11 +1,13 @@
-// McpLinkEditor: reflection, actors, levels, asset discovery and lifecycle,
-// console, PIE and capture routes.
+// McpLinkAI: Blackboard and Behavior Tree authoring routes.
+//
+// AIModule and BehaviorTreeEditor ship with the engine rather than as a
+// plugin, so this is a module of McpLink itself, not a sibling interop plugin.
 
 using UnrealBuildTool;
 
-public class McpLinkEditor : ModuleRules
+public class McpLinkAI : ModuleRules
 {
-	public McpLinkEditor(ReadOnlyTargetRules Target) : base(Target)
+	public McpLinkAI(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		CppStandard = CppStandardVersion.Cpp23;
@@ -25,12 +27,9 @@ public class McpLinkEditor : ModuleRules
 			"UnrealEd",
 			"AssetRegistry",
 			"AssetTools",
-			"ImageCore",
-			"ImageWrapper",
-			"Slate",
-			"SlateCore",
-			"UMG",
-			"EditorSubsystem"
+			"AIModule",
+			"AIGraph",
+			"BehaviorTreeEditor"
 		});
 	}
 }

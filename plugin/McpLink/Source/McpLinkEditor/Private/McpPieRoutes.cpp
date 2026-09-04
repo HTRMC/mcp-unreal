@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "LevelEditorViewport.h"
 #include "McpJson.h"
+#include "Settings/LevelEditorPlaySettings.h"
 #include "McpLinkCoreModule.h"
 #include "McpLinkEditorRoutes.h"
 #include "McpResolve.h"
@@ -151,6 +152,64 @@ namespace McpLink
 					if (Body->TryGetStringField(TEXT("map"), MapOverride) && !MapOverride.IsEmpty())
 					{
 						Params.GlobalMapOverride = MapOverride;
+					}
+					FVector StartLocation;
+					if (GetVector(Body, TEXT("location"), StartLocation))
+					{
+						Params.StartLocation = StartLocation;
+					}
+					FRotator StartRotation;
+					if (GetRotator(Body, TEXT("rotation"), StartRotation))
+					{
+						Params.StartRotation = StartRotation;
+					}
+
+					// Multiplayer options live on the play settings, not on the
+					// request. Duplicating the defaults keeps a one-off net-mode
+					// run from rewriting the user's editor preferences.
+					const int32 Players = FMath::Clamp(IntOr(Body, TEXT("players"), 1), 1, 8);
+					FString NetModeSpec;
+					Body->TryGetStringField(TEXT("net_mode"), NetModeSpec);
+					const bool bDedicated = BoolOr(Body, TEXT("dedicated_server"), false);
+					if (Players > 1 || !NetModeSpec.IsEmpty() || bDedicated)
+					{
+						if (bSimulate)
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest,
+								TEXT("invalid_request"),
+								TEXT("simulate has no players — drop 'simulate' to run a networked session"));
+							return;
+						}
+						ULevelEditorPlaySettings* Settings = DuplicateObject<ULevelEditorPlaySettings>(
+							GetDefault<ULevelEditorPlaySettings>(), GetTransientPackage());
+						const FString NetMode = NetModeSpec.ToLower();
+						if (NetMode.IsEmpty() || NetMode == TEXT("standalone"))
+						{
+							Settings->SetPlayNetMode(EPlayNetMode::PIE_Standalone);
+						}
+						else if (NetMode == TEXT("listen_server") || NetMode == TEXT("listen"))
+						{
+							Settings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
+						}
+						else if (NetMode == TEXT("client"))
+						{
+							Settings->SetPlayNetMode(EPlayNetMode::PIE_Client);
+						}
+						else
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest,
+								TEXT("unknown_net_mode"),
+								FString::Printf(
+									TEXT("unknown net_mode '%s' — use standalone, listen_server or client"),
+									*NetModeSpec));
+							return;
+						}
+						Settings->SetPlayNumberOfClients(Players);
+						Settings->bLaunchSeparateServer = bDedicated;
+						// One process keeps every client inside this editor, which
+						// is what makes the other tools able to reach them.
+						Settings->SetRunUnderOneProcess(BoolOr(Body, TEXT("one_process"), true));
+						Params.EditorPlaySettings = Settings;
 					}
 
 					if (bWait)

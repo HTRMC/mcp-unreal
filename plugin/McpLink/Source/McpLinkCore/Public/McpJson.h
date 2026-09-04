@@ -31,6 +31,26 @@ namespace McpLink
 		return nullptr;
 	}
 
+	// Optional numeric and boolean body fields. JSON has a single number type,
+	// so an integer field arrives as a double.
+	inline int32 IntOr(const TSharedRef<FJsonObject>& Body, const TCHAR* Field, int32 Default)
+	{
+		double Value = 0.0;
+		return Body->TryGetNumberField(Field, Value) ? static_cast<int32>(Value) : Default;
+	}
+
+	inline double DoubleOr(const TSharedRef<FJsonObject>& Body, const TCHAR* Field, double Default)
+	{
+		double Value = 0.0;
+		return Body->TryGetNumberField(Field, Value) ? Value : Default;
+	}
+
+	inline bool BoolOr(const TSharedRef<FJsonObject>& Body, const TCHAR* Field, bool Default)
+	{
+		bool Value = false;
+		return Body->TryGetBoolField(Field, Value) ? Value : Default;
+	}
+
 	inline FString JsonToString(const TSharedRef<FJsonObject>& Object)
 	{
 		FString Out;

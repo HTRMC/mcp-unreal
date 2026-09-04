@@ -154,12 +154,6 @@ namespace McpLink
 			return Body->TryGetNumberField(Field, Value) ? TOptional<double>(Value) : TOptional<double>();
 		}
 
-		int32 IntOr(const TSharedRef<FJsonObject>& Body, const TCHAR* Field, int32 Default)
-		{
-			const TOptional<double> Value = OptionalNumber(Body, Field);
-			return Value.IsSet() ? static_cast<int32>(*Value) : Default;
-		}
-
 		/// Apply the optional transition settings shared by add_transition and
 		/// set_transition. Returns false (and responds) when a rule binding fails.
 		bool ApplyTransitionSettings(

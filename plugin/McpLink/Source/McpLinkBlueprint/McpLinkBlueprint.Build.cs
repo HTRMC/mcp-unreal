@@ -24,6 +24,7 @@ public class McpLinkBlueprint : ModuleRules
 			"AssetRegistry",
 			"AssetTools",
 			"BlueprintGraph",
+			"BlueprintEditorLibrary",
 			"Kismet",
 			"KismetCompiler",
 			"AnimGraph",

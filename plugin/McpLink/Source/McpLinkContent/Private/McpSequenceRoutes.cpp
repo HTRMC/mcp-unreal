@@ -221,7 +221,7 @@ namespace McpLink
 			return Section;
 		}
 
-		void MarkChanged(UMovieSceneSequence& Sequence)
+		void MarkSequenceChanged(UMovieSceneSequence& Sequence)
 		{
 			Sequence.GetMovieScene()->MarkAsChanged();
 			Sequence.MarkPackageDirty();
@@ -316,7 +316,7 @@ namespace McpLink
 						End = Start + TickFromSeconds(*MovieScene, DurationSeconds);
 					}
 					MovieScene->SetPlaybackRange(TRange<FFrameNumber>(Start, FMath::Max(End, Start + 1)));
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SequenceToJson(*Sequence, false));
 					return;
 				}
@@ -445,7 +445,7 @@ namespace McpLink
 				if (Operation == TEXT("set_playback_range"))
 				{
 					MovieScene.SetPlaybackRange(ReadRange(Body, MovieScene));
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SequenceToJson(*Sequence, false));
 					return;
 				}
@@ -460,7 +460,7 @@ namespace McpLink
 						return;
 					}
 					MovieScene.SetDisplayRate(FFrameRate(FMath::RoundToInt(Fps * 1000.0), 1000));
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SequenceToJson(*Sequence, false));
 					return;
 				}
@@ -479,7 +479,7 @@ namespace McpLink
 					FMovieSceneMarkedFrame Mark(Tick);
 					Mark.Label = Label;
 					MovieScene.AddMarkedFrame(Mark);
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SequenceToJson(*Sequence, false));
 					return;
 				}
@@ -507,7 +507,7 @@ namespace McpLink
 						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("widget_not_found"), Error);
 						return;
 					}
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(BindingToJson(MovieScene, Guid, false));
 					return;
 				}
@@ -587,7 +587,7 @@ namespace McpLink
 							: ComponentName;
 						MovieScene.SetObjectDisplayName(Guid, FText::FromString(Label));
 					}
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(BindingToJson(MovieScene, Guid, false));
 					return;
 				}
@@ -600,7 +600,7 @@ namespace McpLink
 					{
 						MovieScene.RemoveSpawnable(Guid);
 					}
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SequenceToJson(*Sequence, false));
 					return;
 				}
@@ -619,7 +619,7 @@ namespace McpLink
 					{
 						Possessable->SetName(Name);
 					}
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(BindingToJson(MovieScene, Guid, false));
 					return;
 				}
@@ -704,7 +704,7 @@ namespace McpLink
 					{
 						AddSectionTo(*Track, ReadRange(Body, MovieScene), 0);
 					}
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(TrackToJson(MovieScene, *Track, false));
 					return;
 				}
@@ -785,7 +785,7 @@ namespace McpLink
 							Vector->SetChannelsUsed(NumChannels);
 						}
 					}
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(TrackToJson(MovieScene, *Track, false));
 					return;
 				}
@@ -802,7 +802,7 @@ namespace McpLink
 					{
 						MovieScene.RemoveTrack(*Track);
 					}
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SequenceToJson(*Sequence, false));
 					return;
 				}
@@ -821,7 +821,7 @@ namespace McpLink
 							FString::Printf(TEXT("%s does not create sections"), *Track->GetClass()->GetName()));
 						return;
 					}
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SectionToJson(MovieScene, *Section, false));
 					return;
 				}
@@ -832,7 +832,7 @@ namespace McpLink
 					if (Section == nullptr) { return; }
 					Section->Modify();
 					Section->SetRange(ReadRange(Body, MovieScene));
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SectionToJson(MovieScene, *Section, false));
 					return;
 				}
@@ -850,7 +850,7 @@ namespace McpLink
 					}
 					Track->Modify();
 					Track->RemoveSection(*Section);
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(TrackToJson(MovieScene, *Track, false));
 					return;
 				}
@@ -873,7 +873,7 @@ namespace McpLink
 						return;
 					}
 					Section->SetCameraGuid(Guid);
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SectionToJson(MovieScene, *Section, false));
 					return;
 				}
@@ -916,7 +916,7 @@ namespace McpLink
 						{
 							Channel->Reset();
 						}
-						MarkChanged(*Sequence);
+						MarkSequenceChanged(*Sequence);
 						Responder->Ok(SectionToJson(MovieScene, *Section, true));
 						return;
 					}
@@ -929,7 +929,7 @@ namespace McpLink
 							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_value"), Error);
 							return;
 						}
-						MarkChanged(*Sequence);
+						MarkSequenceChanged(*Sequence);
 						Responder->Ok(SectionToJson(MovieScene, *Section, true));
 						return;
 					}
@@ -974,7 +974,7 @@ namespace McpLink
 							return;
 						}
 					}
-					MarkChanged(*Sequence);
+					MarkSequenceChanged(*Sequence);
 					Responder->Ok(SectionToJson(MovieScene, *Section, true));
 					return;
 				}

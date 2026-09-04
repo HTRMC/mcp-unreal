@@ -1,0 +1,229 @@
+// The add_node vocabulary: every node kind spawns configured, not empty.
+//
+// The point of each check is the *configuration*: a MakeStruct with no struct
+// or a SwitchEnum with no enum both construct fine and then have no pins, which
+// is exactly the silent failure this route exists to avoid.
+
+#include "Misc/AutomationTest.h"
+
+#if WITH_DEV_AUTOMATION_TESTS
+
+#include "Dom/JsonObject.h"
+#include "EdGraph/EdGraph.h"
+#include "EdGraph/EdGraphNode.h"
+#include "EdGraph/EdGraphPin.h"
+#include "EdGraphNode_Comment.h"
+#include "EdGraphSchema_K2.h"
+#include "Engine/Blueprint.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
+#include "K2Node_DynamicCast.h"
+#include "K2Node_ExecutionSequence.h"
+#include "K2Node_IfThenElse.h"
+#include "K2Node_MacroInstance.h"
+#include "K2Node_MakeStruct.h"
+#include "K2Node_Self.h"
+#include "K2Node_SwitchEnum.h"
+#include "Kismet2/KismetEditorUtilities.h"
+#include "McpBlueprintUtils.h"
+#include "McpTestFlags.h"
+#include "UObject/Package.h"
+
+namespace
+{
+	/// A throwaway Actor Blueprint under /Temp. Nothing here is ever saved, so
+	/// the package never reaches the content folder.
+	UBlueprint* MakeScratchBlueprint()
+	{
+		const FString PackageName = FString::Printf(
+			TEXT("/Temp/McpLinkTests/BP_Nodes_%s"),
+			*FGuid::NewGuid().ToString(EGuidFormats::Digits));
+		UPackage* Package = CreatePackage(*PackageName);
+		return FKismetEditorUtilities::CreateBlueprint(
+			AActor::StaticClass(), Package, FName(*FPackageName::GetShortName(PackageName)),
+			BPTYPE_Normal, UBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass());
+	}
+
+	TSharedRef<FJsonObject> Request(const TCHAR* NodeType)
+	{
+		const TSharedRef<FJsonObject> Body = MakeShared<FJsonObject>();
+		Body->SetStringField(TEXT("node_type"), NodeType);
+		return Body;
+	}
+
+	int32 CountPins(const UEdGraphNode* Node, EEdGraphPinDirection Direction, FName Category)
+	{
+		int32 Count = 0;
+		for (const UEdGraphPin* Pin : Node->Pins)
+		{
+			if (Pin != nullptr && Pin->Direction == Direction && Pin->PinType.PinCategory == Category)
+			{
+				++Count;
+			}
+		}
+		return Count;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FMcpNodeVocabularyTest, "McpLink.Blueprint.NodeVocabulary", McpTestFlags)
+bool FMcpNodeVocabularyTest::RunTest(const FString& Parameters)
+{
+	using namespace McpLink;
+
+	UBlueprint* Blueprint = MakeScratchBlueprint();
+	if (!TestNotNull(TEXT("scratch blueprint created"), Blueprint))
+	{
+		return false;
+	}
+	UEdGraph* Graph = FindGraph(Blueprint, FString());
+	if (!TestNotNull(TEXT("event graph found"), Graph))
+	{
+		return false;
+	}
+
+	FString Error;
+
+	// ---- branch: two exec outputs and a bool condition ----
+	{
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Request(TEXT("branch")), Error);
+		if (TestNotNull(TEXT("branch created"), Node))
+		{
+			TestTrue(TEXT("branch is an IfThenElse"), Node->IsA<UK2Node_IfThenElse>());
+			TestEqual(TEXT("branch has two exec outputs"),
+				CountPins(Node, EGPD_Output, UEdGraphSchema_K2::PC_Exec), 2);
+		}
+	}
+
+	// ---- sequence: the extra exec outputs the "Add pin" button makes ----
+	{
+		const TSharedRef<FJsonObject> Body = Request(TEXT("sequence"));
+		Body->SetNumberField(TEXT("outputs"), 4);
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Body, Error);
+		if (TestNotNull(TEXT("sequence created"), Node))
+		{
+			TestTrue(TEXT("sequence is an ExecutionSequence"), Node->IsA<UK2Node_ExecutionSequence>());
+			TestEqual(TEXT("sequence grew to four outputs"),
+				CountPins(Node, EGPD_Output, UEdGraphSchema_K2::PC_Exec), 4);
+		}
+	}
+
+	// ---- cast: the target type is what gives the node its output pin ----
+	{
+		const TSharedRef<FJsonObject> Body = Request(TEXT("cast"));
+		Body->SetStringField(TEXT("class"), TEXT("/Script/Engine.Pawn"));
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Body, Error);
+		if (TestNotNull(TEXT("cast created"), Node))
+		{
+			UK2Node_DynamicCast* Cast = CastChecked<UK2Node_DynamicCast>(Node);
+			TestEqual(TEXT("cast targets Pawn"), Cast->TargetType.Get(), APawn::StaticClass());
+			TestNotNull(TEXT("cast has a result pin"), Cast->GetCastResultPin());
+		}
+	}
+
+	// ---- make_struct: one input pin per struct member ----
+	{
+		const TSharedRef<FJsonObject> Body = Request(TEXT("make_struct"));
+		Body->SetStringField(TEXT("struct"), TEXT("Vector"));
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Body, Error);
+		if (TestNotNull(TEXT("make_struct created"), Node))
+		{
+			UK2Node_MakeStruct* Make = CastChecked<UK2Node_MakeStruct>(Node);
+			TestNotNull(TEXT("make_struct knows its struct"), Make->StructType.Get());
+			TestTrue(TEXT("make_struct got member pins"), Make->Pins.Num() > 1);
+		}
+	}
+	{
+		// The failure this whole "configure before Finalize" rule exists for.
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Request(TEXT("make_struct")), Error);
+		TestNull(TEXT("make_struct without a struct is refused"), Node);
+		TestTrue(TEXT("and says which field is missing"), Error.Contains(TEXT("struct")));
+	}
+
+	// ---- switch_enum: one case pin per enumerator ----
+	{
+		const TSharedRef<FJsonObject> Body = Request(TEXT("switch_enum"));
+		Body->SetStringField(TEXT("enum"), TEXT("/Script/Engine.ECollisionChannel"));
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Body, Error);
+		if (TestNotNull(TEXT("switch_enum created"), Node))
+		{
+			UK2Node_SwitchEnum* Switch = CastChecked<UK2Node_SwitchEnum>(Node);
+			TestNotNull(TEXT("switch_enum knows its enum"), Switch->Enum.Get());
+			TestTrue(TEXT("switch_enum got case pins"),
+				CountPins(Switch, EGPD_Output, UEdGraphSchema_K2::PC_Exec) > 2);
+		}
+	}
+
+	// ---- macro instance from the engine's standard library ----
+	{
+		const TSharedRef<FJsonObject> Body = Request(TEXT("macro"));
+		Body->SetStringField(TEXT("macro"), TEXT("ForEachLoop"));
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Body, Error);
+		if (TestNotNull(TEXT("ForEachLoop macro created"), Node))
+		{
+			UK2Node_MacroInstance* Macro = CastChecked<UK2Node_MacroInstance>(Node);
+			TestNotNull(TEXT("macro graph bound"), Macro->GetMacroGraph());
+			TestTrue(TEXT("macro exposes its tunnel pins"), Macro->Pins.Num() > 1);
+		}
+	}
+	{
+		const TSharedRef<FJsonObject> Body = Request(TEXT("macro"));
+		Body->SetStringField(TEXT("macro"), TEXT("NoSuchMacro"));
+		TestNull(TEXT("unknown macro refused"),
+			CreateGraphNode(Blueprint, Graph, Body, Error));
+		// The error is the discovery mechanism, so it must list the real names.
+		TestTrue(TEXT("error lists the available macros"), Error.Contains(TEXT("ForEachLoop")));
+	}
+
+	// ---- comment ----
+	{
+		const TSharedRef<FJsonObject> Body = Request(TEXT("comment"));
+		Body->SetStringField(TEXT("text"), TEXT("Locomotion"));
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Body, Error);
+		if (TestNotNull(TEXT("comment created"), Node))
+		{
+			TestEqual(TEXT("comment text kept"),
+				CastChecked<UEdGraphNode_Comment>(Node)->NodeComment, FString(TEXT("Locomotion")));
+		}
+	}
+
+	// ---- self ----
+	{
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Request(TEXT("self")), Error);
+		if (TestNotNull(TEXT("self created"), Node))
+		{
+			TestTrue(TEXT("self is a Self node"), Node->IsA<UK2Node_Self>());
+		}
+	}
+
+	// ---- call_function against another class ----
+	{
+		const TSharedRef<FJsonObject> Body = Request(TEXT("call_function"));
+		Body->SetStringField(TEXT("class"), TEXT("/Script/Engine.KismetSystemLibrary"));
+		Body->SetStringField(TEXT("function"), TEXT("PrintString"));
+		UEdGraphNode* Node = CreateGraphNode(Blueprint, Graph, Body, Error);
+		if (TestNotNull(TEXT("call_function created"), Node))
+		{
+			TestNotNull(TEXT("PrintString's InString pin exists"), Node->FindPin(TEXT("InString")));
+		}
+	}
+	{
+		const TSharedRef<FJsonObject> Body = Request(TEXT("call_function"));
+		Body->SetStringField(TEXT("class"), TEXT("/Script/Engine.KismetSystemLibrary"));
+		Body->SetStringField(TEXT("function"), TEXT("NoSuchFunction"));
+		TestNull(TEXT("missing function refused"),
+			CreateGraphNode(Blueprint, Graph, Body, Error));
+		TestTrue(TEXT("error names the class"), Error.Contains(TEXT("KismetSystemLibrary")));
+	}
+
+	// ---- unknown node type lists the vocabulary ----
+	{
+		TestNull(TEXT("unknown node type refused"),
+			CreateGraphNode(Blueprint, Graph, Request(TEXT("teleporter")), Error));
+		TestTrue(TEXT("error lists node types"), Error.Contains(TEXT("call_function")));
+	}
+
+	return true;
+}
+
+#endif

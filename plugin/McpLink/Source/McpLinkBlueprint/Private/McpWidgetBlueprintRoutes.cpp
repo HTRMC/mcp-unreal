@@ -20,6 +20,7 @@
 #include "K2Node_ComponentBoundEvent.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "McpBlueprintUtils.h"
+#include "McpJson.h"
 #include "McpLinkCoreModule.h"
 #include "McpResolve.h"
 #include "McpResponder.h"
@@ -36,12 +37,6 @@ namespace McpLink
 {
 	namespace
 	{
-		int32 IntOr(const TSharedRef<FJsonObject>& Body, const TCHAR* Field, int32 Default)
-		{
-			double Value = 0.0;
-			return Body->TryGetNumberField(Field, Value) ? static_cast<int32>(Value) : Default;
-		}
-
 		UWidgetBlueprint* WidgetBlueprintOrError(
 			const TSharedRef<FJsonObject>& Body, const TSharedRef<FMcpResponder>& Responder)
 		{

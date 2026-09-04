@@ -16,17 +16,6 @@ namespace McpLink
 {
 	namespace
 	{
-		UWorld* WorldOrError(const TSharedRef<FJsonObject>& Body, const TSharedRef<FMcpResponder>& Responder)
-		{
-			UWorld* World = ResolveWorld(Body);
-			if (World == nullptr)
-			{
-				Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("pie_not_running"),
-					TEXT("world 'pie' requested but no PIE session is running — start one with pie_control"));
-			}
-			return World;
-		}
-
 		AActor* ActorOrError(
 			UWorld* World, const TSharedRef<FJsonObject>& Body, const TSharedRef<FMcpResponder>& Responder,
 			const TCHAR* Field = TEXT("actor"))
@@ -66,7 +55,7 @@ namespace McpLink
 		Core.RegisterRoute(TEXT("/api/actors/list"),
 			[](const TSharedRef<FJsonObject>& Body, TSharedRef<FMcpResponder> Responder)
 			{
-				UWorld* World = WorldOrError(Body, Responder);
+				UWorld* World = ResolveWorldOrError(Body, Responder);
 				if (!World) { return; }
 
 				FString ClassFilterName, NameFilter;
@@ -116,7 +105,7 @@ namespace McpLink
 		Core.RegisterRoute(TEXT("/api/actors/spawn"),
 			[](const TSharedRef<FJsonObject>& Body, TSharedRef<FMcpResponder> Responder)
 			{
-				UWorld* World = WorldOrError(Body, Responder);
+				UWorld* World = ResolveWorldOrError(Body, Responder);
 				if (!World) { return; }
 				FString ClassSpec;
 				if (!Body->TryGetStringField(TEXT("class"), ClassSpec) || ClassSpec.IsEmpty())
@@ -167,7 +156,7 @@ namespace McpLink
 		Core.RegisterRoute(TEXT("/api/actors/delete"),
 			[](const TSharedRef<FJsonObject>& Body, TSharedRef<FMcpResponder> Responder)
 			{
-				UWorld* World = WorldOrError(Body, Responder);
+				UWorld* World = ResolveWorldOrError(Body, Responder);
 				if (!World) { return; }
 				const TArray<TSharedPtr<FJsonValue>>* Specs = nullptr;
 				if (!Body->TryGetArrayField(TEXT("actors"), Specs) || Specs == nullptr || Specs->IsEmpty())
@@ -213,7 +202,7 @@ namespace McpLink
 		Core.RegisterRoute(TEXT("/api/actors/transform"),
 			[](const TSharedRef<FJsonObject>& Body, TSharedRef<FMcpResponder> Responder)
 			{
-				UWorld* World = WorldOrError(Body, Responder);
+				UWorld* World = ResolveWorldOrError(Body, Responder);
 				if (!World) { return; }
 				AActor* Actor = ActorOrError(World, Body, Responder);
 				if (!Actor) { return; }
@@ -260,7 +249,7 @@ namespace McpLink
 		Core.RegisterRoute(TEXT("/api/actors/components"),
 			[](const TSharedRef<FJsonObject>& Body, TSharedRef<FMcpResponder> Responder)
 			{
-				UWorld* World = WorldOrError(Body, Responder);
+				UWorld* World = ResolveWorldOrError(Body, Responder);
 				if (!World) { return; }
 				AActor* Actor = ActorOrError(World, Body, Responder);
 				if (!Actor) { return; }

@@ -19,6 +19,20 @@ pub enum PieOp {
         map: Option<String>,
         /// Simulate In Editor (no player possession) instead of Play In Editor.
         simulate: Option<bool>,
+        /// Spawn the player here [X, Y, Z] instead of at a Player Start.
+        location: Option<[f64; 3]>,
+        /// Facing for that spawn [Pitch, Yaw, Roll].
+        rotation: Option<[f64; 3]>,
+        /// Number of client windows, 1-8 (default 1). More than one makes it a
+        /// networked session.
+        players: Option<i32>,
+        /// "standalone" (default), "listen_server" or "client".
+        net_mode: Option<String>,
+        /// Also launch a separate server even when the net mode does not need one.
+        dedicated_server: Option<bool>,
+        /// Run every client inside this editor process (default true). Only
+        /// in-process clients are reachable by the other tools.
+        one_process: Option<bool>,
     },
     /// Stop the running PIE session.
     Stop {
@@ -165,7 +179,18 @@ impl UnrealMcp {
                 wait,
                 map,
                 simulate,
-            } => json!({"operation": "start", "wait": wait, "map": map, "simulate": simulate}),
+                location,
+                rotation,
+                players,
+                net_mode,
+                dedicated_server,
+                one_process,
+            } => json!({
+                "operation": "start", "wait": wait, "map": map, "simulate": simulate,
+                "location": location, "rotation": rotation, "players": players,
+                "net_mode": net_mode, "dedicated_server": dedicated_server,
+                "one_process": one_process,
+            }),
             PieOp::Stop { wait } => json!({"operation": "stop", "wait": wait}),
             PieOp::Status {} => json!({"operation": "status"}),
             PieOp::Pause {} => json!({"operation": "pause"}),

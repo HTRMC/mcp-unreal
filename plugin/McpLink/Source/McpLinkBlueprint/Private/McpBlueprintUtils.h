@@ -9,6 +9,8 @@ class UBlueprint;
 class UEdGraph;
 class UEdGraphNode;
 class UEdGraphPin;
+class UEnum;
+class UScriptStruct;
 struct FEdGraphPinType;
 
 namespace McpLink
@@ -53,8 +55,29 @@ namespace McpLink
 	TSharedRef<FJsonObject> PinToJson(const UEdGraphPin* Pin);
 	TSharedRef<FJsonObject> NodeToJson(const UEdGraphNode* Node);
 
-	/// Map a simple type name ("bool", "int", "float", "string", "name",
-	/// "vector", "rotator", "transform", "object:/Script/Engine.Actor") onto a
-	/// pin type. Returns false with a message for anything unrecognised.
+	/// Map a type name onto a pin type. Scalars ("bool", "int", "float",
+	/// "string", "name", "text"), common structs ("vector", "transform"),
+	/// prefixed references ("object:<Class>", "class:<Class>",
+	/// "softobject:<Class>", "softclass:<Class>", "interface:<Class>",
+	/// "struct:<Struct>", "enum:<Enum>") and containers ("array<int>",
+	/// "set<name>", "map<name,float>"). Returns false with a message for
+	/// anything unrecognised.
 	bool MakePinType(const FString& TypeName, FEdGraphPinType& OutType, FString& OutError);
+
+	/// An enum by path ("/Script/Engine.ECollisionChannel"), by bare name, or
+	/// a User-Defined Enum asset path.
+	UEnum* ResolveEnum(const FString& Spec);
+
+	/// A struct by path, by bare name, or with the C++ "F" prefix; also a
+	/// User-Defined Struct asset path.
+	UScriptStruct* ResolveStruct(const FString& Spec);
+
+	/// Spawn and configure one node in `Graph` from an add_node request body
+	/// (see McpBlueprintNodes.cpp for the vocabulary). Returns nullptr with
+	/// OutError naming the fix.
+	UEdGraphNode* CreateGraphNode(
+		UBlueprint* Blueprint,
+		UEdGraph* Graph,
+		const TSharedRef<FJsonObject>& Body,
+		FString& OutError);
 }

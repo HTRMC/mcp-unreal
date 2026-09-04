@@ -12,10 +12,18 @@ class UWorld;
 
 namespace McpLink
 {
+	class FMcpResponder;
+
 	// Tri-state "world" body field: "auto" (default: PIE if playing, else the
 	// editor world), "pie" (nullptr when PIE is not running — callers must
 	// error, never silently fall back), "editor".
 	MCPLINKCORE_API UWorld* ResolveWorld(const TSharedRef<FJsonObject>& Body);
+
+	// ResolveWorld plus the standard 409 when "pie" was asked for and no PIE
+	// session is running. Returns nullptr *after* responding, so a handler can
+	// simply bail out.
+	MCPLINKCORE_API UWorld* ResolveWorldOrError(
+		const TSharedRef<FJsonObject>& Body, const TSharedRef<FMcpResponder>& Responder);
 
 	// Spec is an object path (…:PersistentLevel.Name) or an editor actor label.
 	MCPLINKCORE_API AActor* ResolveActor(UWorld* World, const FString& Spec);

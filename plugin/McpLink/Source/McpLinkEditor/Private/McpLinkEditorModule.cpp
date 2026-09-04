@@ -12,7 +12,10 @@ public:
 		McpLink::RegisterActorRoutes(Core);
 		McpLink::RegisterLevelRoutes(Core);
 		McpLink::RegisterAssetRoutes(Core);
+		McpLink::RegisterAssetOpsRoutes(Core);
 		McpLink::RegisterConsoleRoutes(Core);
+		McpLink::RegisterEditorOpsRoutes(Core);
+		McpLink::RegisterPerfRoutes(Core);
 		McpLink::RegisterPieRoutes(Core);
 		McpLink::RegisterCaptureRoutes(Core);
 		McpLink::RegisterIntrospectRoutes(Core);

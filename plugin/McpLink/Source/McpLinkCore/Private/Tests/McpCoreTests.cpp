@@ -19,11 +19,10 @@
 #include "McpResponder.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "McpTestFlags.h"
 
 namespace
 {
-	constexpr EAutomationTestFlags McpTestFlags =
-		EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
 
 	FHttpServerRequest RequestWithBody(const FString& Text)
 	{
