@@ -1,0 +1,59 @@
+{
+  "name": "sequence_ops_add_event",
+  "description": "sequence_ops add_event: a trigger key bound to a new custom event in the director Blueprint, with a payload pin",
+  "route": "/api/sequences/ops",
+  "tool": "sequence_ops",
+  "request": {
+    "operation": "add_event",
+    "sequence": "/Game/Cinematics/LS_McpContractMain",
+    "seconds": 0.5,
+    "name": "OnContract",
+    "parameters": [
+      {
+        "name": "Strength",
+        "type": "float"
+      }
+    ],
+    "payload": {
+      "Strength": 2.5
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "path": "/Game/Cinematics/LS_McpContractMain.LS_McpContractMain:MovieScene_0.MovieSceneEventTrack_0.MovieSceneEventTriggerSection_0",
+      "name": "MovieSceneEventTriggerSection_0",
+      "class": "MovieSceneEventTriggerSection",
+      "row_index": 0,
+      "active": true,
+      "range": {
+        "start_frame": 0,
+        "end_frame": 120,
+        "start_seconds": 0,
+        "end_seconds": 4,
+        "start_tick": 0,
+        "end_tick": 96000
+      },
+      "channels": [
+        {
+          "name": "Value",
+          "type": "MovieSceneEventChannel",
+          "num_keys": 1
+        }
+      ],
+      "track": "/Game/Cinematics/LS_McpContractMain.LS_McpContractMain:MovieScene_0.MovieSceneEventTrack_0",
+      "event": {
+        "name": "OnContract",
+        "node": "4EAF3EDB40A44F3B2DC4CDA2CF764132",
+        "director_blueprint": "/Game/Cinematics/LS_McpContractMain.LS_McpContractMain:LS_McpContractMain_DirectorBP",
+        "graph": "Sequencer Events",
+        "frame": 15,
+        "parameters": [
+          "Strength"
+        ],
+        "note": "wire the event's logic in the director Blueprint with blueprint_modify add_node (blueprint = director_blueprint)"
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "name": "skeletal_mesh_ops_get_skin_weights",
+  "description": "skeletal_mesh_ops get_skin_weights: bone weights of three source vertices",
+  "route": "/api/anim/mesh",
+  "tool": "skeletal_mesh_ops",
+  "request": {
+    "operation": "get_skin_weights",
+    "mesh": "/Game/Anim/SK_McpContractWeights",
+    "vertices": [
+      0,
+      1,
+      2
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "mesh": "/Game/Anim/SK_McpContractWeights.SK_McpContractWeights",
+      "lod": 0,
+      "vertex_count": 3922,
+      "profiles": [],
+      "weights": [
+        {
+          "vertex": 0,
+          "bones": [
+            {
+              "bone": "spine_03",
+              "index": 4,
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "vertex": 1,
+          "bones": [
+            {
+              "bone": "spine_03",
+              "index": 4,
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "vertex": 2,
+          "bones": [
+            {
+              "bone": "spine_03",
+              "index": 4,
+              "weight": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

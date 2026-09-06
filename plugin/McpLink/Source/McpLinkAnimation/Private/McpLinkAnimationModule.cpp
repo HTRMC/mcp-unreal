@@ -7,6 +7,8 @@ namespace McpLink
 	void RegisterAnimNotifyRoutes(FMcpLinkCoreModule& Core);
 	void RegisterSkeletonRoutes(FMcpLinkCoreModule& Core);
 	void RegisterPhysicsAssetRoutes(FMcpLinkCoreModule& Core);
+	void RegisterPoseAssetRoutes(FMcpLinkCoreModule& Core);
+	void RegisterMirrorTableRoutes(FMcpLinkCoreModule& Core);
 }
 
 class FMcpLinkAnimationModule : public IModuleInterface
@@ -19,6 +21,8 @@ public:
 		McpLink::RegisterAnimNotifyRoutes(Core);
 		McpLink::RegisterSkeletonRoutes(Core);
 		McpLink::RegisterPhysicsAssetRoutes(Core);
+		McpLink::RegisterPoseAssetRoutes(Core);
+		McpLink::RegisterMirrorTableRoutes(Core);
 	}
 };
 

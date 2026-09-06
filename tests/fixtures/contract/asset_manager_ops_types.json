@@ -1,0 +1,40 @@
+{
+  "name": "asset_manager_ops_types",
+  "description": "asset_manager_ops types: the primary asset types the Asset Manager scans",
+  "route": "/api/workflow/asset_manager",
+  "tool": "asset_manager_ops",
+  "request": {
+    "operation": "types"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "types": [
+        {
+          "type": "Map",
+          "base_class": "/Script/Engine.World",
+          "blueprint_classes": false,
+          "editor_only": true,
+          "dynamic": false,
+          "asset_count": 1,
+          "scan_paths": [
+            "/Game/Maps"
+          ]
+        },
+        {
+          "type": "PrimaryAssetLabel",
+          "base_class": "/Script/Engine.PrimaryAssetLabel",
+          "blueprint_classes": false,
+          "editor_only": true,
+          "dynamic": false,
+          "asset_count": 0,
+          "scan_paths": [
+            "/Game"
+          ]
+        }
+      ],
+      "count": 2
+    }
+  }
+}

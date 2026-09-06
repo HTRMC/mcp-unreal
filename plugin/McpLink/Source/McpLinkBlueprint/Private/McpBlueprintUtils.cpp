@@ -121,6 +121,11 @@ namespace McpLink
 		CollectTopLevel(Blueprint->FunctionGraphs, TEXT("function"), OutGraphs);
 		CollectTopLevel(Blueprint->MacroGraphs, TEXT("macro"), OutGraphs);
 		CollectTopLevel(Blueprint->DelegateSignatureGraphs, TEXT("delegate"), OutGraphs);
+		// Graphs an implemented interface brought in (anim layers among them).
+		for (const FBPInterfaceDescription& Interface : Blueprint->ImplementedInterfaces)
+		{
+			CollectTopLevel(Interface.Graphs, TEXT("interface"), OutGraphs);
+		}
 	}
 
 	FString GraphPath(const UEdGraph* Graph)

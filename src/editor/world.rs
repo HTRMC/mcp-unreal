@@ -10,6 +10,91 @@ use serde_json::Value;
 use crate::UnrealMcp;
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+pub struct GrassVariety {
+    /// Static mesh path.
+    pub mesh: String,
+    /// Instances per 10m x 10m.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub density: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub min_scale: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_scale: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub random_rotation: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub align_to_surface: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub start_cull_distance: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end_cull_distance: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_grid: Option<bool>,
+    /// Any other FGrassVariety property by name.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub properties: Option<serde_json::Value>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum RvtOp {
+    /// New Runtime Virtual Texture asset; `properties` are its UPROPERTY
+    /// names (TileCount, TileSize, TileBorderSize as log2, MaterialType,
+    /// bCompressTextures, RemoveLowMips, LODGroup).
+    Create {
+        /// e.g. /Game/VT/RVT_Terrain.
+        path: String,
+        properties: Option<serde_json::Value>,
+    },
+    Info {
+        virtual_texture: String,
+    },
+    Save {
+        virtual_texture: String,
+    },
+    /// Every Runtime Virtual Texture Volume in the world.
+    List {
+        world: Option<String>,
+    },
+    /// Place a volume that renders the texture, sized to `align_actor` (a
+    /// landscape, usually) or to everything already assigned to it.
+    SpawnVolume {
+        virtual_texture: String,
+        name: Option<String>,
+        location: Option<[f64; 3]>,
+        align_actor: Option<String>,
+        snap_to_landscape: Option<bool>,
+        /// Default true.
+        fit_bounds: Option<bool>,
+        world: Option<String>,
+    },
+    /// Refit a volume's bounds (the details panel's Set Bounds button).
+    SetBounds {
+        volume: String,
+        align_actor: Option<String>,
+        world: Option<String>,
+    },
+    /// Make an actor's primitives — or a landscape — render into the texture.
+    Assign {
+        virtual_texture: String,
+        actor: String,
+        world: Option<String>,
+    },
+    Unassign {
+        virtual_texture: String,
+        actor: String,
+        world: Option<String>,
+    },
+    /// Bake the volume's streaming mips into its Streaming Texture (needs a
+    /// windowed editor).
+    BuildStreamingMips {
+        volume: String,
+        world: Option<String>,
+    },
+}
+
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
 #[serde(tag = "operation", rename_all = "snake_case")]
 #[schemars(transform = crate::schema::object_with_oneof)]
 pub enum LandscapeOp {
@@ -35,6 +120,33 @@ pub enum LandscapeOp {
         height: Option<f64>,
         /// Landscape material asset path.
         material: Option<String>,
+        /// A heightmap file to build the terrain from: a 16-bit greyscale
+        /// PNG, or raw/r16 uint16 samples. With no component counts given,
+        /// the layout is chosen to fit the image as the New Landscape panel
+        /// does; otherwise the image is fitted to the layout (`transform`).
+        heightmap_file: Option<String>,
+        /// How a heightmap of a different size is fitted: "resample"
+        /// (default, stretch), "original" (corner-aligned), or "expand"
+        /// (centred).
+        transform: Option<String>,
+    },
+    /// Replace a landscape's heights (or a region's) from a heightmap file.
+    ImportHeightmap {
+        /// Edit layer to write into (name or index) when the landscape has
+        /// edit layers. Default: the first layer.
+        edit_layer: Option<String>,
+        world: Option<String>,
+        landscape: Option<String>,
+        /// A 16-bit greyscale PNG, or raw/r16 uint16 samples.
+        file: String,
+        /// Vertex region to write; the whole landscape when omitted.
+        min_x: Option<i32>,
+        min_y: Option<i32>,
+        max_x: Option<i32>,
+        max_y: Option<i32>,
+        /// "resample" (default), "original" or "expand" when the image and
+        /// the region differ in size.
+        transform: Option<String>,
     },
     /// Extent, resolution and paintable layers of one landscape.
     Info {
@@ -55,6 +167,9 @@ pub enum LandscapeOp {
     },
     /// Sculpt: flatten a region to one height, or write a height per vertex.
     SetHeights {
+        /// Edit layer to write into (name or index) when the landscape has
+        /// edit layers. Default: the first layer.
+        edit_layer: Option<String>,
         world: Option<String>,
         landscape: Option<String>,
         min_x: Option<i32>,
@@ -78,6 +193,9 @@ pub enum LandscapeOp {
     },
     /// Paint a layer's weight over a region.
     PaintLayer {
+        /// Edit layer to write into (name or index) when the landscape has
+        /// edit layers. Default: the first layer.
+        edit_layer: Option<String>,
         world: Option<String>,
         landscape: Option<String>,
         layer: String,
@@ -87,6 +205,116 @@ pub enum LandscapeOp {
         max_y: Option<i32>,
         /// 0 to 1 (default 1).
         weight: Option<f64>,
+    },
+    /// Edit layers: name, guid, visibility, lock, alphas, which is being edited.
+    ListEditLayers { landscape: Option<String> },
+    /// Turn edit layers on, moving the existing data into a first layer.
+    EnableEditLayers { landscape: Option<String> },
+    AddEditLayer {
+        landscape: Option<String>,
+        name: String,
+    },
+    /// Rename, show/hide, lock or set the alphas of an edit layer.
+    SetEditLayer {
+        landscape: Option<String>,
+        /// Layer name or index.
+        layer: String,
+        name: Option<String>,
+        visible: Option<bool>,
+        locked: Option<bool>,
+        heightmap_alpha: Option<f64>,
+        weightmap_alpha: Option<f64>,
+    },
+    RemoveEditLayer {
+        landscape: Option<String>,
+        layer: String,
+    },
+    ClearEditLayer {
+        landscape: Option<String>,
+        layer: String,
+    },
+    ReorderEditLayer {
+        landscape: Option<String>,
+        layer: String,
+        index: i32,
+    },
+    /// The layer sculpt and paint writes go to when `layer` is omitted.
+    SetEditingLayer {
+        landscape: Option<String>,
+        layer: String,
+    },
+    /// Spline control points and segments with their indices.
+    ListSplines { landscape: Option<String> },
+    /// Add a spline control point (world location); `connect_to` an existing
+    /// point's index makes the segment between them, optionally with a mesh
+    /// repeated along it.
+    AddSplinePoint {
+        landscape: Option<String>,
+        location: [f64; 3],
+        rotation: Option<[f64; 3]>,
+        connect_to: Option<i32>,
+        width: Option<f64>,
+        side_falloff: Option<f64>,
+        end_falloff: Option<f64>,
+        /// Weightmap layer to paint under the spline on apply_splines.
+        layer_name: Option<String>,
+        /// Static mesh placed at the control point.
+        mesh: Option<String>,
+        /// Static mesh repeated along the new segment.
+        segment_mesh: Option<String>,
+        raise_terrain: Option<bool>,
+        lower_terrain: Option<bool>,
+    },
+    SetSplinePoint {
+        landscape: Option<String>,
+        index: i32,
+        location: Option<[f64; 3]>,
+        rotation: Option<[f64; 3]>,
+        width: Option<f64>,
+        side_falloff: Option<f64>,
+        end_falloff: Option<f64>,
+        layer_name: Option<String>,
+        mesh: Option<String>,
+        raise_terrain: Option<bool>,
+        lower_terrain: Option<bool>,
+    },
+    /// Segment meshes (repeated along it), paint layer, terrain flags and
+    /// tangent lengths.
+    SetSplineSegment {
+        landscape: Option<String>,
+        index: i32,
+        /// One mesh; an empty string clears them.
+        mesh: Option<String>,
+        /// Several meshes, in order along the segment.
+        meshes: Option<Vec<String>>,
+        layer_name: Option<String>,
+        raise_terrain: Option<bool>,
+        lower_terrain: Option<bool>,
+        start_tangent: Option<f64>,
+        end_tangent: Option<f64>,
+    },
+    /// Remove a control point and every segment touching it.
+    RemoveSplinePoint {
+        landscape: Option<String>,
+        index: i32,
+    },
+    RemoveSplineSegment {
+        landscape: Option<String>,
+        index: i32,
+    },
+    /// Deform the terrain to the splines and paint their layer (the spline
+    /// tool's Apply Splines).
+    ApplySplines {
+        landscape: Option<String>,
+        /// Edit layer to deform (default the first) on a layered landscape.
+        edit_layer: Option<String>,
+    },
+    /// New Landscape Grass Type asset — the meshes a landscape material's
+    /// Grass Output node scatters — from varieties.
+    CreateGrassType {
+        /// e.g. /Game/Landscape/LG_Meadow.
+        path: String,
+        varieties: Vec<GrassVariety>,
     },
 }
 
@@ -312,7 +540,7 @@ pub enum LevelInstanceOp {
 #[tool_router(router = world_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
-        description = "Build and sculpt Landscape terrain: create a landscape at a chosen resolution and scale, read and write heights over any region (heights are centimetres of Z relative to the landscape actor, not raw samples), and add or paint the weightmap layers the landscape material blends. Sculpting a region takes either one flat height or one height per vertex, row-major from min_y."
+        description = "Build and sculpt Landscape terrain: create a landscape at a chosen resolution and scale (flat, or from a 16-bit PNG/raw heightmap file), import a heightmap file over an existing landscape, read and write heights over any region (heights are centimetres of Z relative to the landscape actor, not raw samples), and add or paint the weightmap layers the landscape material blends. Sculpting a region takes either one flat height or one height per vertex, row-major from min_y."
     )]
     async fn landscape_ops(
         &self,
@@ -321,6 +549,17 @@ impl UnrealMcp {
         let body =
             serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
         self.call_plugin("/api/world/landscape", body)
+            .await
+            .map(Json)
+    }
+
+    #[tool(
+        description = "Runtime Virtual Textures: create the asset, spawn and size the volume that renders it, assign primitives or a landscape to it, list the volumes in a world, and bake streaming mips."
+    )]
+    async fn rvt_ops(&self, Parameters(op): Parameters<RvtOp>) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/world/virtual_texture", body)
             .await
             .map(Json)
     }

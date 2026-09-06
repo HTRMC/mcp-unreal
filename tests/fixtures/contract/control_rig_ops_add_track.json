@@ -1,0 +1,33 @@
+{
+  "name": "control_rig_ops_add_track",
+  "description": "control_rig_ops add_track: a Control Rig track on an actor's binding",
+  "route": "/api/anim/control_rig",
+  "tool": "control_rig_ops",
+  "request": {
+    "operation": "add_track",
+    "sequence": "/Game/Cine/LS_McpContractRig",
+    "rig": "/Game/Rigs/CR_McpContract",
+    "actor": "McpContractRigActor"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "track": "/Game/Cine/LS_McpContractRig.LS_McpContractRig:MovieScene_0.MovieSceneControlRigParameterTrack_0",
+      "track_name": "CR_McpContract",
+      "binding": "McpContractRigActor",
+      "binding_guid": "B1EF546A41DD999B0FDA45838C459E25",
+      "sections": 1,
+      "rig_class": "/Game/Rigs/CR_McpContract.CR_McpContract_C",
+      "controls": [
+        {
+          "name": "Blend",
+          "type": "Float"
+        }
+      ],
+      "sequence": "/Game/Cine/LS_McpContractRig.LS_McpContractRig",
+      "rig": "/Game/Rigs/CR_McpContract.CR_McpContract",
+      "message": "track added — set_control_key animates its controls"
+    }
+  }
+}

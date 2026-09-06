@@ -1,0 +1,20 @@
+{
+  "name": "mass_ops_create_config",
+  "description": "mass_ops create_config: a new Mass Entity Config asset",
+  "route": "/api/mass/ops",
+  "tool": "mass_ops",
+  "request": {
+    "operation": "create_config",
+    "path": "/Game/Mass/EC_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "config": "/Game/Mass/EC_Contract.EC_Contract",
+      "parent": "",
+      "traits": [],
+      "inherited_traits": []
+    }
+  }
+}

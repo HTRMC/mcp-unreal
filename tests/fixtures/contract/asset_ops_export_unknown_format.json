@@ -1,0 +1,34 @@
+{
+  "name": "asset_ops_export_unknown_format",
+  "description": "asset_ops export with a format no exporter takes: ok with a failed entry",
+  "route": "/api/assets/ops",
+  "tool": "asset_ops",
+  "request": {
+    "operation": "export",
+    "paths": [
+      "/Engine/BasicShapes/Cube"
+    ],
+    "directory": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/McpContractExport",
+    "format": "xyz"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "directory": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/McpContractExport",
+      "format": "xyz",
+      "exported": 0,
+      "failed": 1,
+      "files": [
+        {
+          "asset": "/Engine/BasicShapes/Cube.Cube",
+          "file": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/McpContractExport/Cube.xyz",
+          "ok": false,
+          "errors": [
+            "No xyz exporter found for StaticMesh /Engine/BasicShapes/Cube.Cube"
+          ]
+        }
+      ]
+    }
+  }
+}

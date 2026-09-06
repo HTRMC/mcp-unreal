@@ -1,0 +1,40 @@
+{
+  "name": "rvt_ops_spawn_volume",
+  "description": "rvt_ops spawn_volume: a volume aligned to a landscape",
+  "route": "/api/world/virtual_texture",
+  "tool": "rvt_ops",
+  "request": {
+    "operation": "spawn_volume",
+    "virtual_texture": "/Game/VT/RVT_McpContract",
+    "name": "McpContractRvt",
+    "align_actor": "McpContractLand"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "volume": "/Game/Maps/TestMap.TestMap:PersistentLevel.RuntimeVirtualTextureVolume_0",
+      "label": "McpContractRvt",
+      "virtual_texture": "/Game/VT/RVT_McpContract.RVT_McpContract",
+      "location": [
+        8999.9755859375,
+        7949.9755859375,
+        -150
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3200,
+        3200,
+        300
+      ],
+      "bounds_align_actor": "/Game/Maps/TestMap.TestMap:PersistentLevel.Landscape_1",
+      "streaming_texture": "",
+      "enabled_in_scene": true,
+      "message": "spawned — assign adds primitives or a landscape to the texture; set_bounds refits after they move"
+    }
+  }
+}

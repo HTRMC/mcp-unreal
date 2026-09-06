@@ -1,0 +1,26 @@
+{
+  "name": "control_rig_ops_set_control_key",
+  "description": "control_rig_ops set_control_key: a float control keyed at a time",
+  "route": "/api/anim/control_rig",
+  "tool": "control_rig_ops",
+  "request": {
+    "operation": "set_control_key",
+    "sequence": "/Game/Cine/LS_McpContractRig",
+    "track": "McpContractRigActor",
+    "control": "Blend",
+    "time": 0.5,
+    "value": 1.0
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "sequence": "/Game/Cine/LS_McpContractRig.LS_McpContractRig",
+      "track": "/Game/Cine/LS_McpContractRig.LS_McpContractRig:MovieScene_0.MovieSceneControlRigParameterTrack_0",
+      "control": "Blend",
+      "tick": 12000,
+      "frame": 15,
+      "value": 1
+    }
+  }
+}

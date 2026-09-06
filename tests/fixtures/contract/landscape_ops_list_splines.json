@@ -1,0 +1,76 @@
+{
+  "name": "landscape_ops_list_splines",
+  "description": "landscape_ops list_splines",
+  "route": "/api/world/landscape",
+  "tool": "landscape_ops",
+  "request": {
+    "operation": "list_splines",
+    "landscape": "McpContractLand"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "landscape": "/Game/Maps/TestMap.TestMap:PersistentLevel.Landscape_1",
+      "control_points": [
+        {
+          "index": 0,
+          "location": [
+            9100,
+            9100,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "width": 150,
+          "side_falloff": 1000,
+          "end_falloff": 2000,
+          "layer_name": "None",
+          "mesh": "",
+          "segments": [
+            0
+          ]
+        },
+        {
+          "index": 1,
+          "location": [
+            9500,
+            9200,
+            0
+          ],
+          "rotation": [
+            0,
+            14.036243467926479,
+            0
+          ],
+          "width": 150,
+          "side_falloff": 1000,
+          "end_falloff": 2000,
+          "layer_name": "None",
+          "mesh": "",
+          "segments": [
+            0
+          ]
+        }
+      ],
+      "segments": [
+        {
+          "index": 0,
+          "start": 0,
+          "end": 1,
+          "start_tangent": 412.3105773925781,
+          "end_tangent": 412.3105773925781,
+          "layer_name": "None",
+          "raise_terrain": true,
+          "lower_terrain": true,
+          "meshes": [
+            "/Engine/BasicShapes/Cube.Cube"
+          ]
+        }
+      ]
+    }
+  }
+}

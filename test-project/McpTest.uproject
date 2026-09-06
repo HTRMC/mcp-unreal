@@ -81,6 +81,90 @@
 		{
 			"Name": "Fracture",
 			"Enabled": true
+		},
+		{
+			"Name": "McpLinkToolsets",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkGeometryScript",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkControlRig",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkLevelSnapshots",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkIKRig",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkRemoteControl",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkLiveLink",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkPoseSearch",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkMass",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkChooser",
+			"Enabled": true
+		},
+		{
+			"Name": "McpLinkCameras",
+			"Enabled": true
+		},
+		{
+			"Name": "Chooser",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayCameras",
+			"Enabled": true
+		},
+		{
+			"Name": "RemoteControl",
+			"Enabled": true
+		},
+		{
+			"Name": "LiveLink",
+			"Enabled": true
+		},
+		{
+			"Name": "PoseSearch",
+			"Enabled": true
+		},
+		{
+			"Name": "MassGameplay",
+			"Enabled": true
+		},
+		{
+			"Name": "GeometryScripting",
+			"Enabled": true
+		},
+		{
+			"Name": "LevelSnapshots",
+			"Enabled": true
+		},
+		{
+			"Name": "ToolsetRegistry",
+			"Enabled": true
+		},
+		{
+			"Name": "AllToolsets",
+			"Enabled": true
 		}
 	]
 }

@@ -1,0 +1,20 @@
+{
+  "name": "sequence_ops_add_camera_shake_bad_class_error",
+  "description": "sequence_ops add_camera_shake with a class that is not a camera shake: 404",
+  "route": "/api/sequences/ops",
+  "tool": "sequence_ops",
+  "request": {
+    "operation": "add_camera_shake",
+    "sequence": "/Game/Cinematics/LS_McpContractMain",
+    "binding": "NoSuchBinding",
+    "shake_class": "Actor"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "binding_not_found",
+      "message": "'NoSuchBinding' is not a binding — this sequence has none yet, add_binding makes one"
+    }
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "name": "pose_search_ops_add_channel",
+  "description": "pose_search_ops add_channel: a velocity channel on a bone with properties",
+  "route": "/api/anim/pose_search",
+  "tool": "pose_search_ops",
+  "request": {
+    "operation": "add_channel",
+    "schema": "/Game/MM/PSS_Contract",
+    "channel": "Velocity",
+    "properties": {
+      "Bone": {
+        "BoneName": "pelvis"
+      },
+      "Weight": 0.5
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "schema": "/Game/MM/PSS_Contract.PSS_Contract",
+      "sample_rate": 30,
+      "skeletons": [
+        {
+          "skeleton": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_Skeleton.TutorialTPP_Skeleton",
+          "mirror_table": "",
+          "role": "None"
+        }
+      ],
+      "channels": [
+        {
+          "index": 0,
+          "class": "PoseSearchFeatureChannel_Trajectory",
+          "properties": {
+            "Weight": 7,
+            "Samples": [
+              {
+                "Offset": -0.4000000059604645,
+                "Flags": 32,
+                "Weight": 0.4000000059604645,
+                "NormalizationGroup": "None",
+                "DebugColor": {
+                  "R": 1,
+                  "G": 0,
+                  "B": 0,
+                  "A": 1
+                }
+              },
+              {
+                "Offset": 0,
+                "Flags": 144,
+                "Weight": 2,
+                "NormalizationGroup": "None",
+                "DebugColor": {
+                  "R": 0,
+                  "G": 0,
+                  "B": 1,
+                  "A": 1
+                }
+              },
+              {
+                "Offset": 0.3499999940395355,
+                "Flags": 160,
+                "Weight": 0.699999988079071,
+                "NormalizationGroup": "None",
+                "DebugColor": {
+                  "R": 0,
+                  "G": 0,
+                  "B": 1,
+                  "A": 1
+                }
+              },
+              {
+                "Offset": 0.699999988079071,
+                "Flags": 176,
+                "Weight": 0.5,
+                "NormalizationGroup": "None",
+                "DebugColor": {
+                  "R": 0,
+                  "G": 0,
+                  "B": 1,
+                  "A": 1
+                }
+              }
+            ],
+            "SampleRole": "None",
+            "DebugWeightGroupID": -1,
+            "Filters": []
+          }
+        },
+        {
+          "index": 1,
+          "class": "PoseSearchFeatureChannel_Pose",
+          "properties": {
+            "Weight": 1,
+            "SampledBones": [
+              {
+                "Reference": {
+                  "BoneName": "foot_l"
+                },
+                "Flags": 3,
+                "NormalizationGroup": "None",
+                "Weight": 1,
+                "DebugColor": {
+                  "R": 0,
+                  "G": 1,
+                  "B": 0,
+                  "A": 1
+                }
+              },
+              {
+                "Reference": {
+                  "BoneName": "foot_r"
+                },
+                "Flags": 3,
+                "NormalizationGroup": "None",
+                "Weight": 1,
+                "DebugColor": {
+                  "R": 0,
+                  "G": 1,
+                  "B": 0,
+                  "A": 1
+                }
+              }
+            ],
+            "InputQueryPose": "UseContinuingPose",
+            "bUseCharacterSpaceVelocities": true,
+            "PermutationTimeType": "UseSampleTime",
+            "SampleRole": "None",
+            "DebugWeightGroupID": -1,
+            "Filters": []
+          }
+        },
+        {
+          "index": 2,
+          "class": "PoseSearchFeatureChannel_Velocity",
+          "properties": {
+            "bDefaultWithRootBone": true,
+            "Bone": {
+              "BoneName": "pelvis"
+            },
+            "SampleRole": "None",
+            "OriginBone": {
+              "BoneName": "None"
+            },
+            "OriginRole": "None",
+            "Weight": 0.5,
+            "SamplingAttributeId": -1,
+            "SampleTimeOffset": 0,
+            "OriginTimeOffset": 0,
+            "DebugColor": {
+              "R": 0,
+              "G": 1,
+              "B": 0,
+              "A": 1
+            },
+            "InputQueryPose": "UseContinuingPose",
+            "bUseCharacterSpaceVelocities": true,
+            "bNormalize": false,
+            "ComponentStripping": "None",
+            "PermutationTimeType": "UseSampleTime",
+            "NormalizationGroup": "None",
+            "Filters": []
+          }
+        }
+      ],
+      "finalized_channels": 3,
+      "added": "PoseSearchFeatureChannel_Velocity"
+    }
+  }
+}

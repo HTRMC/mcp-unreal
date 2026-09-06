@@ -7,7 +7,13 @@
 // mesh half (it drives the real reduction module for LODs), so this route uses
 // it rather than touching the render data directly.
 
+#include "Animation/MorphTarget.h"
+#include "BoneWeights.h"
 #include "Animation/Skeleton.h"
+#include "ClothingAsset.h"
+#include "ClothingAssetBase.h"
+#include "ClothingAssetFactoryInterface.h"
+#include "ClothingSystemEditorModule.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Editor.h"
@@ -19,9 +25,15 @@
 #include "McpLinkCoreModule.h"
 #include "McpResolve.h"
 #include "McpResponder.h"
+#include "MeshDescription.h"
+#include "Modules/ModuleManager.h"
+#include "Rendering/SkeletalMeshLODModel.h"
+#include "Rendering/SkeletalMeshModel.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "Rendering/SkeletalMeshLODImporterData.h"
 #include "ScopedTransaction.h"
+#include "SkeletalMeshAttributes.h"
+#include "SkinWeightsAttributesRef.h"
 #include "SkeletalMeshEditorSubsystem.h"
 #include "AnimationBlueprintLibrary.h"
 
@@ -108,6 +120,108 @@ namespace McpLink
 	}
 
 	using namespace SkeletonRoutes;
+
+	namespace MeshEdits
+	{
+		bool ReadVector3f(const TSharedPtr<FJsonValue>& Value, FVector3f& Out)
+		{
+			const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
+			if (!Value.IsValid() || !Value->TryGetArray(Items) || Items->Num() != 3)
+			{
+				return false;
+			}
+			Out = FVector3f(static_cast<float>((*Items)[0]->AsNumber()),
+				static_cast<float>((*Items)[1]->AsNumber()), static_cast<float>((*Items)[2]->AsNumber()));
+			return true;
+		}
+
+		TArray<TSharedPtr<FJsonValue>> Vector3fJson(const FVector3f& V)
+		{
+			return {MakeShared<FJsonValueNumber>(V.X), MakeShared<FJsonValueNumber>(V.Y), MakeShared<FJsonValueNumber>(V.Z)};
+		}
+
+		/// A clothing asset on the mesh by name or guid, or nullptr after responding.
+		UClothingAssetCommon* ClothingOrError(
+			USkeletalMesh& Mesh, const TSharedRef<FJsonObject>& Body, const TSharedRef<FMcpResponder>& Responder)
+		{
+			FString Spec;
+			if (!RequireString(Body, TEXT("clothing"), Spec, Responder, TEXT("a clothing asset name or guid from list_clothing")))
+			{
+				return nullptr;
+			}
+			for (UClothingAssetBase* Asset : Mesh.GetMeshClothingAssets())
+			{
+				if (Asset != nullptr && (Asset->GetName() == Spec || Asset->GetAssetGuid().ToString() == Spec))
+				{
+					return Cast<UClothingAssetCommon>(Asset);
+				}
+			}
+			Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("clothing_not_found"),
+				FString::Printf(TEXT("'%s' has no clothing asset '%s' — list_clothing shows them"), *Mesh.GetPathName(), *Spec));
+			return nullptr;
+		}
+
+		TSharedRef<FJsonObject> ClothingJson(USkeletalMesh& Mesh, UClothingAssetBase& Asset)
+		{
+			const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+			Entry->SetStringField(TEXT("name"), Asset.GetName());
+			Entry->SetStringField(TEXT("guid"), Asset.GetAssetGuid().ToString());
+			if (const UClothingAssetCommon* Common = Cast<UClothingAssetCommon>(&Asset))
+			{
+				Entry->SetNumberField(TEXT("lods"), Common->GetNumLods());
+				Entry->SetStringField(TEXT("physics_asset"),
+					Common->PhysicsAsset != nullptr ? Common->PhysicsAsset->GetPathName() : FString());
+			}
+			TArray<TSharedPtr<FJsonValue>> Bound;
+			if (const FSkeletalMeshModel* Model = Mesh.GetImportedModel())
+			{
+				for (int32 LodIndex = 0; LodIndex < Model->LODModels.Num(); ++LodIndex)
+				{
+					const FSkeletalMeshLODModel& Lod = Model->LODModels[LodIndex];
+					for (int32 SectionIndex = 0; SectionIndex < Lod.Sections.Num(); ++SectionIndex)
+					{
+						if (Mesh.GetSectionClothingAsset(LodIndex, SectionIndex) == &Asset)
+						{
+							const TSharedRef<FJsonObject> Section = MakeShared<FJsonObject>();
+							Section->SetNumberField(TEXT("lod"), LodIndex);
+							Section->SetNumberField(TEXT("section"), SectionIndex);
+							Section->SetNumberField(TEXT("asset_lod"), Lod.Sections[SectionIndex].ClothingData.AssetLodIndex);
+							Bound.Add(MakeShared<FJsonValueObject>(Section));
+						}
+					}
+				}
+			}
+			Entry->SetArrayField(TEXT("bound_sections"), Bound);
+			return Entry;
+		}
+
+		TArray<TSharedPtr<FJsonValue>> ClothingListJson(USkeletalMesh& Mesh)
+		{
+			TArray<TSharedPtr<FJsonValue>> Out;
+			for (UClothingAssetBase* Asset : Mesh.GetMeshClothingAssets())
+			{
+				if (Asset != nullptr)
+				{
+					Out.Add(MakeShared<FJsonValueObject>(ClothingJson(Mesh, *Asset)));
+				}
+			}
+			return Out;
+		}
+
+		/// The LOD's imported model, or nullptr after responding.
+		const FSkeletalMeshLODModel* LodModelOrError(
+			USkeletalMesh& Mesh, int32 Lod, const TSharedRef<FMcpResponder>& Responder)
+		{
+			const FSkeletalMeshModel* Model = Mesh.GetImportedModel();
+			if (Model == nullptr || !Model->LODModels.IsValidIndex(Lod))
+			{
+				Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("lod_not_found"),
+					FString::Printf(TEXT("'%s' has no LOD %d"), *Mesh.GetPathName(), Lod));
+				return nullptr;
+			}
+			return &Model->LODModels[Lod];
+		}
+	}
 
 	void RegisterSkeletonRoutes(FMcpLinkCoreModule& Core)
 	{
@@ -632,6 +746,633 @@ namespace McpLink
 					return;
 				}
 
+				if (Operation == TEXT("get_skin_weights") || Operation == TEXT("set_skin_weights"))
+				{
+					using namespace MeshEdits;
+					const int32 Lod = IntOr(Body, TEXT("lod"), 0);
+					if (LodModelOrError(*Mesh, Lod, Responder) == nullptr)
+					{
+						return;
+					}
+					FMeshDescription* MeshDescription = Mesh->GetMeshDescription(Lod);
+					if (MeshDescription == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("no_mesh_description"),
+							FString::Printf(TEXT("LOD %d of '%s' has no source mesh description"), Lod, *Mesh->GetPathName()));
+						return;
+					}
+					FSkeletalMeshAttributes Attributes(*MeshDescription);
+					FString ProfileName;
+					Body->TryGetStringField(TEXT("profile"), ProfileName);
+					const FName Profile = ProfileName.IsEmpty() ? NAME_None : FName(*ProfileName);
+					const FReferenceSkeleton& RefSkeleton = Mesh->GetRefSkeleton();
+					if (Operation == TEXT("get_skin_weights"))
+					{
+						const FSkeletalMeshConstAttributes ConstAttributes(*MeshDescription);
+						FSkinWeightsVertexAttributesConstRef Weights = ConstAttributes.GetVertexSkinWeights(Profile);
+						if (!Weights.IsValid())
+						{
+							Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("profile_not_found"),
+								FString::Printf(TEXT("LOD %d has no skin weight profile '%s'"), Lod, *ProfileName));
+							return;
+						}
+						TArray<int32> VertexIds;
+						const TArray<TSharedPtr<FJsonValue>>* Requested = nullptr;
+						if (Body->TryGetArrayField(TEXT("vertices"), Requested))
+						{
+							for (const TSharedPtr<FJsonValue>& Value : *Requested)
+							{
+								VertexIds.Add(static_cast<int32>(Value->AsNumber()));
+							}
+						}
+						else
+						{
+							const int32 Max = FMath::Clamp(IntOr(Body, TEXT("max_vertices"), 64), 1, 100000);
+							for (const FVertexID VertexID : MeshDescription->Vertices().GetElementIDs())
+							{
+								if (VertexIds.Num() >= Max)
+								{
+									break;
+								}
+								VertexIds.Add(VertexID.GetValue());
+							}
+						}
+						TArray<TSharedPtr<FJsonValue>> Out;
+						for (const int32 Id : VertexIds)
+						{
+							const FVertexID VertexID(Id);
+							if (!MeshDescription->IsVertexValid(VertexID))
+							{
+								Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_vertex"),
+									FString::Printf(TEXT("vertex %d is not a vertex of LOD %d — it has %d"), Id, Lod, MeshDescription->Vertices().Num()));
+								return;
+							}
+							const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+							Entry->SetNumberField(TEXT("vertex"), Id);
+							TArray<TSharedPtr<FJsonValue>> Bones;
+							for (const UE::AnimationCore::FBoneWeight BoneWeight : Weights.Get(VertexID))
+							{
+								const TSharedRef<FJsonObject> BoneJson = MakeShared<FJsonObject>();
+								BoneJson->SetStringField(TEXT("bone"), RefSkeleton.IsValidIndex(BoneWeight.GetBoneIndex())
+									? RefSkeleton.GetBoneName(BoneWeight.GetBoneIndex()).ToString() : FString());
+								BoneJson->SetNumberField(TEXT("index"), BoneWeight.GetBoneIndex());
+								BoneJson->SetNumberField(TEXT("weight"), BoneWeight.GetWeight());
+								Bones.Add(MakeShared<FJsonValueObject>(BoneJson));
+							}
+							Entry->SetArrayField(TEXT("bones"), Bones);
+							Out.Add(MakeShared<FJsonValueObject>(Entry));
+						}
+						const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+						Data->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+						Data->SetNumberField(TEXT("lod"), Lod);
+						Data->SetNumberField(TEXT("vertex_count"), MeshDescription->Vertices().Num());
+						TArray<TSharedPtr<FJsonValue>> Profiles;
+						for (const FName& Name : Attributes.GetSkinWeightProfileNames(true))
+						{
+							Profiles.Add(MakeShared<FJsonValueString>(Name.ToString()));
+						}
+						Data->SetArrayField(TEXT("profiles"), Profiles);
+						Data->SetArrayField(TEXT("weights"), Out);
+						Responder->Ok(Data);
+						return;
+					}
+
+					// set_skin_weights: [{vertex, bones: [{bone, weight}]}] — the
+					// weights are normalized and sorted by the engine's own
+					// FBoneWeights, then the build turns them into render data.
+					const TArray<TSharedPtr<FJsonValue>>* Entries = nullptr;
+					if (!Body->TryGetArrayField(TEXT("weights"), Entries) || Entries->IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'weights' is required: [{vertex, bones: [{bone, weight}, ...]}, ...]"));
+						return;
+					}
+					struct FVertexWeights
+					{
+						FVertexID Vertex;
+						TArray<UE::AnimationCore::FBoneWeight> Bones;
+					};
+					TArray<FVertexWeights> Parsed;
+					for (const TSharedPtr<FJsonValue>& Value : *Entries)
+					{
+						const TSharedPtr<FJsonObject>* Entry = nullptr;
+						int32 Vertex = -1;
+						const TArray<TSharedPtr<FJsonValue>>* BoneValues = nullptr;
+						if (!Value->TryGetObject(Entry) || !(*Entry)->TryGetNumberField(TEXT("vertex"), Vertex)
+							|| !(*Entry)->TryGetArrayField(TEXT("bones"), BoneValues) || BoneValues->IsEmpty())
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_weights"),
+								TEXT("each entry is {vertex, bones: [{bone, weight}, ...]}"));
+							return;
+						}
+						if (Vertex < 0 || !MeshDescription->IsVertexValid(FVertexID(Vertex)))
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_vertex"),
+								FString::Printf(TEXT("vertex %d is not a vertex of LOD %d — it has %d"), Vertex, Lod, MeshDescription->Vertices().Num()));
+							return;
+						}
+						FVertexWeights VertexWeights;
+						VertexWeights.Vertex = FVertexID(Vertex);
+						for (const TSharedPtr<FJsonValue>& BoneValue : *BoneValues)
+						{
+							const TSharedPtr<FJsonObject>* BoneEntry = nullptr;
+							FString BoneName;
+							double Weight = 0.0;
+							if (!BoneValue->TryGetObject(BoneEntry) || !(*BoneEntry)->TryGetStringField(TEXT("bone"), BoneName)
+								|| !(*BoneEntry)->TryGetNumberField(TEXT("weight"), Weight))
+							{
+								Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_weights"),
+									TEXT("each bone entry is {bone (name), weight (0-1)}"));
+								return;
+							}
+							const int32 BoneIndex = RefSkeleton.FindBoneIndex(FName(*BoneName));
+							if (BoneIndex == INDEX_NONE)
+							{
+								Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("bone_not_found"),
+									FString::Printf(TEXT("the mesh has no bone '%s'"), *BoneName));
+								return;
+							}
+							VertexWeights.Bones.Emplace(static_cast<FBoneIndexType>(BoneIndex), static_cast<float>(Weight));
+						}
+						Parsed.Add(MoveTemp(VertexWeights));
+					}
+					{
+						FScopedSkeletalMeshPostEditChange PostEditChangeScope(Mesh);
+						Mesh->ModifyMeshDescription(Lod);
+						if (!Profile.IsNone() && !Attributes.GetVertexSkinWeights(Profile).IsValid())
+						{
+							Attributes.RegisterSkinWeightAttribute(Profile);
+						}
+						FSkinWeightsVertexAttributesRef Weights = Attributes.GetVertexSkinWeights(Profile);
+						if (!Weights.IsValid())
+						{
+							Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("profile_not_found"),
+								FString::Printf(TEXT("LOD %d has no skin weight profile '%s'"), Lod, *ProfileName));
+							return;
+						}
+						for (const FVertexWeights& VertexWeights : Parsed)
+						{
+							Weights.Set(VertexWeights.Vertex, UE::AnimationCore::FBoneWeights::Create(VertexWeights.Bones));
+						}
+						Mesh->CommitMeshDescription(Lod);
+					}
+					Mesh->MarkPackageDirty();
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+					Data->SetNumberField(TEXT("lod"), Lod);
+					Data->SetStringField(TEXT("profile"), Profile.IsNone() ? TEXT("default") : ProfileName);
+					Data->SetNumberField(TEXT("vertices_written"), Parsed.Num());
+					Data->SetStringField(TEXT("note"), TEXT("weights were normalized to sum to one; the render data was rebuilt"));
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("morph_target_info"))
+				{
+					using namespace MeshEdits;
+					FString Name;
+					if (!RequireString(Body, TEXT("name"), Name, Responder, TEXT("a morph target name from info")))
+					{
+						return;
+					}
+					UMorphTarget* Morph = Mesh->FindMorphTarget(FName(*Name));
+					if (Morph == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("morph_target_not_found"),
+							FString::Printf(TEXT("'%s' has no morph target '%s'"), *Mesh->GetPathName(), *Name));
+						return;
+					}
+					const int32 Lod = IntOr(Body, TEXT("lod"), 0);
+					const int32 MaxDeltas = FMath::Clamp(IntOr(Body, TEXT("max_deltas"), 64), 0, 100000);
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+					Data->SetStringField(TEXT("name"), Morph->GetName());
+					TArray<TSharedPtr<FJsonValue>> Lods;
+					const int32 LodCount = Mesh->GetImportedModel() != nullptr ? Mesh->GetImportedModel()->LODModels.Num() : 0;
+					for (int32 Index = 0; Index < LodCount; ++Index)
+					{
+						const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+						Entry->SetNumberField(TEXT("lod"), Index);
+						Entry->SetBoolField(TEXT("has_data"), Morph->HasDataForLOD(Index));
+						Entry->SetNumberField(TEXT("deltas"), Morph->HasDataForLOD(Index) ? Morph->GetNumDeltasForLOD(Index) : 0);
+						Entry->SetBoolField(TEXT("generated_by_engine"), Morph->IsGeneratedByEngine(Index));
+						Lods.Add(MakeShared<FJsonValueObject>(Entry));
+					}
+					Data->SetArrayField(TEXT("lods"), Lods);
+					// The source of truth is the LOD's mesh description: vertex
+					// ids there are what add_morph_target takes, and what the
+					// build turns into render deltas.
+					TArray<TSharedPtr<FJsonValue>> Deltas;
+					int32 SourceDeltas = 0;
+					if (FMeshDescription* MeshDescription = Mesh->GetMeshDescription(Lod))
+					{
+						FSkeletalMeshAttributes Attributes(*MeshDescription);
+						const FName MorphName = Morph->GetFName();
+						if (Attributes.HasMorphTargetPositionsAttribute(MorphName))
+						{
+							TVertexAttributesConstRef<FVector3f> Positions = Attributes.GetVertexMorphPositionDelta(MorphName);
+							for (const FVertexID VertexID : MeshDescription->Vertices().GetElementIDs())
+							{
+								const FVector3f Delta = Positions[VertexID];
+								if (Delta.IsNearlyZero())
+								{
+									continue;
+								}
+								++SourceDeltas;
+								if (Deltas.Num() >= MaxDeltas)
+								{
+									continue;
+								}
+								const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+								Entry->SetNumberField(TEXT("vertex"), VertexID.GetValue());
+								Entry->SetArrayField(TEXT("delta"), Vector3fJson(Delta));
+								Deltas.Add(MakeShared<FJsonValueObject>(Entry));
+							}
+						}
+						Data->SetNumberField(TEXT("vertex_count"), MeshDescription->Vertices().Num());
+						Data->SetBoolField(TEXT("has_normals"), Attributes.HasMorphTargetNormalsAttribute(MorphName));
+					}
+					Data->SetNumberField(TEXT("sample_lod"), Lod);
+					Data->SetNumberField(TEXT("source_deltas"), SourceDeltas);
+					Data->SetArrayField(TEXT("sample"), Deltas);
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("add_morph_target"))
+				{
+					using namespace MeshEdits;
+					FString NameString;
+					if (!RequireString(Body, TEXT("name"), NameString, Responder, TEXT("the morph target's name")))
+					{
+						return;
+					}
+					const FName Name(*NameString);
+					const int32 Lod = IntOr(Body, TEXT("lod"), 0);
+					if (LodModelOrError(*Mesh, Lod, Responder) == nullptr)
+					{
+						return;
+					}
+					// Morph targets are built from the LOD's mesh description in
+					// 5.8: a UMorphTarget registered by hand is discarded by the
+					// next build, so the deltas go into the source and the build
+					// produces the render-side morph target.
+					FMeshDescription* MeshDescription = Mesh->GetMeshDescription(Lod);
+					if (MeshDescription == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("no_mesh_description"),
+							FString::Printf(TEXT("LOD %d of '%s' has no source mesh description to add a morph target to"),
+								Lod, *Mesh->GetPathName()));
+						return;
+					}
+					const TArray<TSharedPtr<FJsonValue>>* DeltaValues = nullptr;
+					if (!Body->TryGetArrayField(TEXT("deltas"), DeltaValues) || DeltaValues->IsEmpty())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+							TEXT("'deltas' is required: [{vertex, delta: [x, y, z], normal?: [x, y, z]}, ...] ")
+							TEXT("over the LOD's source vertices (morph_target_info reports vertex_count)"));
+						return;
+					}
+					struct FSourceDelta
+					{
+						FVertexID Vertex;
+						FVector3f Position;
+						FVector3f Normal;
+						bool bHasNormal = false;
+					};
+					TArray<FSourceDelta> Deltas;
+					Deltas.Reserve(DeltaValues->Num());
+					bool bAnyNormal = false;
+					for (const TSharedPtr<FJsonValue>& Value : *DeltaValues)
+					{
+						const TSharedPtr<FJsonObject>* Entry = nullptr;
+						int32 Vertex = -1;
+						FSourceDelta Delta;
+						if (!Value->TryGetObject(Entry) || !(*Entry)->TryGetNumberField(TEXT("vertex"), Vertex)
+							|| !ReadVector3f((*Entry)->TryGetField(TEXT("delta")), Delta.Position))
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_delta"),
+								TEXT("each delta is {vertex, delta: [x, y, z], normal?: [x, y, z]}"));
+							return;
+						}
+						if (Vertex < 0 || !MeshDescription->IsVertexValid(FVertexID(Vertex)))
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_vertex"),
+								FString::Printf(TEXT("vertex %d is not a vertex of LOD %d — it has %d source vertices"),
+									Vertex, Lod, MeshDescription->Vertices().Num()));
+							return;
+						}
+						Delta.Vertex = FVertexID(Vertex);
+						Delta.bHasNormal = ReadVector3f((*Entry)->TryGetField(TEXT("normal")), Delta.Normal);
+						bAnyNormal |= Delta.bHasNormal;
+						Deltas.Add(Delta);
+					}
+					FSkeletalMeshAttributes Attributes(*MeshDescription);
+					const bool bExists = Attributes.HasMorphTargetPositionsAttribute(Name);
+					const bool bReplace = BoolOr(Body, TEXT("replace"), false);
+					if (bExists && !bReplace)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("already_exists"),
+							FString::Printf(TEXT("'%s' already has a morph target '%s' — pass replace=true to overwrite its LOD %d deltas"),
+								*Mesh->GetPathName(), *NameString, Lod));
+						return;
+					}
+					{
+						// Rebuilds the render data when it goes out of scope.
+						FScopedSkeletalMeshPostEditChange PostEditChangeScope(Mesh);
+						Mesh->ModifyMeshDescription(Lod);
+						if (bExists && bAnyNormal && !Attributes.HasMorphTargetNormalsAttribute(Name))
+						{
+							Attributes.UnregisterMorphTargetAttribute(Name);
+						}
+						if (!Attributes.HasMorphTargetPositionsAttribute(Name))
+						{
+							Attributes.RegisterMorphTargetAttribute(Name, bAnyNormal);
+						}
+						TVertexAttributesRef<FVector3f> Positions = Attributes.GetVertexMorphPositionDelta(Name);
+						if (bReplace)
+						{
+							for (const FVertexID VertexID : MeshDescription->Vertices().GetElementIDs())
+							{
+								Positions[VertexID] = FVector3f::ZeroVector;
+							}
+						}
+						for (const FSourceDelta& Delta : Deltas)
+						{
+							Positions[Delta.Vertex] = Delta.Position;
+						}
+						if (Attributes.HasMorphTargetNormalsAttribute(Name))
+						{
+							TVertexInstanceAttributesRef<FVector3f> Normals = Attributes.GetVertexInstanceMorphNormalDelta(Name);
+							for (const FSourceDelta& Delta : Deltas)
+							{
+								if (Delta.bHasNormal)
+								{
+									for (const FVertexInstanceID InstanceID : MeshDescription->GetVertexVertexInstanceIDs(Delta.Vertex))
+									{
+										Normals[InstanceID] = Delta.Normal;
+									}
+								}
+							}
+						}
+						Mesh->CommitMeshDescription(Lod);
+					}
+					Mesh->MarkPackageDirty();
+					const UMorphTarget* Built = Mesh->FindMorphTarget(Name);
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+					Data->SetStringField(TEXT("name"), NameString);
+					Data->SetNumberField(TEXT("lod"), Lod);
+					Data->SetNumberField(TEXT("vertex_count"), MeshDescription->Vertices().Num());
+					Data->SetNumberField(TEXT("deltas_given"), Deltas.Num());
+					Data->SetBoolField(TEXT("built"), Built != nullptr);
+					Data->SetNumberField(TEXT("render_deltas"),
+						Built != nullptr && Built->HasDataForLOD(Lod) ? Built->GetNumDeltasForLOD(Lod) : 0);
+					Data->SetBoolField(TEXT("replaced"), bExists);
+					Data->SetNumberField(TEXT("morph_target_count"), Mesh->GetMorphTargets().Num());
+					Data->SetStringField(TEXT("note"),
+						TEXT("drive it from an animation curve of the same name, or SetMorphTarget on a skeletal mesh component"));
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("remove_morph_target"))
+				{
+					FString Name;
+					if (!RequireString(Body, TEXT("name"), Name, Responder, TEXT("a morph target name from info")))
+					{
+						return;
+					}
+					UMorphTarget* Morph = Mesh->FindMorphTarget(FName(*Name));
+					if (Morph == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("morph_target_not_found"),
+							FString::Printf(TEXT("'%s' has no morph target '%s'"), *Mesh->GetPathName(), *Name));
+						return;
+					}
+					if (!Mesh->RemoveMorphTargets({FName(*Name)}, /*bInRebuildRenderMesh*/ true))
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("remove_refused"),
+							FString::Printf(TEXT("the mesh refused to remove morph target '%s'"), *Name));
+						return;
+					}
+					Mesh->MarkPackageDirty();
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+					Data->SetStringField(TEXT("removed"), Name);
+					Data->SetNumberField(TEXT("morph_target_count"), Mesh->GetMorphTargets().Num());
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("list_clothing"))
+				{
+					using namespace MeshEdits;
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+					Data->SetArrayField(TEXT("clothing"), ClothingListJson(*Mesh));
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("create_clothing"))
+				{
+					using namespace MeshEdits;
+					const int32 Lod = IntOr(Body, TEXT("lod"), 0);
+					const int32 Section = IntOr(Body, TEXT("section"), -1);
+					const FSkeletalMeshLODModel* LodModel = LodModelOrError(*Mesh, Lod, Responder);
+					if (LodModel == nullptr)
+					{
+						return;
+					}
+					if (!LodModel->Sections.IsValidIndex(Section))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_section"),
+							FString::Printf(TEXT("'section' is required — LOD %d has %d sections"), Lod, LodModel->Sections.Num()));
+						return;
+					}
+					if (Mesh->GetSectionClothingAsset(Lod, Section) != nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("section_has_clothing"),
+							FString::Printf(TEXT("LOD %d section %d already has clothing bound — unbind_clothing first"), Lod, Section));
+						return;
+					}
+					FString Name;
+					Body->TryGetStringField(TEXT("name"), Name);
+					if (Name.IsEmpty())
+					{
+						Name = FString::Printf(TEXT("%s_Cloth_LOD%d_%d"), *Mesh->GetName(), Lod, Section);
+					}
+					UClothingAssetFactoryBase* Factory =
+						FModuleManager::LoadModuleChecked<FClothingSystemEditorModule>("ClothingSystemEditor").GetFactory();
+					if (Factory == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("no_cloth_factory"),
+							TEXT("the Clothing System editor module has no asset factory"));
+						return;
+					}
+					FSkeletalMeshClothBuildParams Params;
+					Params.TargetAsset = nullptr;
+					Params.TargetLod = 0;
+					Params.bRemapParameters = false;
+					Params.AssetName = Name;
+					Params.LodIndex = Lod;
+					Params.SourceSection = Section;
+					Params.bRemoveFromMesh = BoolOr(Body, TEXT("remove_section"), false);
+					// The Skeletal Mesh Editor's "Create Clothing Data from
+					// Section": a simulation mesh from the section's triangles,
+					// weighted to the bones the section uses.
+					UClothingAssetBase* Asset = Factory->CreateFromSkeletalMesh(Mesh, Params);
+					if (Asset == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("create_failed"),
+							TEXT("the clothing factory refused the section — see the log"));
+						return;
+					}
+					if (!Mesh->GetMeshClothingAssets().Contains(Asset))
+					{
+						Mesh->AddClothingAsset(Asset);
+					}
+					Mesh->MarkPackageDirty();
+					const TSharedRef<FJsonObject> Data = ClothingJson(*Mesh, *Asset);
+					Data->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+					Data->SetStringField(TEXT("message"),
+						TEXT("created — bind_clothing applies it to a section; its physics live on the asset's ")
+						TEXT("ClothConfigs (set_property) and a Physics Asset for collision"));
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("bind_clothing") || Operation == TEXT("unbind_clothing"))
+				{
+					using namespace MeshEdits;
+					const int32 Lod = IntOr(Body, TEXT("lod"), 0);
+					const int32 Section = IntOr(Body, TEXT("section"), -1);
+					const FSkeletalMeshLODModel* LodModel = LodModelOrError(*Mesh, Lod, Responder);
+					if (LodModel == nullptr)
+					{
+						return;
+					}
+					if (!LodModel->Sections.IsValidIndex(Section))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_section"),
+							FString::Printf(TEXT("'section' is required — LOD %d has %d sections"), Lod, LodModel->Sections.Num()));
+						return;
+					}
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+					Data->SetNumberField(TEXT("lod"), Lod);
+					Data->SetNumberField(TEXT("section"), Section);
+					if (Operation == TEXT("bind_clothing"))
+					{
+						UClothingAssetCommon* Cloth = ClothingOrError(*Mesh, Body, Responder);
+						if (Cloth == nullptr)
+						{
+							return;
+						}
+						const int32 AssetLod = IntOr(Body, TEXT("asset_lod"), 0);
+						if (!Cloth->IsValidLod(AssetLod))
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_asset_lod"),
+								FString::Printf(TEXT("clothing '%s' has %d LODs"), *Cloth->GetName(), Cloth->GetNumLods()));
+							return;
+						}
+						// The build regenerates the LOD model from the source, so
+						// the binding also has to live in the section user data
+						// it reads — what Persona's clothing combo box writes.
+						FSkeletalMeshLODModel& LodModelMutable = Mesh->GetImportedModel()->LODModels[Lod];
+						FSkelMeshSourceSectionUserData& UserData =
+							LodModelMutable.UserSectionsData.FindOrAdd(LodModelMutable.Sections[Section].OriginalDataSectionIndex);
+						if (UClothingAssetBase* Current = Mesh->GetSectionClothingAsset(Lod, Section))
+						{
+							Current->Modify();
+							Current->UnbindFromSkeletalMesh(Mesh, Lod, Section);
+							UserData.CorrespondClothAssetIndex = INDEX_NONE;
+							UserData.ClothingData.AssetGuid = FGuid();
+							UserData.ClothingData.AssetLodIndex = INDEX_NONE;
+						}
+						Cloth->Modify();
+						if (!Cloth->BindToSkeletalMesh(Mesh, Lod, Section, AssetLod))
+						{
+							Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("bind_refused"),
+								TEXT("the clothing asset refused the section — its simulation mesh must match the ")
+								TEXT("section's vertices (create it from the same section), and the section must be free"));
+							return;
+						}
+						int32 AssetIndex = INDEX_NONE;
+						Mesh->GetMeshClothingAssets().Find(Cloth, AssetIndex);
+						UserData.CorrespondClothAssetIndex = static_cast<int16>(AssetIndex);
+						UserData.ClothingData.AssetGuid = Cloth->GetAssetGuid();
+						UserData.ClothingData.AssetLodIndex = AssetLod;
+						Data->SetStringField(TEXT("clothing"), Cloth->GetName());
+						Data->SetNumberField(TEXT("asset_lod"), AssetLod);
+					}
+					else
+					{
+						UClothingAssetBase* Current = Mesh->GetSectionClothingAsset(Lod, Section);
+						if (Current == nullptr)
+						{
+							Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("not_bound"),
+								FString::Printf(TEXT("LOD %d section %d has no clothing bound"), Lod, Section));
+							return;
+						}
+						Current->Modify();
+						Current->UnbindFromSkeletalMesh(Mesh, Lod, Section);
+						FSkeletalMeshLODModel& LodModelMutable = Mesh->GetImportedModel()->LODModels[Lod];
+						FSkelMeshSourceSectionUserData& UserData =
+							LodModelMutable.UserSectionsData.FindOrAdd(LodModelMutable.Sections[Section].OriginalDataSectionIndex);
+						UserData.CorrespondClothAssetIndex = INDEX_NONE;
+						UserData.ClothingData.AssetGuid = FGuid();
+						UserData.ClothingData.AssetLodIndex = INDEX_NONE;
+					}
+					Mesh->PostEditChange();
+					Mesh->MarkPackageDirty();
+					Data->SetArrayField(TEXT("clothing_assets"), ClothingListJson(*Mesh));
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("remove_clothing"))
+				{
+					using namespace MeshEdits;
+					UClothingAssetCommon* Cloth = ClothingOrError(*Mesh, Body, Responder);
+					if (Cloth == nullptr)
+					{
+						return;
+					}
+					Cloth->Modify();
+					if (FSkeletalMeshModel* Model = Mesh->GetImportedModel())
+					{
+						for (int32 Lod = 0; Lod < Model->LODModels.Num(); ++Lod)
+						{
+							FSkeletalMeshLODModel& LodModelMutable = Model->LODModels[Lod];
+							for (int32 Section = 0; Section < LodModelMutable.Sections.Num(); ++Section)
+							{
+								if (Mesh->GetSectionClothingAsset(Lod, Section) != Cloth)
+								{
+									continue;
+								}
+								Cloth->UnbindFromSkeletalMesh(Mesh, Lod, Section);
+								FSkelMeshSourceSectionUserData& UserData =
+									LodModelMutable.UserSectionsData.FindOrAdd(LodModelMutable.Sections[Section].OriginalDataSectionIndex);
+								UserData.CorrespondClothAssetIndex = INDEX_NONE;
+								UserData.ClothingData.AssetGuid = FGuid();
+								UserData.ClothingData.AssetLodIndex = INDEX_NONE;
+							}
+						}
+					}
+					Mesh->GetMeshClothingAssets().Remove(Cloth);
+					Cloth->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
+					Cloth->MarkAsGarbage();
+					Mesh->PostEditChange();
+					Mesh->MarkPackageDirty();
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+					Data->SetArrayField(TEXT("clothing_assets"), ClothingListJson(*Mesh));
+					Responder->Ok(Data);
+					return;
+				}
+
 				if (Operation == TEXT("save"))
 				{
 					FString Filename, Error;
@@ -650,7 +1391,9 @@ namespace McpLink
 					FString::Printf(
 						TEXT("unknown operation '%s' — use info, regenerate_lod, remove_lods, ")
 						TEXT("set_material, add_socket, remove_socket, rename_socket, ")
-						TEXT("assign_physics_asset, or save"),
+						TEXT("assign_physics_asset, morph_target_info, add_morph_target, remove_morph_target, ")
+						TEXT("list_clothing, create_clothing, bind_clothing, unbind_clothing, remove_clothing, ")
+						TEXT("get_skin_weights, set_skin_weights, or save"),
 						*Operation));
 			});
 	}

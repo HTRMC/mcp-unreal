@@ -1,0 +1,30 @@
+{
+  "name": "toolset_ops_list_toolsets",
+  "description": "toolset_ops list_toolsets: registered toolsets with their tool counts and the registry's block/allow lists",
+  "route": "/api/toolsets/ops",
+  "tool": "toolset_ops",
+  "request": {
+    "operation": "list_toolsets",
+    "name_contains": "EditorAppToolset"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "toolsets": [
+        {
+          "name": "EditorToolset.EditorAppToolset",
+          "version": "1.0",
+          "description": "Tools for querying and modifying Unreal Editor state: console variables, asset imaging,\nactor and asset selection, viewport camera, content browser navigation, and Play-In-Editor\nsession control.",
+          "enabled": true,
+          "tool_count": 21,
+          "class": "/Script/EditorToolset.EditorAppToolset"
+        }
+      ],
+      "count": 1,
+      "tool_count": 21,
+      "blocked_names": [],
+      "allowed_names": []
+    }
+  }
+}

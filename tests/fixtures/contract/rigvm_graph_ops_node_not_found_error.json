@@ -1,0 +1,19 @@
+{
+  "name": "rigvm_graph_ops_node_not_found_error",
+  "description": "rigvm_graph_ops node_info: a missing node is a 404",
+  "route": "/api/anim/rigvm_graph",
+  "tool": "rigvm_graph_ops",
+  "request": {
+    "operation": "node_info",
+    "rig": "/Game/Rigs/CR_Contract",
+    "node": "NoSuchNode"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "node_not_found",
+      "message": "no node 'NoSuchNode' in the graph"
+    }
+  }
+}

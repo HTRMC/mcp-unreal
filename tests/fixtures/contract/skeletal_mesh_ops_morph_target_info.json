@@ -1,0 +1,50 @@
+{
+  "name": "skeletal_mesh_ops_morph_target_info",
+  "description": "skeletal_mesh_ops morph_target_info: per-LOD counts and a sample of source deltas",
+  "route": "/api/anim/mesh",
+  "tool": "skeletal_mesh_ops",
+  "request": {
+    "operation": "morph_target_info",
+    "mesh": "/Game/Anim/SK_McpContract",
+    "name": "Smile",
+    "max_deltas": 4
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "mesh": "/Game/Anim/SK_McpContract.SK_McpContract",
+      "name": "Smile",
+      "lods": [
+        {
+          "lod": 0,
+          "has_data": true,
+          "deltas": 2,
+          "generated_by_engine": false
+        }
+      ],
+      "vertex_count": 3922,
+      "has_normals": true,
+      "sample_lod": 0,
+      "source_deltas": 2,
+      "sample": [
+        {
+          "vertex": 0,
+          "delta": [
+            0,
+            0,
+            5
+          ]
+        },
+        {
+          "vertex": 1,
+          "delta": [
+            0,
+            0,
+            5
+          ]
+        }
+      ]
+    }
+  }
+}

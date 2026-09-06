@@ -1,0 +1,21 @@
+{
+  "name": "curve_table_ops_evaluate",
+  "description": "curve_table_ops evaluate: a row's value at a time",
+  "route": "/api/data/curve_table",
+  "tool": "curve_table_ops",
+  "request": {
+    "operation": "evaluate",
+    "table": "/Game/Data/CT_McpContract",
+    "row": "Damage",
+    "time": 5.5
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "row": "Damage",
+      "time": 5.5,
+      "value": 55
+    }
+  }
+}

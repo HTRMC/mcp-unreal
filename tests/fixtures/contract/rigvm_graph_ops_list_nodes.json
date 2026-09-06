@@ -1,0 +1,58 @@
+{
+  "name": "rigvm_graph_ops_list_nodes",
+  "description": "rigvm_graph_ops list_nodes: nodes and links of the main graph",
+  "route": "/api/anim/rigvm_graph",
+  "tool": "rigvm_graph_ops",
+  "request": {
+    "operation": "list_nodes",
+    "rig": "/Game/Rigs/CR_Contract",
+    "pins": false
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "rig": "/Game/Rigs/CR_Contract.CR_Contract",
+      "graph": "RigVMModel::",
+      "nodes": [
+        {
+          "node": "RigUnit_BeginExecution",
+          "title": "Forwards Solve",
+          "class": "RigVMUnitNode",
+          "struct": "/Script/ControlRig.RigUnit_BeginExecution",
+          "event": "Forwards Solve",
+          "position": [
+            0,
+            0
+          ]
+        },
+        {
+          "node": "SetPelvis",
+          "title": "Set Transform",
+          "class": "RigVMUnitNode",
+          "struct": "/Script/ControlRig.RigUnit_SetTransform",
+          "position": [
+            400,
+            0
+          ]
+        },
+        {
+          "node": "AddLift",
+          "title": "Add",
+          "class": "RigVMUnitNode",
+          "struct": "",
+          "position": [
+            200,
+            300
+          ]
+        }
+      ],
+      "links": [
+        {
+          "from": "RigUnit_BeginExecution.ExecutePin",
+          "to": "SetPelvis.ExecutePin"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "material_parameter_collection_ops_set_value",
+  "description": "material_parameter_collection_ops set_value: a runtime value on the editor world's instance",
+  "route": "/api/materials/parameter_collection",
+  "tool": "material_parameter_collection_ops",
+  "request": {
+    "operation": "set_value",
+    "collection": "/Game/Materials/MPC_McpContract",
+    "name": "Wind",
+    "value": 2.0
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "collection": "/Game/Materials/MPC_McpContract.MPC_McpContract",
+      "world": "TestMap",
+      "name": "Wind",
+      "value": 2,
+      "note": "a runtime value; it lasts until the world is torn down and is never saved"
+    }
+  }
+}

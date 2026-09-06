@@ -1,0 +1,22 @@
+{
+  "name": "capture_viewport_camera_headless_error",
+  "description": "capture_viewport mode camera under -nullrhi: 409, there is no RHI to render with",
+  "route": "/api/editor/capture_viewport",
+  "tool": "capture_viewport",
+  "request": {
+    "mode": "camera",
+    "location": [
+      0.0,
+      0.0,
+      300.0
+    ]
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "no_renderer",
+      "message": "a headless (-nullrhi) editor has no RHI to render a scene capture with"
+    }
+  }
+}

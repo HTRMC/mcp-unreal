@@ -1,0 +1,25 @@
+{
+  "name": "pie_control_start_net_emulation",
+  "description": "pie_control start with net emulation: latency and loss on every connection, PIE reported running",
+  "route": "/api/editor/pie_control",
+  "tool": "pie_control",
+  "request": {
+    "operation": "start",
+    "wait": true,
+    "net_emulation": {
+      "target": "any",
+      "min_latency_ms": 80,
+      "max_latency_ms": 120,
+      "packet_loss_percent": 5
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "pie_active": true,
+      "map": "UEDPIE_0_TestMap",
+      "paused": false
+    }
+  }
+}

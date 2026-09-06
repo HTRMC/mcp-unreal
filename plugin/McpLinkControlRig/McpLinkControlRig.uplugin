@@ -1,0 +1,27 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.3.0",
+	"EngineVersion": "5.8.0",
+	"FriendlyName": "McpLink Control Rig",
+	"Description": "McpLink interop for Control Rig: create rigs, author their hierarchy of bones, nulls and controls, and drive rigs from Level Sequence tracks from the mcp-unreal MCP server.",
+	"Category": "Editor",
+	"CreatedBy": "mcp-unreal",
+	"CreatedByURL": "https://github.com/HTRMC/mcp-unreal",
+	"DocsURL": "https://github.com/HTRMC/mcp-unreal#readme",
+	"SupportURL": "https://github.com/HTRMC/mcp-unreal/issues",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "McpLinkControlRig",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	],
+	"Plugins": [
+		{ "Name": "McpLink", "Enabled": true },
+		{ "Name": "ControlRig", "Enabled": true }
+	]
+}

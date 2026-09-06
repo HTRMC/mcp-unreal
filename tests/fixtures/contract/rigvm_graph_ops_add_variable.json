@@ -1,0 +1,22 @@
+{
+  "name": "rigvm_graph_ops_add_variable",
+  "description": "rigvm_graph_ops add_variable: a float rig variable",
+  "route": "/api/anim/rigvm_graph",
+  "tool": "rigvm_graph_ops",
+  "request": {
+    "operation": "add_variable",
+    "rig": "/Game/Rigs/CR_Contract",
+    "name": "Lift",
+    "cpp_type": "float",
+    "default": "10.0"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "rig": "/Game/Rigs/CR_Contract.CR_Contract",
+      "variable": "Lift",
+      "cpp_type": "float"
+    }
+  }
+}

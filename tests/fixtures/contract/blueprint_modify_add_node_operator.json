@@ -1,0 +1,43 @@
+{
+  "name": "blueprint_modify_add_node_operator",
+  "description": "blueprint_modify add_node operator: a promotable operator node starting wildcard",
+  "route": "/api/blueprints/modify",
+  "tool": "blueprint_modify",
+  "request": {
+    "operation": "add_node",
+    "blueprint": "/Game/Blueprints/BP_McpDebugProbe",
+    "node_type": "operator",
+    "operator": "Add"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "guid": "49B0A1114A30E326D163C9BB0C943F72",
+      "class": "K2Node_PromotableOperator",
+      "title": "float + float",
+      "x": 0,
+      "y": 0,
+      "pins": [
+        {
+          "name": "A",
+          "direction": "input",
+          "type": "wildcard",
+          "linked_to": []
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "type": "wildcard",
+          "linked_to": []
+        },
+        {
+          "name": "ReturnValue",
+          "direction": "output",
+          "type": "wildcard",
+          "linked_to": []
+        }
+      ]
+    }
+  }
+}

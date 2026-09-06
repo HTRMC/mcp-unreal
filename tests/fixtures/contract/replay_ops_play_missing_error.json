@@ -1,0 +1,18 @@
+{
+  "name": "replay_ops_play_missing_error",
+  "description": "replay_ops play of a replay that does not exist: 409 without PIE",
+  "route": "/api/editor/replay",
+  "tool": "replay_ops",
+  "request": {
+    "operation": "play",
+    "name": "Missing"
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "no_pie",
+      "message": "replays record and play inside a PIE session — pie_control start first"
+    }
+  }
+}

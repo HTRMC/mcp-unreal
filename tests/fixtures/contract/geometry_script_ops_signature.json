@@ -1,0 +1,91 @@
+{
+  "name": "geometry_script_ops_signature",
+  "description": "geometry_script_ops signature: a library function's parameters",
+  "route": "/api/geometry/script",
+  "tool": "geometry_script_ops",
+  "request": {
+    "operation": "signature",
+    "function": "AppendBox"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "function": "AppendBox",
+      "class": "GeometryScriptLibrary_MeshPrimitiveFunctions",
+      "static": true,
+      "params": [
+        {
+          "name": "TargetMesh",
+          "type": "UDynamicMesh*",
+          "direction": "in"
+        },
+        {
+          "name": "PrimitiveOptions",
+          "type": "FGeometryScriptPrimitiveOptions",
+          "direction": "in"
+        },
+        {
+          "name": "Transform",
+          "type": "FTransform",
+          "direction": "in"
+        },
+        {
+          "name": "DimensionX",
+          "type": "float",
+          "direction": "in",
+          "default": "100.000000"
+        },
+        {
+          "name": "DimensionY",
+          "type": "float",
+          "direction": "in",
+          "default": "100.000000"
+        },
+        {
+          "name": "DimensionZ",
+          "type": "float",
+          "direction": "in",
+          "default": "100.000000"
+        },
+        {
+          "name": "StepsX",
+          "type": "int32",
+          "direction": "in",
+          "default": "0"
+        },
+        {
+          "name": "StepsY",
+          "type": "int32",
+          "direction": "in",
+          "default": "0"
+        },
+        {
+          "name": "StepsZ",
+          "type": "int32",
+          "direction": "in",
+          "default": "0"
+        },
+        {
+          "name": "Origin",
+          "type": "EGeometryScriptPrimitiveOriginMode",
+          "direction": "in",
+          "default": "Base"
+        },
+        {
+          "name": "Debug",
+          "type": "UGeometryScriptDebug*",
+          "direction": "in",
+          "default": "None"
+        },
+        {
+          "name": "ReturnValue",
+          "type": "UDynamicMesh*",
+          "direction": "return"
+        }
+      ],
+      "tooltip": "Appends a 3D box to the Target Mesh.",
+      "library": "MeshPrimitiveFunctions"
+    }
+  }
+}

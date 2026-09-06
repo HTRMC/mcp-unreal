@@ -1,0 +1,144 @@
+{
+  "name": "rigvm_graph_ops_add_node",
+  "description": "rigvm_graph_ops add_node: a unit node by struct name with pin defaults (Forwards Solve added first)",
+  "route": "/api/anim/rigvm_graph",
+  "tool": "rigvm_graph_ops",
+  "request": {
+    "operation": "add_node",
+    "rig": "/Game/Rigs/CR_Contract",
+    "struct": "RigUnit_SetTransform",
+    "name": "SetPelvis",
+    "position": [
+      400,
+      0
+    ],
+    "defaults": {
+      "Space": "GlobalSpace"
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "node": "SetPelvis",
+      "title": "Set Transform",
+      "class": "RigVMUnitNode",
+      "struct": "/Script/ControlRig.RigUnit_SetTransform",
+      "position": [
+        400,
+        0
+      ],
+      "pins": [
+        {
+          "pin": "ExecutePin",
+          "path": "SetPelvis.ExecutePin",
+          "direction": "io",
+          "type": "FRigVMExecuteContext",
+          "execute": true
+        },
+        {
+          "pin": "Item",
+          "path": "SetPelvis.Item",
+          "direction": "input",
+          "type": "FRigElementKey",
+          "execute": false,
+          "default": "(Type=Bone,Name=\"None\")",
+          "sub_pins": [
+            {
+              "pin": "Type",
+              "path": "SetPelvis.Item.Type",
+              "direction": "input",
+              "type": "ERigElementType",
+              "execute": false,
+              "default": "Bone"
+            },
+            {
+              "pin": "Name",
+              "path": "SetPelvis.Item.Name",
+              "direction": "input",
+              "type": "FName",
+              "execute": false,
+              "default": "None"
+            }
+          ]
+        },
+        {
+          "pin": "Space",
+          "path": "SetPelvis.Space",
+          "direction": "input",
+          "type": "ERigVMTransformSpace",
+          "execute": false,
+          "default": "GlobalSpace"
+        },
+        {
+          "pin": "bInitial",
+          "path": "SetPelvis.bInitial",
+          "direction": "input",
+          "type": "bool",
+          "execute": false,
+          "default": "False"
+        },
+        {
+          "pin": "Value",
+          "path": "SetPelvis.Value",
+          "direction": "input",
+          "type": "FTransform",
+          "execute": false,
+          "default": "(Rotation=(X=0.000000,Y=0.000000,Z=0.000000,W=1.000000),Translation=(X=0.000000,Y=0.000000,Z=0.000000),Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
+          "sub_pins": [
+            {
+              "pin": "Rotation",
+              "path": "SetPelvis.Value.Rotation",
+              "direction": "input",
+              "type": "FQuat",
+              "execute": false,
+              "default": "(X=0.000000,Y=0.000000,Z=0.000000,W=1.000000)"
+            },
+            {
+              "pin": "Translation",
+              "path": "SetPelvis.Value.Translation",
+              "direction": "input",
+              "type": "FVector",
+              "execute": false,
+              "default": "(X=0.000000,Y=0.000000,Z=0.000000)"
+            },
+            {
+              "pin": "Scale3D",
+              "path": "SetPelvis.Value.Scale3D",
+              "direction": "input",
+              "type": "FVector",
+              "execute": false,
+              "default": "(X=1.000000,Y=1.000000,Z=1.000000)"
+            }
+          ]
+        },
+        {
+          "pin": "Weight",
+          "path": "SetPelvis.Weight",
+          "direction": "input",
+          "type": "float",
+          "execute": false,
+          "default": "1.000000"
+        },
+        {
+          "pin": "bPropagateToChildren",
+          "path": "SetPelvis.bPropagateToChildren",
+          "direction": "input",
+          "type": "bool",
+          "execute": false,
+          "default": "True"
+        },
+        {
+          "pin": "CachedIndex",
+          "path": "SetPelvis.CachedIndex",
+          "direction": "hidden",
+          "type": "FCachedRigElement",
+          "execute": false,
+          "default": "()"
+        }
+      ],
+      "graph": "RigVMModel::",
+      "forwards_solve_added": true
+    }
+  }
+}

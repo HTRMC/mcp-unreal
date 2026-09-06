@@ -1,0 +1,20 @@
+{
+  "name": "remote_control_ops_create",
+  "description": "remote_control_ops create: a new, empty Remote Control Preset",
+  "route": "/api/vp/remote_control",
+  "tool": "remote_control_ops",
+  "request": {
+    "operation": "create",
+    "path": "/Game/VP/RCP_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "preset": "/Game/VP/RCP_Contract.RCP_Contract",
+      "count": 0,
+      "exposed": [],
+      "message": "created — expose_property / expose_function / expose_actor fill it; the Remote Control web app and protocols read it"
+    }
+  }
+}

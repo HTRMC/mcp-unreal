@@ -1,0 +1,18 @@
+{
+  "name": "pose_search_ops_schema_not_found_error",
+  "description": "pose_search_ops schema_info: a missing schema is a 404",
+  "route": "/api/anim/pose_search",
+  "tool": "pose_search_ops",
+  "request": {
+    "operation": "schema_info",
+    "schema": "/Game/MM/NoSuchSchema"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "schema_not_found",
+      "message": "no Pose Search Schema at '/Game/MM/NoSuchSchema'"
+    }
+  }
+}

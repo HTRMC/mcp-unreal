@@ -1,0 +1,103 @@
+{
+  "name": "toolset_ops_get_tool",
+  "description": "toolset_ops get_tool: one tool's entry with the registry-generated inputSchema and outputSchema",
+  "route": "/api/toolsets/ops",
+  "tool": "toolset_ops",
+  "request": {
+    "operation": "get_tool",
+    "tool": "EditorToolset.EditorAppToolset.GetCameraTransform"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "description": "Returns the position and rotation of the level viewport camera.",
+      "name": "EditorToolset.EditorAppToolset.GetCameraTransform",
+      "inputSchema": {
+        "type": "object"
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "returnValue": {
+            "type": "object",
+            "title": "ToolsetTransform",
+            "description": "The transform for the level viewport camera.",
+            "properties": {
+              "location": {
+                "description": "The world-space location.",
+                "title": "Vector",
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "z": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "z"
+                ]
+              },
+              "rotation": {
+                "description": "The world-space rotation.",
+                "title": "Rotator",
+                "type": "object",
+                "properties": {
+                  "pitch": {
+                    "type": "number",
+                    "description": "Pitch (degrees) around Y axis"
+                  },
+                  "yaw": {
+                    "type": "number",
+                    "description": "Yaw (degrees) around Z axis"
+                  },
+                  "roll": {
+                    "type": "number",
+                    "description": "Roll (degrees) around X axis"
+                  }
+                },
+                "required": [
+                  "pitch",
+                  "yaw",
+                  "roll"
+                ]
+              },
+              "scale": {
+                "description": "The scale.",
+                "title": "Vector",
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "z": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "z"
+                ]
+              }
+            }
+          }
+        },
+        "required": [
+          "returnValue"
+        ]
+      },
+      "toolset": "EditorToolset.EditorAppToolset"
+    }
+  }
+}

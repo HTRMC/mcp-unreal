@@ -1,0 +1,120 @@
+{
+  "name": "anim_asset_ops_list_modifiers",
+  "description": "anim_asset_ops list_modifiers: the Animation Modifier classes with their defaults",
+  "route": "/api/anim/assets",
+  "tool": "anim_asset_ops",
+  "request": {
+    "operation": "list_modifiers"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "modifiers": [
+        {
+          "class": "CopyBonesModifier",
+          "path": "/Script/AnimationModifierLibrary.CopyBonesModifier",
+          "blueprint": false,
+          "defaults": {
+            "BonePairs": [],
+            "BonePoseSpace": "World",
+            "bReapplyPostOwnerChange": false
+          }
+        },
+        {
+          "class": "CurveFromSyncMarkersModifier",
+          "path": "/Script/AnimationModifierLibrary.CurveFromSyncMarkersModifier",
+          "blueprint": false,
+          "defaults": {
+            "SyncMarkerValues": [],
+            "CurveName": "CurveFromSyncMarkersModifier",
+            "bRemoveCurveOnRevert": true,
+            "bReapplyPostOwnerChange": false
+          }
+        },
+        {
+          "class": "EncodeRootBoneModifier",
+          "path": "/Script/AnimationModifierLibrary.EncodeRootBoneModifier",
+          "blueprint": false,
+          "defaults": {
+            "WeightedBoneToComputeRootPosition": [],
+            "WeightedBoneToComputeRootOrientation": [],
+            "bReapplyPostOwnerChange": false
+          }
+        },
+        {
+          "class": "FootstepAnimEventsModifier",
+          "path": "/Script/AnimationModifierLibrary.FootstepAnimEventsModifier",
+          "blueprint": false,
+          "defaults": {
+            "SampleRate": 60,
+            "GroundThreshold": 4,
+            "SpeedThreshold": 0.10000000149011612,
+            "FootDefinitions": [],
+            "bShouldRemovePreExistingNotifiesOrSyncMarkers": false,
+            "GeneratedNotifyTracks": [],
+            "ProcessedNotifyTracks": [],
+            "bReapplyPostOwnerChange": false
+          }
+        },
+        {
+          "class": "MirrorModifier",
+          "path": "/Script/AnimationModifierLibrary.MirrorModifier",
+          "blueprint": false,
+          "defaults": {
+            "MirrorDataTable": "None",
+            "bUpdateSyncMarkers": true,
+            "bUpdateNotifies": true,
+            "bReapplyPostOwnerChange": false
+          }
+        },
+        {
+          "class": "MotionExtractorModifier",
+          "path": "/Script/AnimationModifierLibrary.MotionExtractorModifier",
+          "blueprint": false,
+          "defaults": {
+            "BoneName": "root",
+            "RelativeToBoneName": "None",
+            "MotionType": "Translation",
+            "Axis": "Y",
+            "bRemoveCurveOnRevert": false,
+            "bRelativeToFirstFrame": false,
+            "Space": "ComponentSpace",
+            "bAbsoluteValue": false,
+            "MathOperation": "None",
+            "Modifier": 0,
+            "bNormalize": false,
+            "SampleRate": 30,
+            "bUseCustomCurveName": false,
+            "CustomCurveName": "None",
+            "bReapplyPostOwnerChange": false
+          }
+        },
+        {
+          "class": "ReOrientRootBoneModifier",
+          "path": "/Script/AnimationModifierLibrary.ReOrientRootBoneModifier",
+          "blueprint": false,
+          "defaults": {
+            "Rotator": {
+              "Pitch": 0,
+              "Yaw": 0,
+              "Roll": 0
+            },
+            "bReapplyPostOwnerChange": false
+          }
+        },
+        {
+          "class": "ZeroOutRootBoneModifier",
+          "path": "/Script/AnimationModifierLibrary.ZeroOutRootBoneModifier",
+          "blueprint": false,
+          "defaults": {
+            "bClipStartFramesWithNoMotion": true,
+            "bClipEndFramesWithNoMotion": true,
+            "bReapplyPostOwnerChange": false
+          }
+        }
+      ],
+      "note": "Blueprint modifiers appear once loaded — asset_ops load / search_assets class AnimationModifier finds them"
+    }
+  }
+}

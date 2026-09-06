@@ -1,0 +1,21 @@
+{
+  "name": "live_link_ops_add_virtual_source",
+  "description": "live_link_ops add_virtual_source: a virtual-subject container source",
+  "route": "/api/vp/live_link",
+  "tool": "live_link_ops",
+  "request": {
+    "operation": "add_virtual_source",
+    "name": "McpContractVirtual"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "id": "1B1C697B4B7C23E22F0A4BA8DEA4AC3A",
+      "type": "McpContractVirtual",
+      "status": "Active",
+      "machine": "",
+      "virtual": true
+    }
+  }
+}

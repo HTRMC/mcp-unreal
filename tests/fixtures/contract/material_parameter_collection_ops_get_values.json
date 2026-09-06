@@ -1,0 +1,45 @@
+{
+  "name": "material_parameter_collection_ops_get_values",
+  "description": "material_parameter_collection_ops get_values: defaults and runtime values",
+  "route": "/api/materials/parameter_collection",
+  "tool": "material_parameter_collection_ops",
+  "request": {
+    "operation": "get_values",
+    "collection": "/Game/Materials/MPC_McpContract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "collection": "/Game/Materials/MPC_McpContract.MPC_McpContract",
+      "state_id": "8C50F0644677142649D50D9E21D94BA3",
+      "world": "TestMap",
+      "scalars": [
+        {
+          "name": "Wind",
+          "id": "AEAD3EBC4EA9275C2B7C8E86E2FEF6AA",
+          "default": 0.5,
+          "value": 2
+        }
+      ],
+      "vectors": [
+        {
+          "name": "Tint",
+          "id": "D0BD3FB24A34E32834ECCA80D6F79574",
+          "default": [
+            1,
+            0.5,
+            0.25,
+            1
+          ],
+          "value": [
+            1,
+            0.5,
+            0.25,
+            1
+          ]
+        }
+      ]
+    }
+  }
+}

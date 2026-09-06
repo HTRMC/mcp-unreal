@@ -1,0 +1,44 @@
+{
+  "name": "landscape_ops_add_spline_point",
+  "description": "landscape_ops add_spline_point: the first control point",
+  "route": "/api/world/landscape",
+  "tool": "landscape_ops",
+  "request": {
+    "operation": "add_spline_point",
+    "landscape": "McpContractLand",
+    "location": [
+      9100,
+      9100,
+      0
+    ],
+    "width": 150
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "landscape": "/Game/Maps/TestMap.TestMap:PersistentLevel.Landscape_1",
+      "point": {
+        "index": 0,
+        "location": [
+          9100,
+          9100,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "width": 150,
+        "side_falloff": 1000,
+        "end_falloff": 2000,
+        "layer_name": "None",
+        "mesh": "",
+        "segments": []
+      },
+      "control_points": 1,
+      "segments": 0
+    }
+  }
+}

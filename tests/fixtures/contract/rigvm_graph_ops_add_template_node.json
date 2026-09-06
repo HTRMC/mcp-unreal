@@ -1,0 +1,57 @@
+{
+  "name": "rigvm_graph_ops_add_template_node",
+  "description": "rigvm_graph_ops add_node: a template node by name",
+  "route": "/api/anim/rigvm_graph",
+  "tool": "rigvm_graph_ops",
+  "request": {
+    "operation": "add_node",
+    "rig": "/Game/Rigs/CR_Contract",
+    "template": "Add",
+    "name": "AddLift",
+    "position": [
+      200,
+      300
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "node": "AddLift",
+      "title": "Add",
+      "class": "RigVMUnitNode",
+      "struct": "",
+      "position": [
+        200,
+        300
+      ],
+      "pins": [
+        {
+          "pin": "A",
+          "path": "AddLift.A",
+          "direction": "input",
+          "type": "FRigVMUnknownType",
+          "execute": false,
+          "default": "()"
+        },
+        {
+          "pin": "B",
+          "path": "AddLift.B",
+          "direction": "input",
+          "type": "FRigVMUnknownType",
+          "execute": false,
+          "default": "()"
+        },
+        {
+          "pin": "Result",
+          "path": "AddLift.Result",
+          "direction": "output",
+          "type": "FRigVMUnknownType",
+          "execute": false,
+          "default": "()"
+        }
+      ],
+      "graph": "RigVMModel::"
+    }
+  }
+}

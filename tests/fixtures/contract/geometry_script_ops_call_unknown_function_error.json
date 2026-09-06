@@ -1,0 +1,19 @@
+{
+  "name": "geometry_script_ops_call_unknown_function_error",
+  "description": "geometry_script_ops call of a function no library has: 404",
+  "route": "/api/geometry/script",
+  "tool": "geometry_script_ops",
+  "request": {
+    "operation": "call",
+    "mesh": "/Engine/Transient.McpContractMesh",
+    "function": "NoSuchFunction"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "function_not_found",
+      "message": "no Geometry Script library has a function 'NoSuchFunction' — list_functions with 'contains' searches them"
+    }
+  }
+}

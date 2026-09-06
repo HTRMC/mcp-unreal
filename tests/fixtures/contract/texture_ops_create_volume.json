@@ -1,0 +1,34 @@
+{
+  "name": "texture_ops_create_volume",
+  "description": "texture_ops create_volume: a solid-fill volume texture",
+  "route": "/api/textures/ops",
+  "tool": "texture_ops",
+  "request": {
+    "operation": "create_volume",
+    "path": "/Game/Textures/TV_McpContract",
+    "width": 4,
+    "height": 2,
+    "depth": 2,
+    "fill": [
+      200,
+      100,
+      50,
+      255
+    ],
+    "srgb": false,
+    "compression": "TC_Masks"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "texture": "/Game/Textures/TV_McpContract.TV_McpContract",
+      "kind": "volume",
+      "width": 4,
+      "height": 2,
+      "depth": 2,
+      "srgb": false,
+      "message": "created — save writes it; the pixel operations are Texture2D only"
+    }
+  }
+}

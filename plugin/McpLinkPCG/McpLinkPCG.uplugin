@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.2.0",
+	"VersionName": "0.3.0",
 	"EngineVersion": "5.8.0",
 	"FriendlyName": "McpLink PCG",
 	"Description": "McpLink interop for Procedural Content Generation: author PCG graphs, attach and generate components from the mcp-unreal MCP server.",

@@ -1,0 +1,36 @@
+{
+  "name": "toolset_ops_execute",
+  "description": "toolset_ops execute: run a registry tool and unwrap its returnValue into result",
+  "route": "/api/toolsets/ops",
+  "tool": "toolset_ops",
+  "request": {
+    "operation": "execute",
+    "tool": "EditorToolset.EditorAppToolset.GetCameraTransform",
+    "arguments": {}
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "tool": "EditorToolset.EditorAppToolset.GetCameraTransform",
+      "elapsed_ms": 0.1,
+      "result": {
+        "location": {
+          "x": 1105.856414,
+          "y": 0,
+          "z": 296.313333
+        },
+        "rotation": {
+          "pitch": -14.999999999999986,
+          "yaw": -179.999997,
+          "roll": -9.999999999999991e-07
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      }
+    }
+  }
+}

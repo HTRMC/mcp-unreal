@@ -1,0 +1,33 @@
+{
+  "name": "gameplay_camera_ops_add_node_root",
+  "description": "gameplay_camera_ops add_node: an Array node as the rig root",
+  "route": "/api/cameras/gameplay",
+  "tool": "gameplay_camera_ops",
+  "request": {
+    "operation": "add_node",
+    "rig": "/Game/Cameras/CR_Contract",
+    "node": "Array",
+    "name": "Sequence"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "rig": "/Game/Cameras/CR_Contract.CR_Contract",
+      "build_status": "dirty",
+      "root": {
+        "node": "Sequence",
+        "class": "ArrayCameraNode",
+        "display_name": "Sequence",
+        "properties": {
+          "bIsEnabled": true
+        },
+        "children": []
+      },
+      "enter_transitions": 0,
+      "exit_transitions": 0,
+      "blendable_parameters": 0,
+      "added": "Sequence"
+    }
+  }
+}

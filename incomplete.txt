@@ -1,243 +1,79 @@
-mcp-unreal — gaps
-=================
+1. Epic's own agent surface in 5.8
 
-What this MCP cannot do in UE5 yet, as of 2026-09-04 (90 tools, 76 plugin routes).
+  Bridged 2026-09-06: toolset_ops (plugin/McpLinkToolsets) lists, describes and executes every toolset in the Toolset Registry — Epic's, project-authored UToolsetDefinition classes, Python toolsets — and reads UAgentSkill
+  assets. The Unreal MCP plugin (Streamable HTTP, port 8000) is a second transport onto the same registry, so an agent that wants it can connect to it directly; nothing to bridge.
 
-"Cannot" here means "has no dedicated tool". Several of these are reachable
-unstructured through the escape hatches — get_property / set_property /
-call_function (any UPROPERTY / UFUNCTION via reflection), asset_ops create (any
-factory-backed asset shell), run_console_command, and python_exec (anything the
-`unreal` module exposes). What is listed below has no first-class, verified path.
+  2. Engine systems with no route at all
 
+  Status after 2026-09-06. Everything below is either done, reachable through the generic tools with the recipe given, editor-UI-only, or still a real gap.
 
-ANIMATION & CHARACTERS
-----------------------
-- IK Rig, IK Retargeter, Control Rig, Pose Search / Motion Matching: nothing.
-- Pose Assets: no creation or pose editing.
-- No morph target authoring (they can be listed, not created or edited).
-- Anim Sequences themselves: bone track data is read-only (no retargeting, no
-  key editing, no additive-from-pose baking).
+  Done today (each has a tool, fixtures and docs):
+  - Control Rig assets, hierarchies and Sequencer tracks (control_rig_ops); IK Rig, IK Retargeter and batch retargeting (ik_rig_ops); Pose Assets (pose_asset_ops); Mirror Data Tables
+    (mirror_table_ops); Animation Modifiers (anim_asset_ops apply_modifier); morph targets, clothing and skin weights (skeletal_mesh_ops).
+  - Landscape edit layers, splines and grass types (landscape_ops); runtime virtual textures (rvt_ops); HLOD generation, minimap and nav-data builds (world_partition_build); Geometry Script
+    (geometry_script_ops).
+  - Material Parameter Collections (material_parameter_collection_ops); cube and volume textures (texture_ops); Media Framework (media_ops).
+  - Movie Render Graph (movie_render); Level Snapshots (level_snapshot_ops); replays (replay_ops); net emulation and previews (pie_control).
+  - Interchange import (asset_ops import interchange=true); glTF and any registered exporter (asset_ops export format).
+  - Editor Utility Blueprints and Widgets, collections, the Asset Manager, Live Coding, the DDC, String and Curve Tables (the pipeline tools); the Toolset Registry (toolset_ops).
+  - Remote Control presets (remote_control_ops); Live Link sources, virtual subjects and presets (live_link_ops); Motion Matching schemas, databases and index builds (pose_search_ops);
+    Mass Entity configs, traits, spawners with a built-in radius/points generator, and spawning in PIE (mass_ops).
+  - Control Rig graph authoring (rigvm_graph_ops); Choosers (chooser_ops); Gameplay Cameras (gameplay_camera_ops); linked anim layers and Animation Layer Interfaces
+    (anim_blueprint_modify create_layer_interface / implement_layer_interface / add_linked_layer_node).
 
+  Reachable through the generic tools (spawn_actor, set_property, call_function, blueprint_modify, asset_ops) — no dedicated route, and none planned unless a recipe proves awkward:
+  - Water: spawn_actor WaterBodyLake / WaterBodyRiver / WaterBodyOcean (Water plugin), then call_function AddSplinePoint on its WaterSpline component and set_property the WaterBodyComponent.
+  - Smart Objects and Zone Graph: asset_ops create SmartObjectDefinition + set_property Slots; spawn_actor ZoneShape + set_property Points on its ZoneShapeComponent (plugins off by default).
+  - Mover: blueprint_modify add_component MoverComponent (or CharacterMoverComponent) + set_property; Motion Warping: anim_notify_ops add_notify_state AnimNotifyState_MotionWarping.
+  - Post-process material chains: set_property Settings.WeightedBlendables on a PostProcessVolume; Substrate: material_graph add_expression MaterialExpressionSubstrate*; the path tracer:
+    movie_render with MoviePipelineDeferredPass_PathTracer or the r.PathTracing cvars; GPU Lightmass: enable the plugin and build_level lighting uses it.
+  - Sparse volume textures and OpenVDB, Alembic and Geometry Cache, grooms: asset_ops import once the importer plugin is enabled. Paper2D sprites and Text3D: asset_ops create / spawn_actor + set_property.
+  - Audio Modulation, WaveTable, Soundscape and Synesthesia assets: asset_ops create + set_property; Quartz: call_function on the Quartz subsystem in PIE.
+  - Chaos Vehicles: blueprint_modify add_component ChaosWheeledVehicleMovementComponent + set_property; Physics Control: add_component PhysicsControlComponent + call_function in PIE;
+    Chaos Caching: spawn_actor ChaosCacheManager + set_property ObservedComponents and CacheCollection, then call_function in PIE.
+  - Day Sequence: spawn_actor DaySequenceActor + call_function SetTimeOfDay; Take Recorder: call_function on TakeRecorderBlueprintLibrary (windowed editor); camera rigs: spawn_actor
+    CameraRig_Rail / CameraRig_Crane; Template and Actor Sequences: sequence_ops (any UMovieSceneSequence).
+  - USD: spawn_actor UsdStageActor + set_property RootLayer; Datasmith: call_function on DatasmithSceneElement statics (plugins off by default).
+  - HLOD layers: asset_ops create HLODLayer + set_property; Common UI widgets: widget_blueprint_modify add_widget with the CommonUI classes.
+  - Iris, Replication Graph, Pixel Streaming and Multi-User settings: config_ops on DefaultEngine.ini; Gameplay Debugger: run_console_command EnableGDT in PIE.
+  - Landscape patches (LandscapePatch plugin, off by default): there is no patch actor — spawn_actor Actor, add_component LandscapeCircleHeightPatch (Radius, Falloff) or
+    LandscapeTexturePatch (SetHeightTextureAsset / SetHeightSourceMode / SetBlendMode via call_function), then call_function AssignToLandscape(Landscape, EditLayerName) — the patch
+    edit layer is created for you.
+  - PCG Biome Core (off by default) is content, not classes: spawn_actor /PCGBiomeCore/Blueprints/BP_PCGBiomeCore.BP_PCGBiomeCore_C (a PCGComponent on BiomeCore), the volume /
+    spline / texture / exclusion shape Blueprints, and asset_ops duplicate of the DefaultBiome / DefaultGenerator / DefaultAsset templates for data; pcg_ops generates.
+  - Wave Function Collapse (off by default): asset_ops create WaveFunctionCollapseModel + set_property TileSize / Constraints, then call_function Collapse(TryCount, Seed) on the
+    WaveFunctionCollapseSubsystem after set_property WFCModel / Resolution / OriginLocation on it (the BP library only derives models).
+  - Buoyancy (Water plugin): add_component BuoyancyComponent + set_property BuoyancyData.Pontoons [{RelativeLocation, Radius}], BuoyancyCoefficient, BuoyancyDamp on a simulating actor.
+  - Game Features / Modular Gameplay (off by default): asset_ops create GameFeatureData at <Plugin>/Content/<PluginName> + set_property Actions (instanced GameFeatureAction_AddComponents
+    ComponentList entries, _AddCheats, _DataRegistry); activation is C++ only (UGameFeaturesSubsystem has no UFUNCTIONs) — python_exec unreal.GameFeaturesSubsystem is the runtime switch.
+  - Composure (off by default): spawn_actor CompositingElement (or CompositingCaptureBase) + call_function CreateNewInputPass / CreateNewTransformPass (CompositingElementMaterialPass) /
+    CreateNewOutputPass (RenderTargetCompositingOutput) — Inputs / TransformPasses / Outputs are protected instanced arrays, so never set_property them; SetTargetCamera picks the camera.
+  - Sequencer Playlists (off by default, editor-only): asset_ops create SequencerPlaylist + set_property Items (SequencerPlaylistItem_Sequence: Sequence, NumLoops, PlaybackSpeed);
+    playback is call_function PlayAll / StopAll on a SequencerPlaylistPlayer from the SequencerPlaylistsSubsystem.
+  - Nanite Assemblies (5.8): the data is UStaticMesh NaniteSettings.NaniteAssemblyData (Parts with MeshObjectPath, Nodes with PartIndex and Transform) — set_property builds it by hand,
+    or enable NaniteAssemblyEditorUtils and call_function NaniteAssemblyStaticMeshBuilder BeginNewStaticMeshAssemblyBuild / AddAssemblyPart / FinishAssemblyBuild.
+  - Instanced Actors (off by default; Light Weight Instances are deprecated in 5.8): call_function InstanceActor(ActorClass, Transform, Level, Tags, ManagerClass) on the
+    InstancedActorsSubsystem (editor-only) — the partition manager actor is created for you; RemoveActorInstance takes the handle back.
+  - Code-level or external, not an asset an editor route could author: ML Deformer and Deformer Graph (trained models and compute graphs), the Unreal Animation Framework, Gameplay
+    Targeting and Interactions (C++ task subclasses), State Graph and Scene State (experimental, no stable API), Learning Agents and NNE (training pipelines), Chaos Flesh (simulation
+    assets from external solvers), Modular Vehicles (C++ vehicle sims), Network Prediction (C++ simulation model), Harmonix (MetaSound nodes — metasound_ops reaches them).
 
-PHYSICS & DESTRUCTION
----------------------
-- Chaos Vehicles and Chaos Cloth are not exposed.
-- Destruction fields have no dedicated tool, but they do not need one: spawn a
-  FieldSystemActor and drive its component with call_function
-  (ApplyStrainField, ApplyRadialForce, ApplyPhysicsField are all
-  BlueprintCallable), and break a collection directly with call_function on
-  its GeometryCollectionComponent (ApplyExternalStrain, ApplyInternalStrain,
-  CrumbleCluster). What is missing is authoring a persistent UFieldSystem
-  *asset* — a field node graph — rather than issuing one-off commands.
-- Geometry Collections: no per-bone damage thresholds beyond set_property on
-  the asset, and no embedded geometry.
-- No texture baking for fractured interiors (UV layout is covered; baking
-  ambient occlusion or curvature into the atlas is not).
-- Physics on actors/components is only reachable as properties (physics_asset_ops
-  covers ragdoll bodies and constraints).
+  Editor-UI or external, not something a route would improve on: Material Designer, Texture Graph, the Modeling tools' interactive brushes and mesh painting (ui_ops can drive the panels),
+  Rewind Debugger, Object and Light Mixer (ui_ops opens the tabs), Audio Insights, Gauntlet and Automated Perf Testing (external drivers), nDisplay / DMX / Switchboard (hardware-facing).
 
+  Still missing a route: nothing — every engine system above is either a tool, a recipe through the generic tools, or editor-UI / code-level by nature.
 
-RENDERING & CINEMATICS OUTPUT
------------------------------
-- Movie Render Graph (the newer node-based pipeline) is not exposed; the
-  queue-and-config pipeline is.
-- No scene-capture helpers (SceneCapture2D actors are properties only).
-- capture_viewport is one JPEG from a windowed editor — no headless capture, no
-  video, no viewport-layout control.
-- Rendering needs a windowed editor: the Movie Render Queue runs through PIE.
+  3. Holes inside tools that already exist
 
-
-MATERIALS & TEXTURES
---------------------
-- No Material Layer *parameters*: a stack is edited whole, and the per-layer
-  parameter overrides the material instance editor exposes are not surfaced.
-- Substrate materials have no dedicated tooling.
-- Textures: pixel reads and writes are BGRA8 only, one 256x256 region per call,
-  and there is no mip-level addressing. Compression/LOD settings only via
-  set_property. No texture arrays, volume textures or cube maps.
-- No vertex painting. No decal-specific tooling.
-
-
-NIAGARA
--------
-- No scratch pad or custom module scripts: niagara_author places existing module
-  scripts in a stack but cannot author a new module's own graph.
-- No simulation stages, event handlers or parameter-definition assets.
-- Dynamic inputs on a module input (only literal values are settable).
-
-
-AI
---
-- Smart Objects, Mass Entity: nothing.
-- Nav modifiers and nav-link authoring: nothing (queries and the mesh build are
-  covered).
-- State Tree task/condition *parameters* are instanced-struct data with no
-  first-class editor here; the nodes can be added, not tuned.
-- AI Perception only via properties.
-
-
-WORLD BUILDING
---------------
-- World Partition: no streaming sources, no runtime cell inspection, no
-  conversion of a plain map into a partitioned one.
-- Level Instance creation needs a windowed editor (the engine hardcodes a Save
-  As dialog); editing a level instance in place is not exposed.
-- Landscape: no splines, no grass-type wiring, no sculpt/erosion brushes (only
-  raw height writes + layer paint), no landscape material tooling.
-- No BSP/geometry editing (only build_level geometry), no modeling-mode tools,
-  no Geometry Script / dynamic meshes, no UV editing or generation beyond
-  lightmap UVs, no procedural mesh creation from scratch.
-
-
-AUDIO
------
-- No audio modulation. No submix effect-chain authoring (asset + properties
-  only).
-- No playback verification or audio capture — you cannot "hear" the game.
-- MetaSound presets, pages and variables are not exposed (graphs, nodes,
-  connections and interface members are).
-
-
-EDITOR WORKFLOW
----------------
-- Input injection is PIE-only, not editor-UI.
-- No Gameplay Debugger: its categories build their output as strings at draw
-  time, into a canvas context, so there is nothing structured to read without
-  a viewport. No network profiler.
-- Visual Logger entries are read live from a running editor; .bvlog files
-  recorded elsewhere cannot be loaded, and nothing here writes entries.
-- Localization gather/compile run as commandlets (a separate editor process),
-  so they cannot be driven from inside a running editor session.
-- Dialogue scripts and their PO import/export are not exposed (text archives
-  and PO files are).
-- No conflict-report reading, no word-count reports, and no per-entry metadata
-  or plural/gender variant editing.
-- Source control: no changelist management, no shelving, no diff/history
-  (status, checkout, add, delete, revert, sync and submit are covered).
-
-
-BUILD, PACKAGE, C++
--------------------
-- No Live Coding / hot-reload trigger.
-- project_ops only reads project info and toggles plugins — no target editing
-  beyond raw ini (code_ops covers module creation).
-
-
-PROFILING
----------
-- No stat readback beyond perf_ops frame_stats. No memreport, no GPU profile, no
-  LLM / memory-tag stats.
-
-
-ECOSYSTEM PLUGINS WITH NO INTEROP
----------------------------------
-LiveLink, nDisplay / virtual production, Datasmith / CAD import, Groom (hair),
-Water & Landmass, Take Recorder, RealtimeMesh (third-party, deliberately
-excluded).
-
-
-STRUCTURAL LIMITS
------------------
-Not feature gaps, but still "cannot":
-
-- UE 5.8 only. 5.7 and earlier will not compile (5.8 APIs + C++23).
-- The prebuilt plugin is Windows-only; other platforms build from source.
-- Editor tools need a running editor, one per port 8091 — two instances fight
-  over the port.
-- Loopback only, no authentication: cannot drive an editor on another machine.
-- Cannot drive a packaged or standalone build. input_inject and player_control
-  require PIE inside the editor.
-- Headless (-nullrhi) blocks capture_viewport, Niagara spawning, and
-  widget-animation playback.
-
-
-LARGEST COHERENT HOLES
-----------------------
-If picking next work:
-
-1. Source-control changelists, shelving, diff and history
-2. Chaos Vehicles and Chaos Cloth
-3. Texture baking for fractured interiors
-
-
-CLOSED
-------
-2026-09-04 — package_project: BuildCookRun through stage/pak/archive, dedicated
-  server, distribution, IoStore and Launch On device.
-2026-09-04 — code_ops: C++ class and module scaffolding from the engine's own
-  templates, any reflected engine class usable as a base.
-2026-09-04 — trace_ops: Unreal Insights traces analysed headlessly and exported
-  to CSV (timers, timer statistics, timing events, threads, counters).
-2026-09-04 — niagara_author: system/emitter assets, emitter handles, the full
-  module stack per script stage with typed inputs, module add/remove/enable,
-  literal input values, renderers, and a real compile report.
-2026-09-04 — anim_asset_ops, anim_notify_ops, skeleton_ops, skeletal_mesh_ops,
-  physics_asset_ops: montages, composites, blend spaces and aim offsets;
-  notifies, notify states, tracks, sync markers and curves; skeleton sockets,
-  virtual bones and slot groups; skeletal-mesh LODs, material slots and
-  sockets; ragdoll generation with per-body and per-constraint editing.
-2026-09-04 — sublevel_ops, world_partition_ops, level_instance_ops: streaming
-  sublevels end to end, World Partition data layers and editor region loading,
-  Level Instances, Packed Level Actors and actor merging.
-2026-09-04 — source_control_ops, validate_ops, gameplay_tag_ops, curve_ops,
-  reference_ops: provider-agnostic source control, Data Validation, Map Check,
-  compile-all-Blueprints, gameplay tags in the project ini, Curve asset keys,
-  and the reference viewer / size map as data.
-2026-09-04 — metasound_ops: MetaSound Source and Patch authoring — create,
-  node classes, add/remove nodes, connections to nodes and to the graph
-  interface, graph inputs and outputs, and literal input defaults.
-2026-09-04 — state_tree_ops, nav_ops: State Tree authoring (states,
-  transitions, tasks/conditions/evaluators, compile report) and navigation
-  queries (projection, pathing, reachability, raycasts, random points).
-  spawn_actor now builds a volume's brush, so a Nav Mesh Bounds Volume placed
-  through it produces a real nav mesh rather than an empty one.
-2026-09-04 — render_ops, material_function: render targets (create, clear,
-  draw a material, read pixels, export, bake to Texture2D), asset thumbnail
-  rendering, and Material Function authoring.
-2026-09-04 — movie_render: Movie Render Queue — render configs, settings, and
-  rendering a Level Sequence to an image sequence or video through PIE.
-2026-09-04 — localization_ops: the Localization Dashboard pipeline — targets,
-  supported and native cultures, commandlet config generation, and gather and
-  compile producing a manifest, per-culture archives and .locres files.
-2026-09-04 — material_layers: Material Layers and layer blends — the two
-  function assets, and the layer stack on a material or overridden per
-  instance (add, replace, reorder, rename, hide, remove).
-2026-09-04 — blueprint_debug: Blueprint breakpoints, watched pins and the
-  debug object, with live watch values read from a running PIE instance
-  without halting. Halting itself stays out of reach over HTTP, for the
-  reason recorded under EDITOR WORKFLOW.
-2026-09-04 — chaos_ops: Chaos destruction — Geometry Collections built from
-  Static Meshes, and uniform, Voronoi and planar fracturing with grout,
-  surface noise and island splitting, one cluster level per fracture.
-2026-09-04 — texture_ops: import-free texture authoring — create a Texture2D
-  from raw BGRA8 pixels or a fill colour, and read, write or flood-fill a
-  region of an existing one.
-2026-09-04 — localization_ops: translation editing — list a culture's
-  gathered strings with their translations, set one, and export and import
-  PO files for translators working outside the editor.
-2026-09-04 — visual_log_ops: the Visual Logger as data — record a play
-  session and query the engine's own UE_VLOG entries by actor, category or
-  game time, with their log lines, status blocks and shapes.
-2026-09-04 — chaos_ops: clustering and convex hulls — list bones, cluster
-  them automatically or by hand, merge, magnet-grow and delete them, and
-  rebuild or simplify the convex collision the solver uses.
-2026-09-04 — ui_ops: asset editors — open, close and list them, which is
-  also how an asset whose editor finishes its construction gets completed.
-2026-09-04 — chaos_ops: interior faces — give the faces a fracture creates
-  their own material slot, and UVs by box projection or by packing them into
-  an atlas.
-2026-09-04 — blueprint_debug: halting — halt_status, resume, step_into,
-  step_over, step_out and abort. A halted editor stays answerable because the
-  HTTP server is pumped from Slate's pre-tick, which still runs inside the
-  debugging loop; headless halting works too, so the old refusal is gone.
-2026-09-04 — ui_ops: widget driving — find_widgets, click, double_click,
-  hover, focus, type, press_key and scroll, through the AutomationDriver on a
-  worker thread. The assert that had this written off was the engine's path
-  parser on a malformed selector, not the headless editor; a windowed editor is
-  still needed, because widgets are located through arranged geometry.
-2026-09-04 — eqs_ops: Environment Queries — create, options with a generator,
-  tests, enable/disable, compile, save and run. The graph classes export no
-  symbols, but reflection plus virtual dispatch on their exported AIGraph bases
-  builds the real graph, so the asset survives being opened in the editor.
-  Running works in the editor world without PIE, since that world carries the
-  AI system the query manager lives on.
+  - Done 2026-09-06: blueprint_modify create takes blueprint_type (interface, function_library, macro_library), and add_node has enhanced_input_action, input_key, input_action, input_axis, construct_object,
+    add_component_by_class, create_widget, async_action (Blueprint async actions, gameplay/ability tasks, Play Montage), play_montage, interface_message, get_data_table_row, get_subsystem, operator and
+    set_fields_in_struct.
+  - Done 2026-09-06: movie_render create_graph / list_graph_node_classes / graph_info / add_graph_node / remove_graph_node / connect_graph_nodes / disconnect_graph_nodes / set_graph_node_properties, and render/save with a graph.
+  - Done 2026-09-06: sequence_ops add_subsequence, add_camera_shake and add_event (trigger or repeater, custom event in the director Blueprint, typed parameters and payload values). Control Rig tracks with their
+    rig, and keys on the rig's controls: control_rig_ops add_track / set_control_key.
+  - Done 2026-09-06: pie_control start takes net_emulation (latency, loss, per direction and target) and preview (mobile, vr).
+  - Done 2026-09-06: perf_ops has stat_group (any stat group as numbers, GPU included), memreport, and csv_start/csv_stop/csv_status.
+  - Done 2026-09-06: capture_viewport has mode high_res (any size through the High Resolution Screenshot path) and mode camera (a transient scene capture at a location/rotation/fov).
+  - Done 2026-09-06: landscape_ops create takes heightmap_file and import_heightmap writes a file over a landscape or region (16-bit PNG, raw, r16; resample/original/expand).
+  - Done 2026-09-06: texture_ops create_cube and create_volume; texture_info and save take any texture. material_parameter_collection_ops; replay_ops; asset_ops export format + list_exporters.
+  - Done 2026-09-06: skeletal_mesh_ops add/remove morph targets and morph_target_info, create/bind/unbind/remove clothing; pose_asset_ops; mirror_table_ops; landscape_ops edit layers, splines and grass types; rvt_ops; media_ops.

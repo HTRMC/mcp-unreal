@@ -1,0 +1,19 @@
+{
+  "name": "anim_blueprint_modify_layer_not_found_error",
+  "description": "anim_blueprint_modify add_linked_layer_node: an unknown layer is a 404",
+  "route": "/api/anim_blueprints/modify",
+  "tool": "anim_blueprint_modify",
+  "request": {
+    "operation": "add_linked_layer_node",
+    "blueprint": "/Game/Anim/ABP_LayerContract",
+    "layer": "NoSuchLayer"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "layer_not_found",
+      "message": "the Blueprint has no layer 'NoSuchLayer' — implement_layer_interface adds an interface's layers"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "landscape_ops_set_edit_layer_missing_error",
+  "description": "landscape_ops set_edit_layer on a layer that does not exist: 404",
+  "route": "/api/world/landscape",
+  "tool": "landscape_ops",
+  "request": {
+    "operation": "set_edit_layer",
+    "landscape": "McpContractLand",
+    "layer": "Nope",
+    "visible": false
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "layer_not_found",
+      "message": "no edit layer 'Nope' — list_edit_layers shows them"
+    }
+  }
+}

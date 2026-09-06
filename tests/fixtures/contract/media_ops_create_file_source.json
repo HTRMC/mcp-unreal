@@ -1,0 +1,21 @@
+{
+  "name": "media_ops_create_file_source",
+  "description": "media_ops create_file_source: a File Media Source for a WAV",
+  "route": "/api/content/media",
+  "tool": "media_ops",
+  "request": {
+    "operation": "create_file_source",
+    "path": "/Game/Media/MS_McpContract",
+    "file": "C:/Users/HTRMC/AppData/Local/Temp/claude/C--Users-HTRMC-Dev-Projects-mcp-unreal/aa43d396-6f34-47aa-a199-cd1f1b4c2e94/scratchpad/tone.wav"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "source": "/Game/Media/MS_McpContract.MS_McpContract",
+      "file": "C:/Users/HTRMC/AppData/Local/Temp/claude/C--Users-HTRMC-Dev-Projects-mcp-unreal/aa43d396-6f34-47aa-a199-cd1f1b4c2e94/scratchpad/tone.wav",
+      "url": "file://C:/Users/HTRMC/AppData/Local/Temp/claude/C--Users-HTRMC-Dev-Projects-mcp-unreal/aa43d396-6f34-47aa-a199-cd1f1b4c2e94/scratchpad/tone.wav",
+      "valid": true
+    }
+  }
+}

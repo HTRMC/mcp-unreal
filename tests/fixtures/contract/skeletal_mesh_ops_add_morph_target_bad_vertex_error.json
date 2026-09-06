@@ -1,0 +1,29 @@
+{
+  "name": "skeletal_mesh_ops_add_morph_target_bad_vertex_error",
+  "description": "skeletal_mesh_ops add_morph_target with a vertex past the LOD's source vertices: 400",
+  "route": "/api/anim/mesh",
+  "tool": "skeletal_mesh_ops",
+  "request": {
+    "operation": "add_morph_target",
+    "mesh": "/Game/Anim/SK_McpContract",
+    "name": "Bad",
+    "deltas": [
+      {
+        "vertex": 9999999,
+        "delta": [
+          0,
+          0,
+          5
+        ]
+      }
+    ]
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "bad_vertex",
+      "message": "vertex 9999999 is not a vertex of LOD 0 — it has 3922 source vertices"
+    }
+  }
+}

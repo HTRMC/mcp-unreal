@@ -1,0 +1,36 @@
+{
+  "name": "material_parameter_collection_ops_set_vector",
+  "description": "material_parameter_collection_ops set_vector: a new vector parameter",
+  "route": "/api/materials/parameter_collection",
+  "tool": "material_parameter_collection_ops",
+  "request": {
+    "operation": "set_vector",
+    "collection": "/Game/Materials/MPC_McpContract",
+    "name": "Tint",
+    "value": [
+      1.0,
+      0.5,
+      0.25,
+      1.0
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "collection": "/Game/Materials/MPC_McpContract.MPC_McpContract",
+      "name": "Tint",
+      "added": true,
+      "type": "vector",
+      "id": "D0BD3FB24A34E32834ECCA80D6F79574",
+      "default": [
+        1,
+        0.5,
+        0.25,
+        1
+      ],
+      "state_id": "8C50F0644677142649D50D9E21D94BA3",
+      "note": "adding a parameter changes the collection's layout: every material reading it was recompiled and gets a new StateId"
+    }
+  }
+}

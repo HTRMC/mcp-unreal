@@ -1,0 +1,26 @@
+{
+  "name": "remote_control_ops_expose_function",
+  "description": "remote_control_ops expose_function: a callable exposed on the preset",
+  "route": "/api/vp/remote_control",
+  "tool": "remote_control_ops",
+  "request": {
+    "operation": "expose_function",
+    "preset": "/Game/VP/RCP_Contract",
+    "object": "RCContractLight",
+    "function": "SetActorHiddenInGame"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "kind": "function",
+      "label": "Set Actor Hidden In Game",
+      "id": "0CF5EA8D41EFA8675DE8379C89F5C539",
+      "bound_objects": [
+        "/Game/Maps/TestMap.TestMap:PersistentLevel.PointLight_0"
+      ],
+      "preset": "/Game/VP/RCP_Contract.RCP_Contract",
+      "count": 2
+    }
+  }
+}

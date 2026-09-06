@@ -1,0 +1,36 @@
+{
+  "name": "geometry_script_ops_to_static_mesh",
+  "description": "geometry_script_ops to_static_mesh: a new Static Mesh asset from the dynamic mesh",
+  "route": "/api/geometry/script",
+  "tool": "geometry_script_ops",
+  "request": {
+    "operation": "to_static_mesh",
+    "mesh": "/Engine/Transient.McpContractMesh",
+    "path": "/Game/Meshes/SM_McpContractGeo"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "mesh": "/Engine/Transient.McpContractMesh",
+      "vertices": 8,
+      "triangles": 12,
+      "has_attributes": true,
+      "bounds": {
+        "min": [
+          -50,
+          -25,
+          -12.5
+        ],
+        "max": [
+          50,
+          25,
+          12.5
+        ]
+      },
+      "static_mesh": "/Game/Meshes/SM_McpContractGeo.SM_McpContractGeo",
+      "created": true,
+      "lods": 1
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "level_snapshot_ops_apply",
+  "description": "level_snapshot_ops apply: the level restored to the snapshot",
+  "route": "/api/world/snapshot",
+  "tool": "level_snapshot_ops",
+  "request": {
+    "operation": "apply",
+    "snapshot": "/Game/Snapshots/LS_McpContract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "snapshot": "/Game/Snapshots/LS_McpContract.LS_McpContract",
+      "name": "LS_McpContract",
+      "description": "contract",
+      "map": "/Game/Maps/TestMap.TestMap",
+      "captured": "2026-09-06T18:04:27.390Z",
+      "actors": 8,
+      "world": "TestMap",
+      "applied": true,
+      "message": "restored — an undo reverses it; diff should now report nothing changed"
+    }
+  }
+}

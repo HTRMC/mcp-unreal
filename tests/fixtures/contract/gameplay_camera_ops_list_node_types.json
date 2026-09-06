@@ -1,0 +1,207 @@
+{
+  "name": "gameplay_camera_ops_list_node_types",
+  "description": "gameplay_camera_ops list_node_types: camera node classes with slots and defaults",
+  "route": "/api/cameras/gameplay",
+  "tool": "gameplay_camera_ops",
+  "request": {
+    "operation": "list_node_types",
+    "filter": "Transform"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "types": [
+        {
+          "class": "BoomArmCameraNode",
+          "path": "/Script/GameplayCameras.BoomArmCameraNode",
+          "display_name": "Boom Arm Camera Node",
+          "categories": "Common,Transform",
+          "slots": [
+            "InputSlot: Input2DCameraNode"
+          ],
+          "defaults": {
+            "BoomOffset": {
+              "Value": {
+                "X": 0,
+                "Y": 0,
+                "Z": 0
+              },
+              "Variable": "None"
+            },
+            "BoomLengthInterpolator": "None",
+            "MaxForwardInterpolationFactor": {
+              "Value": -1,
+              "Variable": "None"
+            },
+            "MaxBackwardInterpolationFactor": {
+              "Value": -1,
+              "Variable": "None"
+            },
+            "bAdditiveRotation": false,
+            "bIsEnabled": true
+          }
+        },
+        {
+          "class": "DampenPositionCameraNode",
+          "path": "/Script/GameplayCameras.DampenPositionCameraNode",
+          "display_name": "Dampen Position Camera Node",
+          "categories": "Common,Transform",
+          "slots": [],
+          "defaults": {
+            "ForwardDampingFactor": {
+              "Value": 0,
+              "Variable": "None"
+            },
+            "LateralDampingFactor": {
+              "Value": 0,
+              "Variable": "None"
+            },
+            "VerticalDampingFactor": {
+              "Value": 0,
+              "Variable": "None"
+            },
+            "DampenSpace": "CameraPose",
+            "bIsEnabled": true
+          }
+        },
+        {
+          "class": "DampenRotationCameraNode",
+          "path": "/Script/GameplayCameras.DampenRotationCameraNode",
+          "display_name": "Dampen Rotation Camera Node",
+          "categories": "Common,Transform",
+          "slots": [],
+          "defaults": {
+            "YawDampingFactor": {
+              "Value": 0,
+              "Variable": "None"
+            },
+            "PitchDampingFactor": {
+              "Value": 0,
+              "Variable": "None"
+            },
+            "RollDampingFactor": {
+              "Value": 0,
+              "Variable": "None"
+            },
+            "bIsEnabled": true
+          }
+        },
+        {
+          "class": "OffsetCameraNode",
+          "path": "/Script/GameplayCameras.OffsetCameraNode",
+          "display_name": "Offset Camera Node",
+          "categories": "Common,Transform",
+          "slots": [],
+          "defaults": {
+            "TranslationOffset": {
+              "Value": {
+                "X": 0,
+                "Y": 0,
+                "Z": 0
+              },
+              "Variable": "None"
+            },
+            "RotationOffset": {
+              "Value": {
+                "Pitch": 0,
+                "Yaw": 0,
+                "Roll": 0
+              },
+              "Variable": "None"
+            },
+            "OffsetSpace": "CameraPose",
+            "bIsEnabled": true
+          }
+        },
+        {
+          "class": "SetLocationCameraNode",
+          "path": "/Script/GameplayCameras.SetLocationCameraNode",
+          "display_name": "Set Location Camera Node",
+          "categories": "Common,Transform",
+          "slots": [],
+          "defaults": {
+            "Location": {
+              "Value": {
+                "X": 0,
+                "Y": 0,
+                "Z": 0
+              },
+              "Variable": "None"
+            },
+            "OffsetSpace": "OwningContext",
+            "bIsEnabled": true
+          }
+        },
+        {
+          "class": "SetRotationCameraNode",
+          "path": "/Script/GameplayCameras.SetRotationCameraNode",
+          "display_name": "Set Rotation Camera Node",
+          "categories": "Common,Transform",
+          "slots": [],
+          "defaults": {
+            "Rotation": {
+              "Value": {
+                "Pitch": 0,
+                "Yaw": 0,
+                "Roll": 0
+              },
+              "Variable": "None"
+            },
+            "OffsetSpace": "CameraPose",
+            "bIsEnabled": true
+          }
+        },
+        {
+          "class": "SplineOffsetCameraNode",
+          "path": "/Script/GameplayCameras.SplineOffsetCameraNode",
+          "display_name": "Spline Offset Camera Node",
+          "categories": "Common,Transform",
+          "slots": [],
+          "defaults": {
+            "SplineInput": {
+              "Value": 0,
+              "Variable": "None"
+            },
+            "TranslationOffsetSpline": {},
+            "RotationOffsetSpline": {},
+            "OffsetSpace": "CameraPose",
+            "bIsEnabled": true
+          }
+        },
+        {
+          "class": "SplineOrbitCameraNode",
+          "path": "/Script/GameplayCameras.SplineOrbitCameraNode",
+          "display_name": "Spline Orbit Camera Node",
+          "categories": "Common,Transform",
+          "slots": [
+            "InputSlot: Input2DCameraNode"
+          ],
+          "defaults": {
+            "LocationOffsetSpline": {},
+            "TargetOffsetSpline": {},
+            "RotationOffsetSpline": {},
+            "LocationOffsetMultiplier": {
+              "Value": 1,
+              "Variable": "None"
+            },
+            "TargetOffsetSpace": "ActiveContext",
+            "bIsEnabled": true
+          }
+        },
+        {
+          "class": "BlueprintCameraNode",
+          "path": "/Script/GameplayCameras.BlueprintCameraNode",
+          "display_name": "Blueprint Camera Node",
+          "categories": "Common,Transform",
+          "slots": [],
+          "defaults": {
+            "CameraNodeEvaluatorTemplate": "None",
+            "bRunInEditor": false,
+            "bIsEnabled": true
+          }
+        }
+      ]
+    }
+  }
+}

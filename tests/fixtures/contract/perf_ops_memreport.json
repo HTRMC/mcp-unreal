@@ -1,0 +1,22 @@
+{
+  "name": "perf_ops_memreport",
+  "description": "perf_ops memreport: the engine's MemReport written to Saved/Profiling/MemReports and read back, capped",
+  "route": "/api/editor/perf",
+  "tool": "perf_ops",
+  "request": {
+    "operation": "memreport",
+    "full": false,
+    "max_chars": 1000
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "file": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/Profiling/MemReports/TestMap-WindowsEditor-09.06-17.25.32/Pid114476_TestMap-WindowsEditor-06-17.25.33.memreport",
+      "full": false,
+      "chars": 275931,
+      "truncated": true,
+      "text": "Changelist: 56702186\r\nConfig: Development\r\nDevice Name: WindowsEditor\r\nDevice Profile: None\r\nCommandLine Options: -nullrhi -unattended -nopause -nosplash -nosound -stdout -FullStdOutLogOutput\r\nTime Since Boot: 13.29 Seconds\r\n\r\nMemReport: Begin command \"Mem FromReport\"\r\nPlatform Memory Stats for WindowsEditor\r\nProcess Physical Memory: 2824.97 MB used, 3009.07 MB peak\r\nProcess Virtual Memory: 2594.71 MB used, 2814.26 MB peak\r\nPhysical Memory: 19095.82 MB used,  12863.67 MB free, 31959.49 MB total\r\nVirtual Memory: 27192.32 MB used,  9375.17 MB free, 36567.49 MB total\r\n\r\nAllocator Stats for Mimalloc: (not implemented)\r\nMemory Stats:\r\nFMemStack (gamethread) current size = 0.00 MB\r\nFPageAllocator (all threads) allocation size [used/ unused] = [2.00 / 0.00] MB\r\nNametable memory usage = 17.26 MB\r\nAssetRegistry memory usage = 135.40 MB\r\n         0.000MB  -  AllTrailingsIndicesByPhysicsProxy - STAT_AllTrailingsIndicesByPhysicsProxyMemory - STATGROUP_ChaosNiagara - STATCAT_Niagara\r\n         0.000"
+    }
+  }
+}

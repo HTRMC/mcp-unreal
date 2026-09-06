@@ -35,7 +35,18 @@ public class McpLinkWorkflow : ModuleRules
 			"GameplayTagsEditor",
 			"Kismet",
 			"MessageLog",
-			"Localization"
+			"Localization",
+			"CollectionManager",
+			"Blutility",
+			"UMG",
+			"UMGEditor",
+			"DerivedDataCache"
 		});
+
+		// Live Coding only exists on Windows; the route reports it absent elsewhere.
+		if (Target.Platform == UnrealTargetPlatform.Win64)
+		{
+			PrivateDependencyModuleNames.Add("LiveCoding");
+		}
 	}
 }

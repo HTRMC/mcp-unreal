@@ -7,9 +7,53 @@ use serde_json::{Value, json};
 
 use crate::UnrealMcp;
 
+/// One direction of emulated network conditions. Absent fields stay off
+/// the wire: only top-level nulls are stripped before a request is sent.
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+pub struct NetPacketConditions {
+    /// Added latency, milliseconds (0-5000).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub min_latency_ms: Option<i32>,
+    /// Upper bound of the added latency, milliseconds (0-5000).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_latency_ms: Option<i32>,
+    /// Packets dropped, percent (0-100).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub packet_loss_percent: Option<i32>,
+}
+
+/// Emulated network conditions for a PIE session.
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+pub struct NetEmulation {
+    /// Which side the conditions apply to: "any" (default), "server" or "client".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
+    /// Latency added in both directions, milliseconds (0-5000).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub min_latency_ms: Option<i32>,
+    /// Upper bound of that latency, milliseconds; the engine picks a value
+    /// between min and max per packet.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_latency_ms: Option<i32>,
+    /// Packets dropped in both directions, percent (0-100).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub packet_loss_percent: Option<i32>,
+    /// Override the conditions for packets this instance sends.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub outgoing: Option<NetPacketConditions>,
+    /// Override the conditions for packets this instance receives.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub incoming: Option<NetPacketConditions>,
+}
+
 #[derive(serde::Deserialize, schemars::JsonSchema)]
 #[serde(tag = "operation", rename_all = "snake_case")]
 #[schemars(transform = crate::schema::object_with_oneof)]
+// `start` carries every session option, which makes it much larger than the
+// other variants. Boxing it would turn the generated tool schema into a $ref
+// indirection, and the schema is the contract with the MCP client, so the
+// size stays: one of these exists per tool call.
+#[allow(clippy::large_enum_variant)]
 pub enum PieOp {
     /// Start a Play-In-Editor session.
     Start {
@@ -33,6 +77,12 @@ pub enum PieOp {
         /// Run every client inside this editor process (default true). Only
         /// in-process clients are reachable by the other tools.
         one_process: Option<bool>,
+        /// "mobile" renders the session at the mobile feature level (the
+        /// Mobile Preview), "vr" plays into a connected headset (VR Preview).
+        preview: Option<String>,
+        /// Simulate a bad network for the session: latency and packet loss
+        /// on every connection, as the Play settings' Network Emulation does.
+        net_emulation: Option<NetEmulation>,
     },
     /// Stop the running PIE session.
     Stop {
@@ -165,6 +215,48 @@ pub enum InputOp {
     GetState { player_index: Option<u32> },
 }
 
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum ReplayOp {
+    /// Recording / playback state, the active replay and its times; with no
+    /// PIE session, just the replay files on disk.
+    Status,
+    /// The .replay files in the project's Saved/Demos directory.
+    List,
+    /// Start recording the running PIE session to Saved/Demos/<name>.replay.
+    StartRecording {
+        /// File stem; default McpReplay_<timestamp>.
+        name: Option<String>,
+        friendly_name: Option<String>,
+    },
+    /// Stop the active recording or playback.
+    Stop {
+        /// After playback, travel back to the project's default map (the
+        /// engine default). Default false: stay on the recorded map.
+        load_default_map: Option<bool>,
+    },
+    /// Play a recorded replay in the PIE session. The PIE world travels to
+    /// the recorded map; poll status until `playing` is true.
+    Play {
+        name: String,
+    },
+    /// Seek to a time in seconds.
+    Goto {
+        time: f64,
+    },
+    Pause,
+    Resume,
+    /// Playback speed multiplier (world settings' demo time dilation).
+    SetSpeed {
+        speed: f64,
+    },
+    /// Delete a replay file.
+    Delete {
+        name: String,
+    },
+}
+
 #[tool_router(router = play_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
@@ -174,31 +266,21 @@ impl UnrealMcp {
         &self,
         Parameters(op): Parameters<PieOp>,
     ) -> Result<Json<Value>, ErrorData> {
-        let body = match op {
-            PieOp::Start {
-                wait,
-                map,
-                simulate,
-                location,
-                rotation,
-                players,
-                net_mode,
-                dedicated_server,
-                one_process,
-            } => json!({
-                "operation": "start", "wait": wait, "map": map, "simulate": simulate,
-                "location": location, "rotation": rotation, "players": players,
-                "net_mode": net_mode, "dedicated_server": dedicated_server,
-                "one_process": one_process,
-            }),
-            PieOp::Stop { wait } => json!({"operation": "stop", "wait": wait}),
-            PieOp::Status {} => json!({"operation": "status"}),
-            PieOp::Pause {} => json!({"operation": "pause"}),
-            PieOp::Resume {} => json!({"operation": "resume"}),
-        };
-        self.call_plugin("/api/editor/pie_control", body)
+        self.call_plugin("/api/editor/pie_control", pie_body(op))
             .await
             .map(Json)
+    }
+
+    #[tool(
+        description = "Replay recording and playback inside a PIE session (the DemoNetDriver behind demorec/demoplay): start_recording, stop, play, goto, pause, resume, set_speed, status, and list/delete the .replay files under Saved/Demos."
+    )]
+    async fn replay_ops(
+        &self,
+        Parameters(op): Parameters<ReplayOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/editor/replay", body).await.map(Json)
     }
 
     #[tool(
@@ -259,6 +341,36 @@ impl UnrealMcp {
 
 /// Request body for `/api/input/inject`. Split out so the contract fixtures can
 /// assert the exact wire shape without a live editor.
+/// The plugin request for a `pie_control` operation (shared with the
+/// contract tests).
+pub fn pie_body(op: PieOp) -> Value {
+    match op {
+        PieOp::Start {
+            wait,
+            map,
+            simulate,
+            location,
+            rotation,
+            players,
+            net_mode,
+            dedicated_server,
+            one_process,
+            preview,
+            net_emulation,
+        } => json!({
+            "operation": "start", "wait": wait, "map": map, "simulate": simulate,
+            "location": location, "rotation": rotation, "players": players,
+            "net_mode": net_mode, "dedicated_server": dedicated_server,
+            "one_process": one_process, "preview": preview,
+            "net_emulation": net_emulation,
+        }),
+        PieOp::Stop { wait } => json!({"operation": "stop", "wait": wait}),
+        PieOp::Status {} => json!({"operation": "status"}),
+        PieOp::Pause {} => json!({"operation": "pause"}),
+        PieOp::Resume {} => json!({"operation": "resume"}),
+    }
+}
+
 pub fn input_body(op: InputOp) -> Value {
     #[allow(clippy::let_and_return)]
     let body = match op {

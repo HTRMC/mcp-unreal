@@ -1,0 +1,18 @@
+{
+  "name": "live_link_ops_remove_source_not_found_error",
+  "description": "live_link_ops remove_source: an unknown source is a 404",
+  "route": "/api/vp/live_link",
+  "tool": "live_link_ops",
+  "request": {
+    "operation": "remove_source",
+    "source": "NoSuchSource"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "source_not_found",
+      "message": "'source' must be a source id (or unique type) from status"
+    }
+  }
+}

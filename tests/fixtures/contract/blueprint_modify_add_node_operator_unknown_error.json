@@ -1,0 +1,20 @@
+{
+  "name": "blueprint_modify_add_node_operator_unknown_error",
+  "description": "blueprint_modify add_node operator with an unknown operation: 400 listing the promotable operators",
+  "route": "/api/blueprints/modify",
+  "tool": "blueprint_modify",
+  "request": {
+    "operation": "add_node",
+    "blueprint": "/Game/Blueprints/BP_McpDebugProbe",
+    "node_type": "operator",
+    "operator": "Teleport"
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "node_not_created",
+      "message": "no promotable operator 'Teleport' — one of: Add, Divide, EqualEqual, Greater, GreaterEqual, Less, LessEqual, Multiply, NotEqual, Subtract"
+    }
+  }
+}

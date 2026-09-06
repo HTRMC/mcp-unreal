@@ -29,10 +29,14 @@ public class McpLinkEditor : ModuleRules
 			"AssetTools",
 			"ImageCore",
 			"ImageWrapper",
+			"RenderCore",
+			"RHI",
 			"Slate",
 			"SlateCore",
 			"UMG",
-			"EditorSubsystem"
+			"EditorSubsystem",
+			"InterchangeCore",
+			"InterchangeEngine"
 		});
 	}
 }

@@ -1,0 +1,19 @@
+{
+  "name": "string_table_ops_remove_string_missing_error",
+  "description": "string_table_ops remove_string on a missing key: 404",
+  "route": "/api/data/string_table",
+  "tool": "string_table_ops",
+  "request": {
+    "operation": "remove_string",
+    "table": "/Game/Text/ST_McpContract",
+    "key": "Nope"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "key_not_found",
+      "message": "'ST_McpContract' has no key 'Nope'"
+    }
+  }
+}

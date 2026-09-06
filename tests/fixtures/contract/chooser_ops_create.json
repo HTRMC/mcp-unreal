@@ -1,0 +1,34 @@
+{
+  "name": "chooser_ops_create",
+  "description": "chooser_ops create: a table returning AnimSequences for a Pawn context",
+  "route": "/api/data/chooser",
+  "tool": "chooser_ops",
+  "request": {
+    "operation": "create",
+    "path": "/Game/Choosers/CHT_Contract",
+    "result_type": "object",
+    "output_class": "AnimSequence",
+    "context": [
+      "Pawn"
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "chooser": "/Game/Choosers/CHT_Contract.CHT_Contract",
+      "result_type": "ObjectResult",
+      "output_class": "/Script/Engine.AnimSequence",
+      "context": [
+        {
+          "_structType": "/Script/Chooser.ContextObjectTypeClass",
+          "Class": "/Script/CoreUObject.Class'/Script/Engine.Pawn'",
+          "Direction": "Read"
+        }
+      ],
+      "columns": [],
+      "rows": [],
+      "fallback": {}
+    }
+  }
+}

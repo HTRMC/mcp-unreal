@@ -1,0 +1,50 @@
+{
+  "name": "skeletal_mesh_ops_add_morph_target",
+  "description": "skeletal_mesh_ops add_morph_target: source vertex deltas built into a morph target",
+  "route": "/api/anim/mesh",
+  "tool": "skeletal_mesh_ops",
+  "request": {
+    "operation": "add_morph_target",
+    "mesh": "/Game/Anim/SK_McpContract",
+    "name": "Smile",
+    "deltas": [
+      {
+        "vertex": 0,
+        "delta": [
+          0,
+          0,
+          5
+        ]
+      },
+      {
+        "vertex": 1,
+        "delta": [
+          0,
+          0,
+          5
+        ],
+        "normal": [
+          0,
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "mesh": "/Game/Anim/SK_McpContract.SK_McpContract",
+      "name": "Smile",
+      "lod": 0,
+      "vertex_count": 3922,
+      "deltas_given": 2,
+      "built": true,
+      "render_deltas": 2,
+      "replaced": false,
+      "morph_target_count": 1,
+      "note": "drive it from an animation curve of the same name, or SetMorphTarget on a skeletal mesh component"
+    }
+  }
+}

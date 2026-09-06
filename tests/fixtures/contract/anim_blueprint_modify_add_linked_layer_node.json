@@ -1,0 +1,25 @@
+{
+  "name": "anim_blueprint_modify_add_linked_layer_node",
+  "description": "anim_blueprint_modify add_linked_layer_node: a Linked Anim Layer node wired to the output",
+  "route": "/api/anim_blueprints/modify",
+  "tool": "anim_blueprint_modify",
+  "request": {
+    "operation": "add_linked_layer_node",
+    "blueprint": "/Game/Anim/ABP_LayerContract",
+    "layer": "UpperBody"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "layer": "UpperBody",
+      "interface": "/Game/Anim/ALI_Contract.ALI_Contract_C",
+      "blueprint": "/Game/Anim/ABP_LayerContract.ABP_LayerContract",
+      "graph": "AnimGraph",
+      "node": "AnimGraphNode_LinkedAnimLayer_0",
+      "pins": [
+        "Pose (out, struct)"
+      ]
+    }
+  }
+}

@@ -107,6 +107,35 @@ pub enum AnimAssetOp {
     Save {
         asset: String,
     },
+    /// The Animation Modifier classes available (engine library and loaded
+    /// Blueprint modifiers) with their default properties.
+    ListModifiers,
+    /// The modifiers applied to an Animation Sequence.
+    ListAppliedModifiers {
+        asset: String,
+    },
+    /// Add a modifier instance to an Animation Sequence, set its properties
+    /// and apply it — distance curves, motion extraction, footstep events,
+    /// root re-orientation and the rest.
+    ApplyModifier {
+        asset: String,
+        /// Class name or path from list_modifiers.
+        modifier: String,
+        /// The modifier's UPROPERTY values.
+        properties: Option<serde_json::Value>,
+    },
+    /// Undo what an applied modifier did (by class name or index).
+    RevertModifier {
+        asset: String,
+        modifier: Option<String>,
+        index: Option<i32>,
+    },
+    /// Revert and drop the modifier instance.
+    RemoveModifier {
+        asset: String,
+        modifier: Option<String>,
+        index: Option<i32>,
+    },
 }
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -237,6 +266,142 @@ pub enum SkeletonOp {
 }
 
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+pub struct BoneWeightEntry {
+    /// Bone name.
+    pub bone: String,
+    /// 0-1; the set is normalized.
+    pub weight: f64,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+pub struct VertexSkinWeights {
+    /// Source vertex id.
+    pub vertex: u32,
+    pub bones: Vec<BoneWeightEntry>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+pub struct MorphDelta {
+    /// Render vertex index in the LOD.
+    pub vertex: u32,
+    /// Position offset [x, y, z] in mesh space.
+    pub delta: [f64; 3],
+    /// Normal offset [x, y, z] (default none).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub normal: Option<[f64; 3]>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum PoseAssetOp {
+    /// New Pose Asset: from an animation (one pose per frame, named by
+    /// `pose_names` or after the frames) or empty on a skeleton.
+    Create {
+        /// e.g. /Game/Anim/PA_Face.
+        path: String,
+        /// Skeleton, skeletal mesh or animation path; implied by `animation`.
+        skeleton: Option<String>,
+        animation: Option<String>,
+        pose_names: Option<Vec<String>>,
+        /// Also add the skeleton's reference pose under this name.
+        reference_pose: Option<String>,
+    },
+    Info {
+        pose_asset: String,
+        /// Default 200.
+        max_names: Option<i32>,
+    },
+    /// Re-extract every pose from an animation.
+    UpdateFromAnimation {
+        pose_asset: String,
+        animation: String,
+    },
+    AddReferencePose {
+        pose_asset: String,
+        name: String,
+    },
+    RenamePose {
+        pose_asset: String,
+        name: String,
+        new_name: String,
+    },
+    DeletePoses {
+        pose_asset: String,
+        names: Vec<String>,
+    },
+    DeleteCurves {
+        pose_asset: String,
+        names: Vec<String>,
+    },
+    /// Switch between full and additive poses; additive ones are relative to
+    /// `base_pose` (or the reference pose with base_pose_index -1).
+    SetAdditive {
+        pose_asset: String,
+        /// Default true.
+        additive: Option<bool>,
+        base_pose: Option<String>,
+        base_pose_index: Option<i32>,
+    },
+    Save {
+        pose_asset: String,
+    },
+}
+
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+pub struct MirrorExpression {
+    /// e.g. "Left", "_l", "^l_".
+    pub find: String,
+    /// e.g. "Right", "_r", "r_".
+    pub replace: String,
+    /// "Prefix" (default), "Suffix" or "RegularExpression".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub method: Option<String>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+#[schemars(transform = crate::schema::object_with_oneof)]
+pub enum MirrorTableOp {
+    /// New Mirror Data Table for a skeleton, filled by running the find /
+    /// replace expressions (the project's defaults unless given) over every
+    /// bone, notify, curve and sync marker.
+    Create {
+        /// e.g. /Game/Anim/MDT_Hero.
+        path: String,
+        /// Skeleton, skeletal mesh or animation path.
+        skeleton: String,
+        /// Mirror axis "X" (default), "Y" or "Z".
+        axis: Option<String>,
+        expressions: Option<Vec<MirrorExpression>>,
+    },
+    Info {
+        table: String,
+        /// Default 200.
+        max_rows: Option<i32>,
+    },
+    /// Re-run the expressions: "sync" (default, rebuild every row),
+    /// "add_missing" (keep edits, add new names) or "update_existing".
+    Sync {
+        table: String,
+        mode: Option<String>,
+    },
+    SetAxis {
+        table: String,
+        axis: String,
+    },
+    /// Replace the expression list, and by default sync the rows from it.
+    SetExpressions {
+        table: String,
+        expressions: Vec<MirrorExpression>,
+        sync: Option<bool>,
+    },
+    Save {
+        table: String,
+    },
+}
+
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
 #[serde(tag = "operation", rename_all = "snake_case")]
 #[schemars(transform = crate::schema::object_with_oneof)]
 pub enum SkeletalMeshOp {
@@ -289,6 +454,83 @@ pub enum SkeletalMeshOp {
     },
     Save {
         mesh: String,
+    },
+    /// A morph target's per-LOD delta counts and a sample of its deltas.
+    MorphTargetInfo {
+        mesh: String,
+        name: String,
+        /// LOD to sample deltas from (default 0).
+        lod: Option<i32>,
+        /// Default 64.
+        max_deltas: Option<i32>,
+    },
+    /// Add a morph target from vertex deltas over one LOD's render vertices,
+    /// or replace an existing one's deltas with `replace`.
+    AddMorphTarget {
+        mesh: String,
+        name: String,
+        lod: Option<i32>,
+        deltas: Vec<MorphDelta>,
+        replace: Option<bool>,
+        /// Keep deltas whose only change is the normal (default false).
+        compare_normal: Option<bool>,
+    },
+    RemoveMorphTarget {
+        mesh: String,
+        name: String,
+    },
+    /// The mesh's clothing assets and the sections each is bound to.
+    ListClothing {
+        mesh: String,
+    },
+    /// Build a clothing asset from a section's triangles (the Skeletal Mesh
+    /// Editor's "Create Clothing Data from Section"); bind_clothing applies it.
+    CreateClothing {
+        mesh: String,
+        section: i32,
+        lod: Option<i32>,
+        name: Option<String>,
+        /// Remove the source section from the render mesh (default false).
+        remove_section: Option<bool>,
+    },
+    /// Bind a clothing asset (name or guid) to a section so it simulates.
+    BindClothing {
+        mesh: String,
+        clothing: String,
+        section: i32,
+        lod: Option<i32>,
+        /// The clothing asset's own LOD to use (default 0).
+        asset_lod: Option<i32>,
+    },
+    UnbindClothing {
+        mesh: String,
+        section: i32,
+        lod: Option<i32>,
+    },
+    /// Unbind everywhere and delete the clothing asset.
+    RemoveClothing {
+        mesh: String,
+        clothing: String,
+    },
+    /// Skin weights of source vertices (mesh description ids): every bone
+    /// and weight, for a list of vertices or the first `max_vertices`.
+    GetSkinWeights {
+        mesh: String,
+        lod: Option<i32>,
+        vertices: Option<Vec<i32>>,
+        /// Default 64.
+        max_vertices: Option<i32>,
+        /// A skin weight profile; omit for the default weights.
+        profile: Option<String>,
+    },
+    /// Write skin weights for source vertices: bones by name with weights
+    /// that are normalized to one; the render data is rebuilt.
+    SetSkinWeights {
+        mesh: String,
+        lod: Option<i32>,
+        weights: Vec<VertexSkinWeights>,
+        /// A profile to write (created if missing); omit for the default.
+        profile: Option<String>,
     },
 }
 
@@ -391,6 +633,34 @@ impl UnrealMcp {
         let body =
             serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
         self.call_plugin("/api/anim/mesh", body).await.map(Json)
+    }
+
+    #[tool(
+        description = "Pose Assets: create one from an animation (a pose per frame) or a skeleton, list its poses, curves and tracks, re-extract from an animation, add the reference pose, rename or delete poses and curves, and switch between full and additive space."
+    )]
+    async fn pose_asset_ops(
+        &self,
+        Parameters(op): Parameters<PoseAssetOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/anim/pose_asset", body)
+            .await
+            .map(Json)
+    }
+
+    #[tool(
+        description = "Mirror Data Tables: create one for a skeleton from find/replace expressions (Left/Right, _l/_r, …), read its rows and sync status, re-sync after skeleton or expression changes, set the mirror axis or expressions. Rows are DataTable rows, so data_table_ops edits them."
+    )]
+    async fn mirror_table_ops(
+        &self,
+        Parameters(op): Parameters<MirrorTableOp>,
+    ) -> Result<Json<Value>, ErrorData> {
+        let body =
+            serde_json::to_value(op).map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        self.call_plugin("/api/anim/mirror_table", body)
+            .await
+            .map(Json)
     }
 
     #[tool(

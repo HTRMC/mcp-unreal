@@ -1,0 +1,20 @@
+{
+  "name": "replay_ops_status_no_pie",
+  "description": "replay_ops status without a PIE session: the files on disk",
+  "route": "/api/editor/replay",
+  "tool": "replay_ops",
+  "request": {
+    "operation": "status"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "pie_active": false,
+      "recording": false,
+      "playing": false,
+      "demo_directory": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/Demos",
+      "replays": []
+    }
+  }
+}

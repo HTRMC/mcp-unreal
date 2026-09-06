@@ -1,0 +1,22 @@
+{
+  "name": "asset_ops_import_interchange_no_translator_error",
+  "description": "asset_ops import through Interchange of a file no translator takes: 400",
+  "route": "/api/assets/ops",
+  "tool": "asset_ops",
+  "request": {
+    "operation": "import",
+    "files": [
+      "C:/Users/HTRMC/AppData/Local/Temp/claude/C--Users-HTRMC-Dev-Projects-mcp-unreal/aa43d396-6f34-47aa-a199-cd1f1b4c2e94/scratchpad/tone.wav"
+    ],
+    "destination": "/Game/Imported/McpContract",
+    "interchange": true
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "no_translator",
+      "message": "Interchange has no translator for 'C:/Users/HTRMC/AppData/Local/Temp/claude/C--Users-HTRMC-Dev-Projects-mcp-unreal/aa43d396-6f34-47aa-a199-cd1f1b4c2e94/scratchpad/tone.wav' — omit 'interchange' for the legacy importer"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "mass_ops_list_generators",
+  "description": "mass_ops list_generators: spawn data generator classes, including McpLink's radius/points one",
+  "route": "/api/mass/ops",
+  "tool": "mass_ops",
+  "request": {
+    "operation": "list_generators"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "generators": [
+        {
+          "class": "MassEntityEQSSpawnPointsGenerator",
+          "path": "/Script/MassSpawner.MassEntityEQSSpawnPointsGenerator",
+          "module": "/Script/MassSpawner"
+        },
+        {
+          "class": "MassEntityZoneGraphSpawnPointsGenerator",
+          "path": "/Script/MassSpawner.MassEntityZoneGraphSpawnPointsGenerator",
+          "module": "/Script/MassSpawner"
+        },
+        {
+          "class": "McpMassRadiusSpawnGenerator",
+          "path": "/Script/McpLinkMass.McpMassRadiusSpawnGenerator",
+          "module": "/Script/McpLinkMass"
+        }
+      ]
+    }
+  }
+}

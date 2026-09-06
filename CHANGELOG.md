@@ -10,6 +10,221 @@ installed as a pair.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-06
+
+### Added
+
+- **`chooser_ops` (McpLinkChooser).** Chooser tables: signature, columns by
+  struct bound to context properties, rows with results and cells, the
+  fallback, evaluation against live objects or structs, and saving.
+- **`gameplay_camera_ops` (McpLinkCameras).** Camera Rigs as node trees,
+  Camera assets with a director, the headless build and its log, and
+  activation on the player in PIE.
+- **`rigvm_graph_ops` (McpLinkControlRig).** Control Rig graph authoring:
+  unit, template, variable, comment, branch/if/select nodes, links, pin
+  defaults, rig variables and the VM compile log.
+- **`anim_blueprint_modify` linked anim layers.** Animation Layer
+  Interfaces with layers and groups, implementing them on an Animation
+  Blueprint, and Linked Anim Layer / Linked Anim Graph nodes; layer graphs
+  are addressable in every `graph` field.
+- **`remote_control_ops` (McpLinkRemoteControl).** Remote Control presets:
+  create, expose properties, functions and actors under labels, rename,
+  unexpose, list and save.
+- **`live_link_ops` (McpLinkLiveLink).** Live Link sources and subjects,
+  sources from a factory's connection string, virtual sources and virtual
+  subjects, and Live Link Presets saved from or applied to the client —
+  virtual sources are recreated by the route, since the 5.8 client
+  check()-fails recreating one from a preset.
+- **`pose_search_ops` (McpLinkPoseSearch).** Motion Matching: Pose Search
+  Schemas with feature channels edited by class and properties, Pose
+  Search Databases with animation entries, the derived-data index build
+  and saving.
+- **`mass_ops` (McpLinkMass).** Mass Entity Configs with traits (JSON
+  properties, `_structType` for instanced-struct fragments), Mass Spawners
+  with entity types and spawn data generators including a built-in
+  radius/points generator, spawning and despawning in PIE, entity counts.
+- **`anim_asset_ops` runs Animation Modifiers.** `list_modifiers`,
+  `apply_modifier` (instance on the sequence's asset user data, properties
+  set, applied), `list_applied_modifiers`, `revert_modifier`,
+  `remove_modifier`.
+- **`skeletal_mesh_ops` edits skin weights.** `get_skin_weights` and
+  `set_skin_weights` on the source mesh description (default weights or a
+  named profile), rebuilt into render data.
+- **`ik_rig_ops` (McpLinkIKRig).** IK Rigs for a skeletal mesh with humanoid
+  auto-characterization or hand-built solvers, goals, retarget root and
+  chains; IK Retargeters with the 5.8 op stack, chain mapping and pose
+  alignment; and the Retarget Animations batch, which duplicates and bakes
+  animations onto the target skeleton.
+- **`world_partition_build` (headless).** HLOD setup/build/delete/finalize,
+  minimap, navigation data and actor resaves through
+  `WorldPartitionBuilderCommandlet`.
+- **`geometry_script_ops` (McpLinkGeometryScript).** Geometry Script as an
+  API: dynamic meshes in the transient package, every
+  `UGeometryScriptLibrary_*` function callable by name through reflection
+  (`list_functions` and `signature` to find them), counts and bounds, and
+  `to_static_mesh` / `from_static_mesh` for the way in and out of assets.
+- **`control_rig_ops` (McpLinkControlRig).** Control Rig Blueprints from a
+  skeleton, hierarchy authoring (bones, nulls, controls of every type with
+  shapes, offsets and initial values, removal, value setting), compile, and
+  Sequencer: a Control Rig track on a binding or actor, and keys on its
+  controls by time or frame.
+- **`level_snapshot_ops` (McpLinkLevelSnapshots).** Take a Level Snapshot
+  asset of the open level, diff the level against it (changed, removed,
+  added actors) and restore it.
+- **`asset_ops import` through Interchange.** `interchange: true` runs the
+  Interchange framework with the project's pipeline stack (or `pipelines`),
+  asynchronously with the reply waiting, and reports every asset it made.
+- **`call_function` argument conversion moved to McpLinkCore.**
+  `CallFunctionFromJson` and `FunctionSignatureJson` (McpReflection.h) are
+  shared with the Geometry Script bridge; a failed argument now cancels the
+  transaction.
+- **`pose_asset_ops` and `mirror_table_ops`.** Pose Assets from an animation
+  (a pose per frame) or a skeleton, with renaming, deletion, re-extraction
+  and full/additive conversion; Mirror Data Tables synced from find/replace
+  expressions over a skeleton, with axis and expression edits.
+- **`skeletal_mesh_ops` edits morph targets and clothing.** `add_morph_target`
+  writes deltas over the LOD's source vertices into the mesh description so
+  the build produces the morph target (a hand-registered `UMorphTarget` is
+  discarded by the next build); `morph_target_info` reads them back;
+  `remove_morph_target`. `create_clothing` builds a clothing asset from a
+  section, `bind_clothing` / `unbind_clothing` apply it (keeping the section
+  user data the build reads, as Persona does), `list_clothing`,
+  `remove_clothing`.
+- **`landscape_ops` edit layers, splines and grass types.** List, add, rename,
+  show/hide, lock, reorder, clear and remove edit layers; `edit_layer` on the
+  height and weight writes; spline control points and segments with meshes,
+  paint layers and raise/lower flags, `apply_splines`; `create_grass_type`.
+- **`rvt_ops`.** Runtime Virtual Texture assets, volumes sized to a landscape
+  or to what is assigned, `assign` / `unassign` for primitives and landscapes,
+  `list`, and streaming-mip baking in a windowed editor.
+- **`media_ops`.** File Media Sources, Media Players, Media Textures and
+  Playlists; open, play, pause, seek, rewind, rate, looping, close and status.
+- **`material_parameter_collection_ops`.** Material Parameter Collections:
+  create, add or edit scalar and vector parameters and their defaults
+  (through the same edit bracket the details panel uses, so materials that
+  read the collection are recompiled and its state id changes), rename and
+  remove, and read or set the runtime values on the editor or PIE world's
+  instance.
+- **`replay_ops`.** Replay recording and playback in PIE through the Replay
+  Subsystem: `start_recording` / `stop`, `play`, `goto`, `pause`, `resume`,
+  `set_speed`, `status`, and `list` / `delete` for the `.replay` files under
+  `Saved/Demos`. A replay that fits in one stream chunk stalls on its first
+  frame in the engine; `play` nudges it with a short seek.
+- **`texture_ops create_cube` and `create_volume`.** Cube maps from six BGRA8
+  faces and volume textures from a stack of slices, or a solid fill;
+  `texture_info` and `texture_ops save` now take any texture class.
+- **`asset_ops export` takes a `format`.** The extension picks the exporter —
+  `gltf` / `glb` through the glTF Exporter plugin, `fbx`, `obj`, `t3d`,
+  `png`, `wav`, … — and the result lists each file written or the exporter's
+  errors; `list_exporters` shows what an asset's class can be exported as.
+- **Seven pipeline and data tools.** `collection_ops` (content browser
+  collections), `editor_utility_ops` (run Editor Utility Blueprints, open
+  and close Editor Utility Widgets), `asset_manager_ops` (primary asset
+  types, ids and rules; Primary Asset Label creation), `live_coding_ops`
+  (Live Coding status, enable, compile-and-patch; hot reload), `ddc_ops`
+  (Derived Data Cache graph and per-node usage), `string_table_ops` (String
+  Table keys, texts, notes, namespace, CSV) and `curve_table_ops` (Curve
+  Table rows as keys with interpolation, evaluation, CSV).
+- **`movie_render` authors Movie Render Graphs.** `create_graph` makes the
+  node-based pipeline's asset, seeded from the engine's default graph so it
+  renders as-is (or empty); `list_graph_node_classes`, `graph_info` (nodes,
+  pins and connections as "Node.Pin", every overridable property with its
+  value and override state), `add_graph_node`, `remove_graph_node`,
+  `connect_graph_nodes` / `disconnect_graph_nodes` build it, and
+  `set_graph_node_properties` sets values and switches on their override
+  checkboxes in one step, dynamic properties included. `render` and `save`
+  take a `graph` as well as the legacy `config`.
+- **`sequence_ops` nests, shakes and fires events.** `add_subsequence` puts
+  another Level Sequence on the Subsequences track (root or on a binding)
+  for its own length or a given range; `add_camera_shake` plays a
+  CameraShakeBase class on a camera binding with play scale and space;
+  `add_event` creates a custom event in the sequence's director Blueprint
+  (made on first use, the way Sequencer does it) and keys a trigger at a
+  frame — or a repeater over a range — that calls it, with `parameters`
+  becoming the event's pins and `payload` the values passed in; a binding's
+  event carries the bound object as a pin. The reported `director_blueprint`
+  is addressable by `blueprint_modify`, which is how the event's logic gets
+  wired.
+- **`perf_ops` reads the engine's own profilers.** `stat_group` returns any
+  `stat <group>` — GPU, SceneRendering, Game, Memory, Physics, Niagara and
+  the rest — as data: each stat's inclusive and exclusive time in
+  milliseconds, averaged and at its worst over a frame window, with call
+  counts, counters and memory, switching the group back off afterwards; an
+  unknown group lists them. `memreport` runs `MemReport -full` and returns
+  the report it writes with its path. `csv_start` / `csv_stop` / `csv_status`
+  drive the CSV profiler.
+- **`capture_viewport` renders more than the viewport.** `mode: "high_res"`
+  redraws the view at any size through the editor's High Resolution
+  Screenshot path; `mode: "camera"` renders the scene from a camera placed
+  at a `location` / `rotation` with a `fov` through a transient scene
+  capture, no viewport needed.
+- **`pie_control start` emulates a bad network and runs previews.**
+  `net_emulation` adds latency and packet loss to every connection the
+  session makes (both directions, or `incoming` / `outgoing` separately;
+  aimed at the server, the clients or everyone); `preview` runs the session
+  as the Mobile Preview or the VR Preview.
+- **`landscape_ops` imports heightmap files.** `create` takes a
+  `heightmap_file` (16-bit PNG, raw or r16) and picks the component layout
+  that fits it, as the New Landscape panel does; `import_heightmap` writes a
+  file over an existing landscape or a region, resampled, corner-aligned or
+  centred.
+- **`blueprint_modify` authors the rest of a gameplay graph.** `create`
+  takes a `blueprint_type`: a Blueprint Interface (functions added with
+  `add_function`, implemented elsewhere with `add_interface`), a Function
+  Library or a Macro Library, each with the parent its editor factory fixes.
+  `add_node` gains the kinds real gameplay needs: `enhanced_input_action`
+  (one node per action, as the editor enforces), the legacy `input_key`
+  (with modifiers), `input_action` and `input_axis` events,
+  `construct_object`, `add_component_by_class` and `create_widget` with the
+  class pin set so their exposed pins appear, `async_action` from any
+  factory function — Blueprint async actions, gameplay and ability tasks
+  such as Wait Gameplay Event, and Play Montage (also `play_montage`) — with
+  their delegate outputs, `interface_message`, `get_data_table_row` typed by
+  the table with the row name checked, `get_subsystem` picking the world,
+  player-controller, engine or editor node for the class, `operator` for the
+  promotable operators (starting wildcard, listing the operations on an
+  unknown name) and `set_fields_in_struct`.
+- **`toolset_ops` bridges the engine's own agent surface.** UE 5.8 ships an
+  experimental Toolset Registry — an editor subsystem holding every
+  AI-callable toolset the editor has registered: Epic's own (Dataflow graphs,
+  Chaos Cloth assets, Game Feature and ordinary plugins, MVVM, Data
+  Registries, World Conditions, Conversations, Live Coding, semantic asset
+  search, gameplay cues, config settings with schemas, a Slate driver,
+  Sequencer and Control Rig, the editor camera and content browser — 52
+  toolsets and some 830 C++ and Python tools with `AllToolsets` enabled),
+  any toolset a project defines as a `UToolsetDefinition` subclass or a
+  Python toolset, and Agent Skill assets, Epic's twenty and a project's own.
+  The new `McpLinkToolsets` sibling plugin exposes it as one route:
+  `list_toolsets` and `list_tools` show what is registered (and what the
+  project's block and allow lists hide), `get_tool` reports a tool's
+  argument schema exactly as the registry generated it from the UFunction,
+  `execute` runs a tool — by full `<Toolset>.<Tool>` name, or by bare name
+  when only one toolset defines it — and returns its converted return value,
+  waiting on asynchronous tools for up to `timeout_secs`, and `list_skills`
+  / `get_skill` read the skill assets. `status` lists `toolset_registry` in
+  `features` when the plugin is loaded.
+- **`niagara_author` reads and writes module inputs through the Niagara
+  editor's own stack view model.** Inputs a template had handed to a dynamic
+  input — an emitter's drag, a spawn-speed range — were locked: the binder the
+  tool used refuses any input whose override is linked, so those stayed at
+  their template defaults. `stack` and the new `get_module` now report each
+  input the way the stack panel shows it: its `mode` (a literal `value`, a
+  `linked_parameter`, a `dynamic_input` with that script's own inputs nested
+  beneath it, a data interface, an object asset, an expression, or the
+  module's default function), plus `can_reset`, enum options, static
+  switches and edit conditions. `set_module_input` addresses inputs at any
+  depth by path (`Drag/Minimum`) and can give one a literal, a dynamic input
+  such as Random Range Float with its sub-inputs set in the same call
+  (`inputs`), a `link` to a parameter (a new `User.` name becomes an exposed
+  user parameter), an HLSL `expression`, a `data_interface` class with
+  `properties`, an `object_asset`, a `reset` to the default, or an
+  `edit_condition_enabled` toggle — replacing whatever drove the input
+  before, as typing into the panel would. `list_input_options` lists, for one
+  input, the dynamic inputs and parameters that fit its type, the namespaces
+  a new parameter may go in and the data-interface classes it accepts;
+  `list_dynamic_inputs` lists every dynamic input script with the type it
+  produces.
+
 ## [0.2.0] - 2026-09-05
 
 ### Added
@@ -317,6 +532,7 @@ versions is planned.
   systems or play widget animations; `status` and the affected tools say so.
 - One editor at a time — a second instance cannot bind port 8091.
 
-[Unreleased]: https://github.com/HTRMC/mcp-unreal/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/HTRMC/mcp-unreal/compare/v0.3.0...HEAD
 [0.1.0]: https://github.com/HTRMC/mcp-unreal/releases/tag/v0.1.0
 [0.2.0]: https://github.com/HTRMC/mcp-unreal/releases/tag/v0.2.0
+[0.3.0]: https://github.com/HTRMC/mcp-unreal/releases/tag/v0.3.0

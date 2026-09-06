@@ -8,6 +8,7 @@
 #include "McpJson.h"
 #include "McpLinkCoreModule.h"
 #include "McpLinkEditorRoutes.h"
+#include "McpReflection.h"
 #include "McpResolve.h"
 #include "McpResponder.h"
 #include "ScopedTransaction.h"
@@ -55,22 +56,6 @@ namespace McpLink
 			return Property;
 		}
 
-		// Case-insensitive field lookup (UE property names vs JSON keys).
-		TSharedPtr<FJsonValue> FindArg(const TSharedPtr<FJsonObject>& Args, const FString& Name)
-		{
-			if (!Args.IsValid())
-			{
-				return nullptr;
-			}
-			for (const auto& Pair : Args->Values)
-			{
-				if (Pair.Key.ToView().Equals(Name, ESearchCase::IgnoreCase))
-				{
-					return Pair.Value;
-				}
-			}
-			return nullptr;
-		}
 	}
 
 	void RegisterObjectRoutes(FMcpLinkCoreModule& Core)
@@ -161,77 +146,27 @@ namespace McpLink
 				Body->TryGetObjectField(TEXT("args"), ArgsPtr);
 				const TSharedPtr<FJsonObject> Args = ArgsPtr ? *ArgsPtr : nullptr;
 
-				TArray<uint8> Parms;
-				Parms.SetNumZeroed(Function->ParmsSize);
-				TArray<FProperty*> ParamProps;
-				for (TFieldIterator<FProperty> It(Function); It && It->HasAnyPropertyFlags(CPF_Parm); ++It)
-				{
-					ParamProps.Add(*It);
-					It->InitializeValue_InContainer(Parms.GetData());
-				}
-
+				const TSharedRef<FJsonObject> Outputs = MakeShared<FJsonObject>();
 				FString ImportError;
-				for (FProperty* Param : ParamProps)
-				{
-					if (Param->HasAnyPropertyFlags(CPF_ReturnParm))
-					{
-						continue;
-					}
-					const TSharedPtr<FJsonValue> Arg = FindArg(Args, Param->GetName());
-					if (Arg.IsValid())
-					{
-						FText FailReason;
-						if (!FJsonObjectConverter::JsonValueToUProperty(
-							Arg, Param, Param->ContainerPtrToValuePtr<void>(Parms.GetData()),
-							0, 0, false, &FailReason))
-						{
-							ImportError = FString::Printf(TEXT("argument '%s': %s"),
-								*Param->GetName(), *FailReason.ToString());
-							break;
-						}
-					}
-					else if (!Param->HasAnyPropertyFlags(CPF_OutParm))
-					{
-						// Missing input arg: keep the initialized default.
-					}
-				}
-
-				if (!ImportError.IsEmpty())
-				{
-					for (FProperty* Param : ParamProps)
-					{
-						Param->DestroyValue_InContainer(Parms.GetData());
-					}
-					Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_argument"), ImportError);
-					return;
-				}
-
 				{
 					// Objects created while a transaction is open are recorded in the
 					// undo buffer (StaticConstructObject_Internal), so a call that spawns
 					// runtime objects during PIE (e.g. WidgetBlueprintLibrary::Create on
 					// a CDO) would pin the PIE world — no transaction while PIE runs.
 					const bool bPieRunning = GEditor != nullptr && GEditor->PlayWorld != nullptr;
-					const FScopedTransaction Transaction(
+					FScopedTransaction Transaction(
 						NSLOCTEXT("McpLink", "CallFunction", "McpLink Call Function"),
 						ShouldTransact(Object) && !bPieRunning);
 					Object->Modify();
-					Object->ProcessEvent(Function, Parms.GetData());
-				}
-
-				const TSharedRef<FJsonObject> Outputs = MakeShared<FJsonObject>();
-				for (FProperty* Param : ParamProps)
-				{
-					if (Param->HasAnyPropertyFlags(CPF_ReturnParm | CPF_OutParm))
+					if (!CallFunctionFromJson(Object, Function, Args, Outputs, ImportError))
 					{
-						Outputs->SetField(Param->GetName(), FJsonObjectConverter::UPropertyToJsonValue(
-							Param, Param->ContainerPtrToValuePtr<void>(Parms.GetData()),
-							0, 0, nullptr, nullptr, EJsonObjectConversionFlags::SkipStandardizeCase));
+						Transaction.Cancel();
 					}
 				}
-				for (FProperty* Param : ParamProps)
+				if (!ImportError.IsEmpty())
 				{
-					Param->DestroyValue_InContainer(Parms.GetData());
+					Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_argument"), ImportError);
+					return;
 				}
 
 				const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();

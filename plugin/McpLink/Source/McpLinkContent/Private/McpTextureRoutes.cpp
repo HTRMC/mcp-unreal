@@ -16,6 +16,8 @@
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Engine/Texture2D.h"
+#include "Engine/TextureCube.h"
+#include "Engine/VolumeTexture.h"
 #include "McpAssetUtils.h"
 #include "McpJson.h"
 #include "McpLinkCoreModule.h"
@@ -142,6 +144,68 @@ namespace McpLink
 			Texture->PostEditChange();
 			Texture->MarkPackageDirty();
 		}
+
+		/// The pixel payload of a new texture: base64 BGRA8 of exactly Expected
+		/// bytes in Field, or a solid `fill`. False after responding.
+		bool ReadPixelsOrFill(const TSharedRef<FJsonObject>& Body, const TCHAR* Field, int64 Expected,
+			const TCHAR* Layout, TArray<uint8>& OutPixels, const TSharedRef<FMcpResponder>& Responder)
+		{
+			FString Encoded;
+			if (Body->TryGetStringField(Field, Encoded) && !Encoded.IsEmpty())
+			{
+				if (!FBase64::Decode(Encoded, OutPixels))
+				{
+					Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_base64"),
+						FString::Printf(TEXT("'%s' is not valid base64"), Field));
+					return false;
+				}
+				if (OutPixels.Num() != Expected)
+				{
+					Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("wrong_pixel_count"),
+						FString::Printf(TEXT("'%s' decoded to %d bytes; expected %lld — %s"),
+							Field, OutPixels.Num(), Expected, Layout));
+					return false;
+				}
+				return true;
+			}
+			// No pixels given: a solid fill, which is the usual starting point
+			// for a mask you then paint into.
+			uint8 Bgra[4];
+			ReadColorBgra(Body, TEXT("fill"), Bgra);
+			OutPixels.SetNumUninitialized(Expected);
+			for (int64 Offset = 0; Offset < Expected; Offset += 4)
+			{
+				FMemory::Memcpy(OutPixels.GetData() + Offset, Bgra, 4);
+			}
+			return true;
+		}
+
+		/// 'compression' as a TextureCompressionSettings (default TC_Default).
+		/// False after responding — checked before the asset exists, so a bad
+		/// name leaves nothing behind.
+		bool ReadCompression(const TSharedRef<FJsonObject>& Body, TextureCompressionSettings& Out,
+			const TSharedRef<FMcpResponder>& Responder)
+		{
+			Out = TC_Default;
+			FString Compression;
+			if (!Body->TryGetStringField(TEXT("compression"), Compression))
+			{
+				return true;
+			}
+			const UEnum* Enum = StaticEnum<TextureCompressionSettings>();
+			const int64 Value = Enum->GetValueByNameString(Compression);
+			if (Value == INDEX_NONE)
+			{
+				Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_compression"),
+					FString::Printf(
+						TEXT("'%s' is not a TextureCompressionSettings — e.g. TC_Default, TC_Masks, ")
+						TEXT("TC_Grayscale, TC_HDR, TC_VectorDisplacementmap"),
+						*Compression));
+				return false;
+			}
+			Out = static_cast<TextureCompressionSettings>(Value);
+			return true;
+		}
 	}
 
 	using namespace Textures;
@@ -179,37 +243,16 @@ namespace McpLink
 
 					const int64 Expected = static_cast<int64>(Width) * Height * 4;
 					TArray<uint8> Pixels;
-					FString Encoded;
-					if (Body->TryGetStringField(TEXT("pixels"), Encoded) && !Encoded.IsEmpty())
+					if (!ReadPixelsOrFill(Body, TEXT("pixels"), Expected,
+							TEXT("4 bytes per pixel, width * height pixels, rows top to bottom"),
+							Pixels, Responder))
 					{
-						if (!FBase64::Decode(Encoded, Pixels))
-						{
-							Responder->Error(EHttpServerResponseCodes::BadRequest,
-								TEXT("bad_base64"), TEXT("'pixels' is not valid base64"));
-							return;
-						}
-						if (Pixels.Num() != Expected)
-						{
-							Responder->Error(EHttpServerResponseCodes::BadRequest,
-								TEXT("wrong_pixel_count"),
-								FString::Printf(
-									TEXT("'pixels' decoded to %d bytes; a %dx%d BGRA8 texture needs ")
-									TEXT("%lld (4 bytes per pixel, rows top to bottom)"),
-									Pixels.Num(), Width, Height, Expected));
-							return;
-						}
+						return;
 					}
-					else
+					TextureCompressionSettings Compression = TC_Default;
+					if (!ReadCompression(Body, Compression, Responder))
 					{
-						// No pixels given: a solid fill, which is the usual
-						// starting point for a mask you then paint into.
-						uint8 Bgra[4];
-						ReadColorBgra(Body, TEXT("fill"), Bgra);
-						Pixels.SetNumUninitialized(Expected);
-						for (int64 Offset = 0; Offset < Expected; Offset += 4)
-						{
-							FMemory::Memcpy(Pixels.GetData() + Offset, Bgra, 4);
-						}
+						return;
 					}
 
 					const FScopedTransaction Transaction(
@@ -222,25 +265,7 @@ namespace McpLink
 					// Masks, gradients and lookup tables are data, not colour;
 					// sRGB on them is the classic silent wrongness.
 					Texture->SRGB = BoolOr(Body, TEXT("srgb"), true);
-					FString Compression;
-					if (Body->TryGetStringField(TEXT("compression"), Compression))
-					{
-						const UEnum* Enum = StaticEnum<TextureCompressionSettings>();
-						const int64 Value = Enum->GetValueByNameString(Compression);
-						if (Value == INDEX_NONE)
-						{
-							Responder->Error(EHttpServerResponseCodes::BadRequest,
-								TEXT("bad_compression"),
-								FString::Printf(
-									TEXT("'%s' is not a TextureCompressionSettings — e.g. ")
-									TEXT("TC_Default, TC_Masks, TC_Grayscale, TC_HDR, ")
-									TEXT("TC_VectorDisplacementmap"),
-									*Compression));
-							return;
-						}
-						Texture->CompressionSettings =
-							static_cast<TextureCompressionSettings>(Value);
-					}
+					Texture->CompressionSettings = Compression;
 					Texture->UpdateResource();
 					Texture->PostEditChange();
 					FAssetRegistryModule::AssetCreated(Texture);
@@ -257,24 +282,140 @@ namespace McpLink
 					return;
 				}
 
-				UTexture2D* Texture = TextureOrError(Body, Responder);
-				if (Texture == nullptr)
+				if (Operation == TEXT("create_cube") || Operation == TEXT("create_volume"))
 				{
+					const bool bCube = Operation == TEXT("create_cube");
+					FString Path;
+					if (!RequireString(Body, TEXT("path"), Path, Responder,
+							bCube ? TEXT("e.g. /Game/Textures/TC_Sky") : TEXT("e.g. /Game/Textures/TV_Noise")))
+					{
+						return;
+					}
+					int32 Width = 0, Height = 0, Depth = 0;
+					if (bCube)
+					{
+						Width = Height = IntOr(Body, TEXT("size"), 0);
+						Depth = 6;
+						if (Width <= 0 || Width > 4096)
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_size"),
+								TEXT("'size' is required, between 1 and 4096 — every face is size x size"));
+							return;
+						}
+					}
+					else
+					{
+						Width = IntOr(Body, TEXT("width"), 0);
+						Height = IntOr(Body, TEXT("height"), 0);
+						Depth = IntOr(Body, TEXT("depth"), 0);
+						if (Width <= 0 || Height <= 0 || Depth <= 0 || Width > 2048 || Height > 2048 || Depth > 512)
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_size"),
+								TEXT("'width', 'height' (1-2048) and 'depth' (1-512) are required"));
+							return;
+						}
+					}
+					if (FPackageName::DoesPackageExist(Path) || FindPackage(nullptr, *Path) != nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("already_exists"),
+							FString::Printf(TEXT("an asset already exists at '%s'"), *Path));
+						return;
+					}
+					const int64 Expected = static_cast<int64>(Width) * Height * Depth * 4;
+					TArray<uint8> Pixels;
+					if (!ReadPixelsOrFill(Body, bCube ? TEXT("faces") : TEXT("pixels"), Expected,
+							bCube ? TEXT("six size x size BGRA8 faces back to back in +X, -X, +Y, -Y, +Z, -Z order")
+								  : TEXT("depth slices of width x height BGRA8, front to back"),
+							Pixels, Responder))
+					{
+						return;
+					}
+					TextureCompressionSettings Compression = TC_Default;
+					if (!ReadCompression(Body, Compression, Responder))
+					{
+						return;
+					}
+
+					const FScopedTransaction Transaction(
+						NSLOCTEXT("McpLink", "CreateTexture", "McpLink Create Texture"));
+					UPackage* Package = CreatePackage(*Path);
+					const FName AssetName(*FPackageName::GetShortName(Path));
+					UTexture* Texture = nullptr;
+					if (bCube)
+					{
+						UTextureCube* Cube = NewObject<UTextureCube>(Package, AssetName,
+							RF_Public | RF_Standalone | RF_Transactional);
+						// Six slices make a cube map; a single slice would be
+						// read as a long-lat panorama.
+						Cube->Source.Init(Width, Height, 6, 1, TSF_BGRA8, Pixels.GetData());
+						Texture = Cube;
+					}
+					else
+					{
+						UVolumeTexture* Volume = NewObject<UVolumeTexture>(Package, AssetName,
+							RF_Public | RF_Standalone | RF_Transactional);
+						Volume->Source.Init(Width, Height, Depth, 1, TSF_BGRA8, Pixels.GetData());
+						Texture = Volume;
+					}
+					Texture->SRGB = BoolOr(Body, TEXT("srgb"), true);
+					Texture->CompressionSettings = Compression;
+					Texture->UpdateResource();
+					Texture->PostEditChange();
+					FAssetRegistryModule::AssetCreated(Texture);
+					Package->MarkPackageDirty();
+
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("texture"), Texture->GetPathName());
+					Data->SetStringField(TEXT("kind"), bCube ? TEXT("cube") : TEXT("volume"));
+					if (bCube)
+					{
+						Data->SetNumberField(TEXT("size"), Width);
+					}
+					else
+					{
+						Data->SetNumberField(TEXT("width"), Width);
+						Data->SetNumberField(TEXT("height"), Height);
+						Data->SetNumberField(TEXT("depth"), Depth);
+					}
+					Data->SetBoolField(TEXT("srgb"), Texture->SRGB);
+					Data->SetStringField(TEXT("message"),
+						TEXT("created — save writes it; the pixel operations are Texture2D only"));
+					Responder->Ok(Data);
 					return;
 				}
 
 				if (Operation == TEXT("save"))
 				{
+					// Cubes and volumes save too; only the pixel operations
+					// need a Texture2D.
+					FString Path;
+					if (!RequireString(Body, TEXT("texture"), Path, Responder, TEXT("a texture asset path")))
+					{
+						return;
+					}
+					UTexture* Any = Cast<UTexture>(ResolveAsset(Path));
+					if (Any == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("texture_not_found"),
+							FString::Printf(TEXT("no texture at '%s'"), *Path));
+						return;
+					}
 					FString Filename, Error;
-					if (!SaveAsset(Texture, Filename, Error))
+					if (!SaveAsset(Any, Filename, Error))
 					{
 						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("save_failed"), Error);
 						return;
 					}
 					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
-					Data->SetStringField(TEXT("texture"), Texture->GetPathName());
+					Data->SetStringField(TEXT("texture"), Any->GetPathName());
 					Data->SetStringField(TEXT("file"), Filename);
 					Responder->Ok(Data);
+					return;
+				}
+
+				UTexture2D* Texture = TextureOrError(Body, Responder);
+				if (Texture == nullptr)
+				{
 					return;
 				}
 
@@ -283,8 +424,8 @@ namespace McpLink
 				{
 					Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_operation"),
 						FString::Printf(
-							TEXT("unknown operation '%s' — use create, read_pixels, write_pixels, ")
-							TEXT("fill or save (texture_info reports size and format; asset_ops ")
+							TEXT("unknown operation '%s' — use create, create_cube, create_volume, ")
+							TEXT("read_pixels, write_pixels, fill or save (texture_info reports size and format; asset_ops ")
 							TEXT("import brings in a file from disk)"),
 							*Operation));
 					return;

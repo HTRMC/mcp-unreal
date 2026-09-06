@@ -1,0 +1,21 @@
+{
+  "name": "pose_search_ops_create_database",
+  "description": "pose_search_ops create_database: a database on a schema",
+  "route": "/api/anim/pose_search",
+  "tool": "pose_search_ops",
+  "request": {
+    "operation": "create_database",
+    "path": "/Game/MM/PSD_Contract",
+    "schema": "/Game/MM/PSS_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "database": "/Game/MM/PSD_Contract.PSD_Contract",
+      "schema": "/Game/MM/PSS_Contract.PSS_Contract",
+      "animations": [],
+      "index": "in_progress"
+    }
+  }
+}

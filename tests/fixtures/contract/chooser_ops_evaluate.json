@@ -1,0 +1,25 @@
+{
+  "name": "chooser_ops_evaluate",
+  "description": "chooser_ops evaluate: the table evaluated against a live actor",
+  "route": "/api/data/chooser",
+  "tool": "chooser_ops",
+  "request": {
+    "operation": "evaluate",
+    "chooser": "/Game/Choosers/CHT_Contract",
+    "context": [
+      "ChooserContractPawn"
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "chooser": "/Game/Choosers/CHT_Contract.CHT_Contract",
+      "status": "stop",
+      "results": [
+        "/Engine/Tutorial/SubEditors/TutorialAssets/Character/Tutorial_Idle.Tutorial_Idle"
+      ],
+      "context_structs": []
+    }
+  }
+}

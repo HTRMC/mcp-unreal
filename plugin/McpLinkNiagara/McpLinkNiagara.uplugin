@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.2.0",
+	"VersionName": "0.3.0",
 	"EngineVersion": "5.8.0",
 	"FriendlyName": "McpLink Niagara",
 	"Description": "McpLink interop for Niagara: spawn, inspect and drive Niagara systems from the mcp-unreal MCP server.",

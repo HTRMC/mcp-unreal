@@ -1,0 +1,20 @@
+{
+  "name": "material_parameter_collection_ops_set_value_missing_error",
+  "description": "material_parameter_collection_ops set_value on an unknown parameter: 404",
+  "route": "/api/materials/parameter_collection",
+  "tool": "material_parameter_collection_ops",
+  "request": {
+    "operation": "set_value",
+    "collection": "/Game/Materials/MPC_McpContract",
+    "name": "Nope",
+    "value": 1.0
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "parameter_not_found",
+      "message": "'/Game/Materials/MPC_McpContract.MPC_McpContract' has no scalar parameter 'Nope'"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "asset_ops_export_format",
+  "description": "asset_ops export with format: a static mesh written as glTF",
+  "route": "/api/assets/ops",
+  "tool": "asset_ops",
+  "request": {
+    "operation": "export",
+    "paths": [
+      "/Engine/BasicShapes/Cube"
+    ],
+    "directory": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/McpContractExport",
+    "format": "gltf"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "directory": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/McpContractExport",
+      "format": "gltf",
+      "exported": 1,
+      "failed": 0,
+      "files": [
+        {
+          "asset": "/Engine/BasicShapes/Cube.Cube",
+          "file": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Saved/McpContractExport/Cube.gltf",
+          "ok": true,
+          "errors": []
+        }
+      ]
+    }
+  }
+}

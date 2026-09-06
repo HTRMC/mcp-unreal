@@ -1,0 +1,44 @@
+{
+  "name": "live_link_ops_apply_preset",
+  "description": "live_link_ops apply_preset: a preset's sources and subjects added to the client (virtual ones recreated by hand)",
+  "route": "/api/vp/live_link",
+  "tool": "live_link_ops",
+  "request": {
+    "operation": "apply_preset",
+    "preset": "/Game/VP/LLP_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "sources": [
+        {
+          "id": "4ED2DC4ECC5911CE4AF0635DA8B24A5A",
+          "type": "DefaultVirtualSource",
+          "status": "Active",
+          "machine": "",
+          "virtual": true
+        },
+        {
+          "id": "F4D50F1647BE2D96BAC43E953E39BBAE",
+          "type": "McpContractVirtual",
+          "status": "Active",
+          "machine": "",
+          "virtual": true
+        }
+      ],
+      "subjects": [
+        {
+          "name": "ContractSubject",
+          "source": "F4D50F1647BE2D96BAC43E953E39BBAE",
+          "role": "LiveLinkAnimationRole",
+          "enabled": true
+        }
+      ],
+      "preset": "/Game/VP/LLP_Contract.LLP_Contract",
+      "applied": true,
+      "virtual_sources_recreated": 1,
+      "virtual_subjects_recreated": 1
+    }
+  }
+}

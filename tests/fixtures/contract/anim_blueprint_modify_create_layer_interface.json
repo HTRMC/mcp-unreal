@@ -1,0 +1,37 @@
+{
+  "name": "anim_blueprint_modify_create_layer_interface",
+  "description": "anim_blueprint_modify create_layer_interface: an Animation Layer Interface with two layers",
+  "route": "/api/anim_blueprints/modify",
+  "tool": "anim_blueprint_modify",
+  "request": {
+    "operation": "create_layer_interface",
+    "path": "/Game/Anim/ALI_Contract",
+    "layers": [
+      "UpperBody",
+      "FullBody"
+    ],
+    "group": "Body"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "blueprint": "/Game/Anim/ALI_Contract.ALI_Contract",
+      "is_interface": true,
+      "layers": [
+        {
+          "layer": "UpperBody",
+          "group": "Body",
+          "nodes": 1
+        },
+        {
+          "layer": "FullBody",
+          "group": "Body",
+          "nodes": 1
+        }
+      ],
+      "implemented_interfaces": [],
+      "message": "created in memory — implement_layer_interface on an Animation Blueprint, then blueprint_modify save both"
+    }
+  }
+}

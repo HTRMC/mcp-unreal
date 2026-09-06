@@ -1,0 +1,26 @@
+{
+  "name": "material_parameter_collection_ops_set_scalar",
+  "description": "material_parameter_collection_ops set_scalar: a new scalar parameter with its default",
+  "route": "/api/materials/parameter_collection",
+  "tool": "material_parameter_collection_ops",
+  "request": {
+    "operation": "set_scalar",
+    "collection": "/Game/Materials/MPC_McpContract",
+    "name": "Wind",
+    "value": 0.5
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "collection": "/Game/Materials/MPC_McpContract.MPC_McpContract",
+      "name": "Wind",
+      "added": true,
+      "type": "scalar",
+      "id": "AEAD3EBC4EA9275C2B7C8E86E2FEF6AA",
+      "default": 0.5,
+      "state_id": "2528083C4EC80C5D6FACD5AF18DFDC7E",
+      "note": "adding a parameter changes the collection's layout: every material reading it was recompiled and gets a new StateId"
+    }
+  }
+}

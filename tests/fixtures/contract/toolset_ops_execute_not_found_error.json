@@ -1,0 +1,18 @@
+{
+  "name": "toolset_ops_execute_not_found_error",
+  "description": "toolset_ops execute on an unknown tool: 404 tool_not_found",
+  "route": "/api/toolsets/ops",
+  "tool": "toolset_ops",
+  "request": {
+    "operation": "execute",
+    "tool": "NoSuchToolAnywhere"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "tool_not_found",
+      "message": "no registered tool matches 'NoSuchToolAnywhere' — see list_tools"
+    }
+  }
+}

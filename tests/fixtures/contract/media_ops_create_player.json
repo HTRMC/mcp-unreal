@@ -1,0 +1,33 @@
+{
+  "name": "media_ops_create_player",
+  "description": "media_ops create_player",
+  "route": "/api/content/media",
+  "tool": "media_ops",
+  "request": {
+    "operation": "create_player",
+    "path": "/Game/Media/MP_McpContract",
+    "loop": true
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "player": "/Game/Media/MP_McpContract.MP_McpContract",
+      "url": "",
+      "player_plugin": "None",
+      "closed": false,
+      "preparing": false,
+      "ready": false,
+      "playing": false,
+      "paused": false,
+      "looping": false,
+      "error": false,
+      "time": 0,
+      "duration": 0,
+      "rate": 0,
+      "video_tracks": 0,
+      "audio_tracks": 0,
+      "message": "created — create_texture gives a material something to sample, open starts a source"
+    }
+  }
+}

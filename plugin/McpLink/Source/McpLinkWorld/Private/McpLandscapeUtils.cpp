@@ -3,8 +3,11 @@
 #include "Engine/World.h"
 #include "Landscape.h"
 #include "LandscapeEdit.h"
+#include "LandscapeFileFormatInterface.h"
+#include "LandscapeImportHelper.h"
 #include "LandscapeInfo.h"
 #include "LandscapeProxy.h"
+#include "Misc/Paths.h"
 
 namespace McpLink::Landscapes
 {
@@ -66,7 +69,21 @@ namespace McpLink::Landscapes
 		const int32 SizeY = Params.ComponentsY * QuadsPerComponent + 1;
 
 		TArray<uint16> Heights;
-		Heights.Init(WorldToHeight(Params.Height, Params.Scale.Z), SizeX * SizeY);
+		if (Params.RawHeights.IsEmpty())
+		{
+			Heights.Init(WorldToHeight(Params.Height, Params.Scale.Z), SizeX * SizeY);
+		}
+		else if (Params.RawHeights.Num() == SizeX * SizeY)
+		{
+			Heights = Params.RawHeights;
+		}
+		else
+		{
+			OutError = FString::Printf(
+				TEXT("the landscape is %d x %d vertices, so the height data needs %d samples, not %d"),
+				SizeX, SizeY, SizeX * SizeY, Params.RawHeights.Num());
+			return nullptr;
+		}
 		TMap<FGuid, TArray<uint16>> HeightDataPerLayer;
 		HeightDataPerLayer.Add(FGuid(), MoveTemp(Heights));
 		TMap<FGuid, TArray<FLandscapeImportLayerInfo>> MaterialLayerDataPerLayer;
@@ -161,6 +178,28 @@ namespace McpLink::Landscapes
 		{
 			Raw.Add(WorldToHeight(World, ScaleZ));
 		}
+		return SetRawHeights(Landscape, X1, Y1, X2, Y2, Raw, OutError);
+	}
+
+	bool SetRawHeights(
+		ALandscape& Landscape, int32 X1, int32 Y1, int32 X2, int32 Y2,
+		const TArray<uint16>& Raw, FString& OutError)
+	{
+		ULandscapeInfo* Info = Landscape.GetLandscapeInfo();
+		if (Info == nullptr)
+		{
+			OutError = TEXT("this landscape has no landscape info");
+			return false;
+		}
+		const int32 Width = X2 - X1 + 1;
+		const int32 Rows = Y2 - Y1 + 1;
+		if (Width <= 0 || Rows <= 0 || Raw.Num() != Width * Rows)
+		{
+			OutError = FString::Printf(
+				TEXT("the region is %d x %d, which needs %d samples, not %d"),
+				Width, Rows, Width * Rows, Raw.Num());
+			return false;
+		}
 
 		Landscape.Modify();
 		{
@@ -172,6 +211,89 @@ namespace McpLink::Landscapes
 		// from the height data, so without this a scatter (or anything else that
 		// line-traces) keeps hitting the old terrain.
 		Landscape.RecreateCollisionComponents();
+		return true;
+	}
+
+	bool ReadHeightmapFile(
+		const FString& FilePath, TArray<uint16>& OutRaw, int32& OutWidth, int32& OutHeight,
+		FString& OutError)
+	{
+		if (!FPaths::FileExists(FilePath))
+		{
+			OutError = FString::Printf(TEXT("no file at '%s'"), *FilePath);
+			return false;
+		}
+		// The import helper is what the New Landscape panel's file picker
+		// runs: it knows the registered heightmap formats (16-bit PNG, raw
+		// and r16) and reports resolution before reading.
+		FLandscapeImportDescriptor Descriptor;
+		FText Message;
+		const ELandscapeImportResult DescribeResult = FLandscapeImportHelper::GetHeightmapImportDescriptor(
+			FilePath, /*bSingleFile*/ true, /*bFlipYAxis*/ false, Descriptor, Message);
+		if (DescribeResult == ELandscapeImportResult::Error || Descriptor.ImportResolutions.IsEmpty())
+		{
+			OutError = FString::Printf(TEXT("cannot read '%s' as a heightmap: %s"), *FilePath,
+				Message.IsEmpty() ? TEXT("unsupported format — use a 16-bit greyscale PNG, .raw or .r16")
+								  : *Message.ToString());
+			return false;
+		}
+		const FLandscapeImportResolution& Resolution = Descriptor.ImportResolutions[0];
+		const ELandscapeImportResult ReadResult =
+			FLandscapeImportHelper::GetHeightmapImportData(Descriptor, 0, OutRaw, Message);
+		if (ReadResult == ELandscapeImportResult::Error
+			|| OutRaw.Num() != static_cast<int32>(Resolution.Width * Resolution.Height))
+		{
+			OutError = FString::Printf(TEXT("cannot read '%s' as a heightmap: %s"), *FilePath,
+				Message.IsEmpty() ? TEXT("the file did not yield one sample per pixel") : *Message.ToString());
+			return false;
+		}
+		OutWidth = static_cast<int32>(Resolution.Width);
+		OutHeight = static_cast<int32>(Resolution.Height);
+		return true;
+	}
+
+	bool FitHeightmap(
+		const TArray<uint16>& InRaw, int32 InWidth, int32 InHeight,
+		int32 OutWidth, int32 OutHeight, const FString& Transform,
+		TArray<uint16>& OutRaw, FString& OutError)
+	{
+		if (InWidth == OutWidth && InHeight == OutHeight)
+		{
+			OutRaw = InRaw;
+			return true;
+		}
+		ELandscapeImportTransformType Type = ELandscapeImportTransformType::Resample;
+		const FString Lower = Transform.ToLower();
+		if (Lower.IsEmpty() || Lower == TEXT("resample"))
+		{
+			Type = ELandscapeImportTransformType::Resample;
+		}
+		else if (Lower == TEXT("original"))
+		{
+			Type = ELandscapeImportTransformType::None;
+		}
+		else if (Lower == TEXT("expand"))
+		{
+			Type = ELandscapeImportTransformType::ExpandCentered;
+		}
+		else
+		{
+			OutError = FString::Printf(
+				TEXT("unknown transform '%s' — use resample, original or expand"), *Transform);
+			return false;
+		}
+		FLandscapeImportHelper::TransformHeightmapImportData(
+			InRaw, OutRaw,
+			FLandscapeImportResolution(InWidth, InHeight),
+			FLandscapeImportResolution(OutWidth, OutHeight),
+			Type);
+		if (OutRaw.Num() != OutWidth * OutHeight)
+		{
+			OutError = FString::Printf(
+				TEXT("fitting the %d x %d heightmap to %d x %d produced %d samples"),
+				InWidth, InHeight, OutWidth, OutHeight, OutRaw.Num());
+			return false;
+		}
 		return true;
 	}
 }

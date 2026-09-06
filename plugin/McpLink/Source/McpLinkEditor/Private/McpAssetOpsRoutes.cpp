@@ -6,6 +6,7 @@
 // fixup all stay consistent — the same code paths the editor UI uses, with
 // every confirmation dialog suppressed so the routes work headless.
 
+#include "AssetExportTask.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "AssetViewUtils.h"
@@ -13,9 +14,13 @@
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "EditorReimportHandler.h"
+#include "Exporters/Exporter.h"
 #include "Factories/Factory.h"
 #include "FileHelpers.h"
+#include "Containers/Ticker.h"
 #include "HAL/FileManager.h"
+#include "InterchangeManager.h"
+#include "InterchangeSourceData.h"
 #include "IAssetTools.h"
 #include "JsonObjectConverter.h"
 #include "McpAssetUtils.h"
@@ -25,6 +30,7 @@
 #include "McpResolve.h"
 #include "McpResponder.h"
 #include "Misc/PackageName.h"
+#include "Misc/Paths.h"
 #include "ObjectTools.h"
 #include "UObject/MetaData.h"
 #include "UObject/ObjectRedirector.h"
@@ -305,6 +311,97 @@ namespace McpLink
 
 					// The automated path is the one that never opens an import
 					// dialog, which is what makes this usable headless.
+					if (BoolOr(Body, TEXT("interchange"), false))
+					{
+						// The Interchange framework instead of the legacy automated
+						// importer: pipelines from the project settings (or the
+						// 'pipelines' override), no dialogs, asynchronous — the
+						// reply waits for every file.
+						if (!UInterchangeManager::IsInterchangeImportEnabled())
+						{
+							Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("interchange_disabled"),
+								TEXT("Interchange import is disabled in this project's Editor settings"));
+							return;
+						}
+						UInterchangeManager& Manager = UInterchangeManager::GetInterchangeManager();
+						FImportAssetParameters Params;
+						Params.bIsAutomated = true;
+						Params.bFollowRedirectors = true;
+						const TArray<TSharedPtr<FJsonValue>>* Pipelines = nullptr;
+						if (Body->TryGetArrayField(TEXT("pipelines"), Pipelines))
+						{
+							for (const TSharedPtr<FJsonValue>& Value : *Pipelines)
+							{
+								FString PipelinePath;
+								if (Value->TryGetString(PipelinePath) && !PipelinePath.IsEmpty())
+								{
+									Params.OverridePipelines.Add(FSoftObjectPath(PipelinePath));
+								}
+							}
+						}
+						TArray<UE::Interchange::FAssetImportResultRef> Results;
+						for (const FString& File : Files)
+						{
+							UInterchangeSourceData* Source = UInterchangeManager::CreateSourceData(File);
+							if (Source == nullptr || !Manager.CanTranslateSourceData(Source))
+							{
+								Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("no_translator"),
+									FString::Printf(TEXT("Interchange has no translator for '%s' — omit 'interchange' for the legacy importer"), *File));
+								return;
+							}
+							Results.Add(Manager.ImportAssetAsync(Destination, Source, Params));
+						}
+						// Poll until every result is done, then answer.
+						const TSharedRef<double> Started = MakeShared<double>(FPlatformTime::Seconds());
+						FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
+							[Responder, Results, Started, Destination](float) -> bool
+							{
+								bool bAllDone = true;
+								for (const UE::Interchange::FAssetImportResultRef& Result : Results)
+								{
+									bAllDone &= Result->GetStatus() == UE::Interchange::FImportResult::EStatus::Done;
+								}
+								if (!bAllDone)
+								{
+									if (FPlatformTime::Seconds() - *Started > 600.0)
+									{
+										Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("import_timeout"),
+											TEXT("the Interchange import did not finish within ten minutes"));
+										return false;
+									}
+									return true;
+								}
+								TArray<TSharedPtr<FJsonValue>> Assets;
+								for (const UE::Interchange::FAssetImportResultRef& Result : Results)
+								{
+									for (UObject* Asset : Result->GetImportedObjects())
+									{
+										if (Asset == nullptr)
+										{
+											continue;
+										}
+										const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+										Entry->SetStringField(TEXT("path"), Asset->GetPathName());
+										Entry->SetStringField(TEXT("class"), Asset->GetClass()->GetName());
+										Assets.Add(MakeShared<FJsonValueObject>(Entry));
+									}
+								}
+								const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+								Data->SetStringField(TEXT("destination"), Destination);
+								Data->SetStringField(TEXT("importer"), TEXT("interchange"));
+								Data->SetNumberField(TEXT("imported"), Assets.Num());
+								Data->SetArrayField(TEXT("assets"), Assets);
+								if (Assets.IsEmpty())
+								{
+									Data->SetStringField(TEXT("note"),
+										TEXT("Interchange produced no assets — the log has the pipeline's reasons"));
+								}
+								Responder->Ok(Data);
+								return false;
+							}), 0.f);
+						return;
+					}
+
 					UAutomatedAssetImportData* ImportData = NewObject<UAutomatedAssetImportData>();
 					ImportData->Filenames = Files;
 					ImportData->DestinationPath = Destination;
@@ -802,13 +899,129 @@ namespace McpLink
 						Assets.Add(Asset);
 					}
 					IFileManager::Get().MakeDirectory(*Directory, /*Tree*/ true);
-					GetAssetTools().ExportAssetsWithCleanFilename(Assets, Directory);
+					FString Format;
+					Body->TryGetStringField(TEXT("format"), Format);
+					Format.RemoveFromStart(TEXT("."));
 
 					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
-					Data->SetNumberField(TEXT("exported"), Assets.Num());
 					Data->SetStringField(TEXT("directory"), Directory);
-					Data->SetStringField(TEXT("note"),
-						TEXT("an asset type with no exporter writes nothing — check the directory listing"));
+					if (Format.IsEmpty())
+					{
+						GetAssetTools().ExportAssetsWithCleanFilename(Assets, Directory);
+						Data->SetNumberField(TEXT("exported"), Assets.Num());
+						Data->SetStringField(TEXT("note"),
+							TEXT("each asset used its first registered exporter; pass 'format' (gltf, ")
+							TEXT("glb, fbx, obj, t3d, png, …) to choose, and list_exporters to see what ")
+							TEXT("is registered for a class — an asset type with no exporter writes nothing"));
+						Responder->Ok(Data);
+						return;
+					}
+
+					// A named format picks the exporter by extension through the
+					// same task the Export dialog runs, with every prompt off.
+					TArray<TSharedPtr<FJsonValue>> Files;
+					int32 Exported = 0;
+					for (UObject* Asset : Assets)
+					{
+						UAssetExportTask* Task = NewObject<UAssetExportTask>();
+						Task->Object = Asset;
+						Task->Exporter = nullptr;
+						Task->Filename = FPaths::Combine(Directory, Asset->GetName() + TEXT(".") + Format);
+						Task->bSelected = false;
+						Task->bReplaceIdentical = true;
+						Task->bPrompt = false;
+						Task->bAutomated = true;
+						Task->bUseFileArchive = false;
+						Task->bWriteEmptyFiles = false;
+						const bool bRan = UExporter::RunAssetExportTask(Task);
+						const bool bWritten = bRan && IFileManager::Get().FileExists(*Task->Filename);
+						const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+						Entry->SetStringField(TEXT("asset"), Asset->GetPathName());
+						Entry->SetStringField(TEXT("file"), Task->Filename);
+						Entry->SetBoolField(TEXT("ok"), bWritten);
+						if (Task->Exporter != nullptr)
+						{
+							Entry->SetStringField(TEXT("exporter"), Task->Exporter->GetClass()->GetName());
+						}
+						TArray<TSharedPtr<FJsonValue>> Errors;
+						for (const FString& Error : Task->Errors)
+						{
+							Errors.Add(MakeShared<FJsonValueString>(Error));
+						}
+						if (bRan && !bWritten)
+						{
+							Errors.Add(MakeShared<FJsonValueString>(
+								TEXT("the exporter reported success but wrote no file")));
+						}
+						Entry->SetArrayField(TEXT("errors"), Errors);
+						Files.Add(MakeShared<FJsonValueObject>(Entry));
+						Exported += bWritten ? 1 : 0;
+					}
+					Data->SetStringField(TEXT("format"), Format);
+					Data->SetNumberField(TEXT("exported"), Exported);
+					Data->SetNumberField(TEXT("failed"), Assets.Num() - Exported);
+					Data->SetArrayField(TEXT("files"), Files);
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("list_exporters"))
+				{
+					// Every concrete exporter class, or only the ones that take
+					// the asset at 'path'. Plugins add theirs (glTF, USD, …).
+					UClass* Filter = nullptr;
+					FString Path;
+					if (Body->TryGetStringField(TEXT("path"), Path) && !Path.IsEmpty())
+					{
+						UObject* Asset = LoadAsset(Path);
+						if (Asset == nullptr)
+						{
+							Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("asset_not_found"),
+								FString::Printf(TEXT("no asset at '%s'"), *Path));
+							return;
+						}
+						Filter = Asset->GetClass();
+					}
+					TArray<TSharedPtr<FJsonValue>> Exporters;
+					for (TObjectIterator<UClass> It; It; ++It)
+					{
+						if (!It->IsChildOf(UExporter::StaticClass())
+							|| It->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
+						{
+							continue;
+						}
+						const UExporter* Exporter = It->GetDefaultObject<UExporter>();
+						if (Exporter == nullptr || Exporter->SupportedClass == nullptr)
+						{
+							continue;
+						}
+						if (Filter != nullptr && !Filter->IsChildOf(Exporter->SupportedClass))
+						{
+							continue;
+						}
+						const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+						Entry->SetStringField(TEXT("exporter"), It->GetName());
+						Entry->SetStringField(TEXT("supported_class"), Exporter->SupportedClass->GetName());
+						TArray<TSharedPtr<FJsonValue>> Formats;
+						for (int32 Index = 0; Index < Exporter->FormatExtension.Num(); ++Index)
+						{
+							const TSharedRef<FJsonObject> FormatEntry = MakeShared<FJsonObject>();
+							FormatEntry->SetStringField(TEXT("extension"), Exporter->FormatExtension[Index]);
+							FormatEntry->SetStringField(TEXT("description"),
+								Exporter->FormatDescription.IsValidIndex(Index) ? Exporter->FormatDescription[Index] : FString());
+							Formats.Add(MakeShared<FJsonValueObject>(FormatEntry));
+						}
+						Entry->SetArrayField(TEXT("formats"), Formats);
+						Entry->SetBoolField(TEXT("text"), Exporter->bText);
+						Exporters.Add(MakeShared<FJsonValueObject>(Entry));
+					}
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					if (Filter != nullptr)
+					{
+						Data->SetStringField(TEXT("asset_class"), Filter->GetName());
+					}
+					Data->SetNumberField(TEXT("count"), Exporters.Num());
+					Data->SetArrayField(TEXT("exporters"), Exporters);
 					Responder->Ok(Data);
 					return;
 				}

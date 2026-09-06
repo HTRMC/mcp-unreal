@@ -1,0 +1,25 @@
+{
+  "name": "rvt_ops_assign",
+  "description": "rvt_ops assign: a landscape rendering into the texture",
+  "route": "/api/world/virtual_texture",
+  "tool": "rvt_ops",
+  "request": {
+    "operation": "assign",
+    "virtual_texture": "/Game/VT/RVT_McpContract",
+    "actor": "McpContractLand"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "virtual_texture": "/Game/VT/RVT_McpContract.RVT_McpContract",
+      "actor": "/Game/Maps/TestMap.TestMap:PersistentLevel.Landscape_1",
+      "targets": [
+        {
+          "target": "/Game/Maps/TestMap.TestMap:PersistentLevel.Landscape_1",
+          "changed": true
+        }
+      ]
+    }
+  }
+}

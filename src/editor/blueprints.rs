@@ -48,7 +48,13 @@ pub enum BlueprintModify {
         /// Destination package path, e.g. "/Game/Blueprints/BP_Thing".
         path: String,
         /// Parent class (default "Actor"), e.g. "Pawn", "/Script/Engine.Actor".
+        /// Interfaces and function libraries fix their own parent, so leave
+        /// it out for those.
         parent_class: Option<String>,
+        /// "normal" (default), "interface" (a Blueprint Interface: add its
+        /// functions with add_function, implement it elsewhere with
+        /// add_interface), "function_library" or "macro_library".
+        blueprint_type: Option<String>,
     },
     /// Reparent an existing Blueprint and recompile it.
     SetParentClass {
@@ -179,26 +185,38 @@ pub enum BlueprintModify {
         blueprint: String,
         graph: Option<String>,
         /// One of: call_function, call_parent_function, variable_get,
-        /// variable_set, event, custom_event, component_bound_event, branch,
-        /// sequence, select, switch_int, switch_string, switch_name,
-        /// switch_enum, macro, cast, class_cast, spawn_actor, make_struct,
-        /// break_struct, make_array, make_set, make_map, get_array_item,
-        /// format_text, self, literal, enum_literal, reroute, comment,
-        /// timeline, call_delegate, bind_delegate, unbind_delegate,
-        /// clear_delegate, assign_delegate.
+        /// variable_set, event, custom_event, component_bound_event,
+        /// enhanced_input_action, input_key, input_action, input_axis,
+        /// branch, sequence, select, switch_int, switch_string, switch_name,
+        /// switch_enum, macro, cast, class_cast, spawn_actor,
+        /// construct_object, add_component_by_class, create_widget,
+        /// async_action, play_montage, interface_message,
+        /// get_data_table_row, get_subsystem, operator, make_struct,
+        /// break_struct, set_fields_in_struct, make_array, make_set,
+        /// make_map, get_array_item, format_text, self, literal,
+        /// enum_literal, reroute, comment, timeline, call_delegate,
+        /// bind_delegate, unbind_delegate, clear_delegate, assign_delegate.
         node_type: String,
-        /// call_function / call_parent_function: the UFUNCTION name.
-        /// event: an overridable event, e.g. "ReceiveBeginPlay".
+        /// call_function / call_parent_function / interface_message: the
+        /// UFUNCTION name. event: an overridable event, e.g.
+        /// "ReceiveBeginPlay". async_action: the static factory function,
+        /// e.g. "WaitGameplayEvent" or "AsyncLoadPrimaryAsset".
         function: Option<String>,
-        /// Class the function, event, variable or delegate lives on; also the
-        /// target type for cast/class_cast and the class for spawn_actor.
-        /// Defaults to this Blueprint.
+        /// Class the function, event, variable or delegate lives on; the
+        /// interface for interface_message; the proxy class for async_action
+        /// (e.g. "AbilityTask_WaitGameplayEvent"); the target type for
+        /// cast/class_cast; the class to spawn, construct, add or create for
+        /// spawn_actor, construct_object, add_component_by_class and
+        /// create_widget; the subsystem for get_subsystem. Defaults to this
+        /// Blueprint.
         class: Option<String>,
         /// variable_get / variable_set: the variable name.
         variable: Option<String>,
-        /// custom_event / timeline: the name to give it.
+        /// custom_event / timeline: the name to give it. input_action /
+        /// input_axis: the legacy mapping name. get_data_table_row: the row.
         name: Option<String>,
-        /// make_struct / break_struct: the struct, e.g. "HitResult".
+        /// make_struct / break_struct / set_fields_in_struct: the struct,
+        /// e.g. "HitResult".
         #[serde(rename = "struct")]
         struct_type: Option<String>,
         /// switch_enum / enum_literal: the enum, e.g. "/Script/Engine.ECollisionChannel".
@@ -215,7 +233,26 @@ pub enum BlueprintModify {
         /// component_bound_event: the component variable to bind on.
         component: Option<String>,
         /// literal: object or actor path the node references.
+        /// enhanced_input_action: the Input Action asset. get_data_table_row:
+        /// the DataTable asset.
         object: Option<String>,
+        /// input_key: the key, e.g. "SpaceBar", "LeftMouseButton",
+        /// "Gamepad_FaceButton_Bottom".
+        key: Option<String>,
+        /// input_key / input_action / input_axis: whether the event consumes
+        /// the input (default true).
+        consume_input: Option<bool>,
+        /// input_key: modifiers that must be held, any of "control", "alt",
+        /// "shift", "command".
+        modifiers: Option<Vec<String>>,
+        /// operator: the promotable operation — "Add", "Subtract",
+        /// "Multiply", "Divide", "Greater", "Less", "EqualEqual",
+        /// "NotEqual", ...; an unknown name comes back with the list. The
+        /// node starts wildcard and takes the type of whatever is wired in.
+        operator: Option<String>,
+        /// get_subsystem: for a local player subsystem, take the player from
+        /// a PlayerController pin instead of the world context.
+        player_controller: Option<bool>,
         /// cast / class_cast: make it a pure cast with no exec pins.
         pure: Option<bool>,
         /// sequence: how many exec outputs (default 2).
@@ -450,6 +487,11 @@ mod tests {
             delegate: None,
             component: None,
             object: None,
+            key: None,
+            consume_input: None,
+            modifiers: None,
+            operator: None,
+            player_controller: None,
             pure: None,
             outputs: None,
             entries: None,

@@ -20,6 +20,7 @@ public:
 		McpLink::RegisterUiOpsRoutes(Core);
 		McpLink::RegisterPieRoutes(Core);
 		McpLink::RegisterCaptureRoutes(Core);
+		McpLink::RegisterReplayRoutes(Core);
 		McpLink::RegisterIntrospectRoutes(Core);
 	}
 };

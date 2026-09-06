@@ -1,0 +1,27 @@
+{
+  "name": "remote_control_ops_expose_property",
+  "description": "remote_control_ops expose_property: an actor property exposed under a label",
+  "route": "/api/vp/remote_control",
+  "tool": "remote_control_ops",
+  "request": {
+    "operation": "expose_property",
+    "preset": "/Game/VP/RCP_Contract",
+    "object": "RCContractLight",
+    "property": "bHidden",
+    "label": "Hidden"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "kind": "property",
+      "label": "Hidden",
+      "id": "0A0D44294C79DB0BEB1DA7977BC39E78",
+      "bound_objects": [
+        "/Game/Maps/TestMap.TestMap:PersistentLevel.PointLight_0"
+      ],
+      "preset": "/Game/VP/RCP_Contract.RCP_Contract",
+      "count": 1
+    }
+  }
+}

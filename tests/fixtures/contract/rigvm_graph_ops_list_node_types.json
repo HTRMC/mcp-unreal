@@ -1,0 +1,51 @@
+{
+  "name": "rigvm_graph_ops_list_node_types",
+  "description": "rigvm_graph_ops list_node_types: unit structs and templates matching a filter",
+  "route": "/api/anim/rigvm_graph",
+  "tool": "rigvm_graph_ops",
+  "request": {
+    "operation": "list_node_types",
+    "filter": "Set Transform",
+    "max": 5
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "units": [
+        {
+          "struct": "/Script/ControlRig.RigUnit_SetTransformAnimationChannel",
+          "display_name": "Set Transform Channel",
+          "category": "",
+          "template": "SetAnimationChannel::Execute(in Value,in Control,in Channel,in bInitial)"
+        },
+        {
+          "struct": "/Script/ControlRig.RigUnit_SetTransformAnimationChannelFromItem",
+          "display_name": "Set Transform Channel",
+          "category": "",
+          "template": "SetAnimationChannelFromItem::Execute(in Value,in Item,in bInitial)"
+        },
+        {
+          "struct": "/Script/ControlRig.RigUnit_OffsetTransformForItem",
+          "display_name": "Offset Transform",
+          "category": "Transforms"
+        },
+        {
+          "struct": "/Script/ControlRig.RigUnit_SetTransform",
+          "display_name": "Set Transform",
+          "category": "Transforms",
+          "template": "Set Transform::Execute(in Item,in Space,in bInitial,in Value,in Weight,in bPropagateToChildren)"
+        },
+        {
+          "struct": "/Script/ControlRig.RigUnit_SetTransformItemArray",
+          "display_name": "Set Transform Array",
+          "category": "Transforms"
+        }
+      ],
+      "templates": [
+        "Set Transform::Execute(in Item,in Space,in bInitial,in Value,in Weight,in bPropagateToChildren)"
+      ],
+      "note": "add_node takes 'struct' (a unit struct path) or 'template' (a notation such as Add(in A,in B,out Result)); pass 'filter' to narrow, 'max' to see more"
+    }
+  }
+}

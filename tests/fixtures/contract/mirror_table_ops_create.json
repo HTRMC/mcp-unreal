@@ -1,0 +1,629 @@
+{
+  "name": "mirror_table_ops_create",
+  "description": "mirror_table_ops create: a Mirror Data Table synced from the default expressions",
+  "route": "/api/anim/mirror_table",
+  "tool": "mirror_table_ops",
+  "request": {
+    "operation": "create",
+    "path": "/Game/Anim/MDT_McpContract",
+    "skeleton": "/Game/Anim/SK_McpContract",
+    "axis": "X"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "table": "/Game/Anim/MDT_McpContract.MDT_McpContract",
+      "skeleton": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_Skeleton.TutorialTPP_Skeleton",
+      "axis": "X",
+      "sync": "up_to_date",
+      "expressions": [
+        {
+          "find": "r_",
+          "replace": "l_",
+          "method": "Prefix"
+        },
+        {
+          "find": "l_",
+          "replace": "r_",
+          "method": "Prefix"
+        },
+        {
+          "find": "R_",
+          "replace": "L_",
+          "method": "Prefix"
+        },
+        {
+          "find": "L_",
+          "replace": "R_",
+          "method": "Prefix"
+        },
+        {
+          "find": "_l",
+          "replace": "_r",
+          "method": "Suffix"
+        },
+        {
+          "find": "_r",
+          "replace": "_l",
+          "method": "Suffix"
+        },
+        {
+          "find": "_R",
+          "replace": "_L",
+          "method": "Suffix"
+        },
+        {
+          "find": "_L",
+          "replace": "_R",
+          "method": "Suffix"
+        },
+        {
+          "find": "right",
+          "replace": "left",
+          "method": "Prefix"
+        },
+        {
+          "find": "left",
+          "replace": "right",
+          "method": "Prefix"
+        },
+        {
+          "find": "Right",
+          "replace": "Left",
+          "method": "Prefix"
+        },
+        {
+          "find": "Left",
+          "replace": "Right",
+          "method": "Prefix"
+        },
+        {
+          "find": "right",
+          "replace": "left",
+          "method": "Suffix"
+        },
+        {
+          "find": "left",
+          "replace": "right",
+          "method": "Suffix"
+        },
+        {
+          "find": "Right",
+          "replace": "Left",
+          "method": "Suffix"
+        },
+        {
+          "find": "Left",
+          "replace": "Right",
+          "method": "Suffix"
+        },
+        {
+          "find": "([^}]*)_l_([^}]*)",
+          "replace": "$1_r_$2",
+          "method": "RegularExpression"
+        },
+        {
+          "find": "([^}]*)_r_([^}]*)",
+          "replace": "$1_l_$2",
+          "method": "RegularExpression"
+        },
+        {
+          "find": "([^}]*)_L_([^}]*)",
+          "replace": "$1_R_$2",
+          "method": "RegularExpression"
+        },
+        {
+          "find": "([^}]*)_R_([^}]*)",
+          "replace": "$1_L_$2",
+          "method": "RegularExpression"
+        },
+        {
+          "find": "([^}]*)_left_([^}]*)",
+          "replace": "$1_right_$2",
+          "method": "RegularExpression"
+        },
+        {
+          "find": "([^}]*)_right_([^}]*)",
+          "replace": "$1_left_$2",
+          "method": "RegularExpression"
+        },
+        {
+          "find": "([^}]*)_Left_([^}]*)",
+          "replace": "$1_Right_$2",
+          "method": "RegularExpression"
+        },
+        {
+          "find": "([^}]*)_Right_([^}]*)",
+          "replace": "$1_Left_$2",
+          "method": "RegularExpression"
+        },
+        {
+          "find": "((?:^[sS]pine|^[rR]oot|^[pP]elvis|^[nN]eck|^[hH]ead|^ik_hand_gun).*)",
+          "replace": "$1",
+          "method": "RegularExpression"
+        }
+      ],
+      "row_count": 68,
+      "rows": [
+        {
+          "row": "Root",
+          "name": "Root",
+          "mirrored_name": "Root",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "pelvis",
+          "name": "pelvis",
+          "mirrored_name": "pelvis",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "spine_01",
+          "name": "spine_01",
+          "mirrored_name": "spine_01",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "spine_02",
+          "name": "spine_02",
+          "mirrored_name": "spine_02",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "spine_03",
+          "name": "spine_03",
+          "mirrored_name": "spine_03",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "clavicle_l",
+          "name": "clavicle_l",
+          "mirrored_name": "clavicle_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "upperarm_l",
+          "name": "upperarm_l",
+          "mirrored_name": "upperarm_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "lowerarm_l",
+          "name": "lowerarm_l",
+          "mirrored_name": "lowerarm_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "hand_l",
+          "name": "hand_l",
+          "mirrored_name": "hand_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "index_01_l",
+          "name": "index_01_l",
+          "mirrored_name": "index_01_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "index_02_l",
+          "name": "index_02_l",
+          "mirrored_name": "index_02_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "index_03_l",
+          "name": "index_03_l",
+          "mirrored_name": "index_03_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "middle_01_l",
+          "name": "middle_01_l",
+          "mirrored_name": "middle_01_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "middle_02_l",
+          "name": "middle_02_l",
+          "mirrored_name": "middle_02_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "middle_03_l",
+          "name": "middle_03_l",
+          "mirrored_name": "middle_03_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "pinky_01_l",
+          "name": "pinky_01_l",
+          "mirrored_name": "pinky_01_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "pinky_02_l",
+          "name": "pinky_02_l",
+          "mirrored_name": "pinky_02_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "pinky_03_l",
+          "name": "pinky_03_l",
+          "mirrored_name": "pinky_03_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ring_01_l",
+          "name": "ring_01_l",
+          "mirrored_name": "ring_01_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ring_02_l",
+          "name": "ring_02_l",
+          "mirrored_name": "ring_02_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ring_03_l",
+          "name": "ring_03_l",
+          "mirrored_name": "ring_03_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thumb_01_l",
+          "name": "thumb_01_l",
+          "mirrored_name": "thumb_01_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thumb_02_l",
+          "name": "thumb_02_l",
+          "mirrored_name": "thumb_02_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thumb_03_l",
+          "name": "thumb_03_l",
+          "mirrored_name": "thumb_03_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "lowerarm_twist_01_l",
+          "name": "lowerarm_twist_01_l",
+          "mirrored_name": "lowerarm_twist_01_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "upperarm_twist_01_l",
+          "name": "upperarm_twist_01_l",
+          "mirrored_name": "upperarm_twist_01_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "clavicle_r",
+          "name": "clavicle_r",
+          "mirrored_name": "clavicle_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "upperarm_r",
+          "name": "upperarm_r",
+          "mirrored_name": "upperarm_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "lowerarm_r",
+          "name": "lowerarm_r",
+          "mirrored_name": "lowerarm_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "hand_r",
+          "name": "hand_r",
+          "mirrored_name": "hand_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "index_01_r",
+          "name": "index_01_r",
+          "mirrored_name": "index_01_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "index_02_r",
+          "name": "index_02_r",
+          "mirrored_name": "index_02_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "index_03_r",
+          "name": "index_03_r",
+          "mirrored_name": "index_03_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "middle_01_r",
+          "name": "middle_01_r",
+          "mirrored_name": "middle_01_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "middle_02_r",
+          "name": "middle_02_r",
+          "mirrored_name": "middle_02_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "middle_03_r",
+          "name": "middle_03_r",
+          "mirrored_name": "middle_03_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "pinky_01_r",
+          "name": "pinky_01_r",
+          "mirrored_name": "pinky_01_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "pinky_02_r",
+          "name": "pinky_02_r",
+          "mirrored_name": "pinky_02_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "pinky_03_r",
+          "name": "pinky_03_r",
+          "mirrored_name": "pinky_03_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ring_01_r",
+          "name": "ring_01_r",
+          "mirrored_name": "ring_01_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ring_02_r",
+          "name": "ring_02_r",
+          "mirrored_name": "ring_02_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ring_03_r",
+          "name": "ring_03_r",
+          "mirrored_name": "ring_03_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thumb_01_r",
+          "name": "thumb_01_r",
+          "mirrored_name": "thumb_01_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thumb_02_r",
+          "name": "thumb_02_r",
+          "mirrored_name": "thumb_02_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thumb_03_r",
+          "name": "thumb_03_r",
+          "mirrored_name": "thumb_03_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "lowerarm_twist_01_r",
+          "name": "lowerarm_twist_01_r",
+          "mirrored_name": "lowerarm_twist_01_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "upperarm_twist_01_r",
+          "name": "upperarm_twist_01_r",
+          "mirrored_name": "upperarm_twist_01_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "neck_01",
+          "name": "neck_01",
+          "mirrored_name": "neck_01",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "head",
+          "name": "head",
+          "mirrored_name": "head",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thigh_l",
+          "name": "thigh_l",
+          "mirrored_name": "thigh_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "calf_l",
+          "name": "calf_l",
+          "mirrored_name": "calf_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "calf_twist_01_l",
+          "name": "calf_twist_01_l",
+          "mirrored_name": "calf_twist_01_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "foot_l",
+          "name": "foot_l",
+          "mirrored_name": "foot_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ball_l",
+          "name": "ball_l",
+          "mirrored_name": "ball_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thigh_twist_01_l",
+          "name": "thigh_twist_01_l",
+          "mirrored_name": "thigh_twist_01_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thigh_r",
+          "name": "thigh_r",
+          "mirrored_name": "thigh_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "calf_r",
+          "name": "calf_r",
+          "mirrored_name": "calf_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "calf_twist_01_r",
+          "name": "calf_twist_01_r",
+          "mirrored_name": "calf_twist_01_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "foot_r",
+          "name": "foot_r",
+          "mirrored_name": "foot_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ball_r",
+          "name": "ball_r",
+          "mirrored_name": "ball_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "thigh_twist_01_r",
+          "name": "thigh_twist_01_r",
+          "mirrored_name": "thigh_twist_01_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ik_foot_root",
+          "name": "ik_foot_root",
+          "mirrored_name": "ik_foot_root",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ik_foot_l",
+          "name": "ik_foot_l",
+          "mirrored_name": "ik_foot_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ik_foot_r",
+          "name": "ik_foot_r",
+          "mirrored_name": "ik_foot_l",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ik_hand_root",
+          "name": "ik_hand_root",
+          "mirrored_name": "ik_hand_root",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ik_hand_gun",
+          "name": "ik_hand_gun",
+          "mirrored_name": "ik_hand_gun",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ik_hand_l",
+          "name": "ik_hand_l",
+          "mirrored_name": "ik_hand_r",
+          "type": "Bone",
+          "enabled": true
+        },
+        {
+          "row": "ik_hand_r",
+          "name": "ik_hand_r",
+          "mirrored_name": "ik_hand_l",
+          "type": "Bone",
+          "enabled": true
+        }
+      ],
+      "message": "created and synced — rows are editable with data_table_ops; re-run sync after adding expressions"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "collection_ops_create",
+  "description": "collection_ops create: a local static collection seeded with one asset",
+  "route": "/api/workflow/collections",
+  "tool": "collection_ops",
+  "request": {
+    "operation": "create",
+    "name": "McpContractCollection",
+    "assets": [
+      "/Game/Blueprints/BP_McpDebugProbe"
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "collections": [
+        {
+          "name": "McpContractCollection",
+          "share_type": "local",
+          "asset_count": 1
+        }
+      ],
+      "count": 1,
+      "created": "McpContractCollection",
+      "added": 1
+    }
+  }
+}

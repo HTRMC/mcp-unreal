@@ -1,0 +1,27 @@
+{
+  "name": "ik_rig_ops_retarget_animations",
+  "description": "ik_rig_ops retarget_animations: an animation duplicated and retargeted through the retargeter",
+  "route": "/api/anim/ik_rig",
+  "tool": "ik_rig_ops",
+  "request": {
+    "operation": "retarget_animations",
+    "retargeter": "/Game/Rigs/RTG_McpContract",
+    "animations": [
+      "/Engine/Tutorial/SubEditors/TutorialAssets/Character/Tutorial_Idle"
+    ],
+    "target_folder": "/Game/Anim/McpContractRetarget",
+    "suffix": "_RT"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "retargeter": "/Game/Rigs/RTG_McpContract.RTG_McpContract",
+      "requested": 1,
+      "created": 1,
+      "assets": [
+        "/Game/Anim/McpContractRetarget/Tutorial_Idle_RT.Tutorial_Idle_RT"
+      ]
+    }
+  }
+}

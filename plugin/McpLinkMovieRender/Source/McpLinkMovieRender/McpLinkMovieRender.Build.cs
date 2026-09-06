@@ -14,6 +14,7 @@ public class McpLinkMovieRender : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"Json",
+			"JsonUtilities",
 			"McpLinkCore",
 			"UnrealEd",
 			"AssetRegistry",

@@ -1,0 +1,25 @@
+{
+  "name": "skeletal_mesh_ops_create_clothing",
+  "description": "skeletal_mesh_ops create_clothing: a clothing asset built from a section",
+  "route": "/api/anim/mesh",
+  "tool": "skeletal_mesh_ops",
+  "request": {
+    "operation": "create_clothing",
+    "mesh": "/Game/Anim/SK_McpContract",
+    "section": 0,
+    "name": "Cape"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "name": "Cape",
+      "guid": "4D48CA2A409866A114AEECAB7058AC78",
+      "lods": 1,
+      "physics_asset": "",
+      "bound_sections": [],
+      "mesh": "/Game/Anim/SK_McpContract.SK_McpContract",
+      "message": "created — bind_clothing applies it to a section; its physics live on the asset's ClothConfigs (set_property) and a Physics Asset for collision"
+    }
+  }
+}

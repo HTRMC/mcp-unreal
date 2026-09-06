@@ -37,8 +37,12 @@ public class McpLinkContent : ModuleRules
 			"LevelSequence",
 			"MovieScene",
 			"MovieSceneTracks",
+			"MovieSceneTools",
+			"Sequencer",
+			"BlueprintGraph",
 			"UMG",
-			"UMGEditor"
+			"UMGEditor",
+			"MediaAssets"
 		});
 	}
 }

@@ -32,7 +32,15 @@ public class McpLinkAnimation : ModuleRules
 			"AnimationBlueprintLibrary",
 			"SkeletalMeshEditor",
 			"PhysicsUtilities",
-			"PhysicsCore"
+			"PhysicsCore",
+			"ClothingSystemEditor",
+			"ClothingSystemEditorInterface",
+			"ClothingSystemRuntimeCommon",
+			"ClothingSystemRuntimeInterface",
+			"MeshDescription",
+			"SkeletalMeshDescription",
+			"AnimationModifiers",
+			"AnimationCore"
 		});
 	}
 }

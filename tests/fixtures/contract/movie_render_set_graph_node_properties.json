@@ -1,0 +1,160 @@
+{
+  "name": "movie_render_set_graph_node_properties",
+  "description": "movie_render set_graph_node_properties: a resolution override applied with its override flag",
+  "route": "/api/render/movie",
+  "tool": "movie_render",
+  "request": {
+    "operation": "set_graph_node_properties",
+    "graph": "/Game/Cinematics/MRG_McpContract",
+    "node": "Global Output Settings",
+    "properties": {
+      "OutputResolution": {
+        "Resolution": {
+          "X": 640,
+          "Y": 360
+        },
+        "ProfileName": "Custom"
+      }
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "name": "MovieGraphGlobalOutputSettingNode_1",
+      "guid": "A7176D5C450378952F2523BF2EC26142",
+      "class": "MovieGraphGlobalOutputSettingNode",
+      "title": "Global Output Settings",
+      "kind": "node",
+      "path": "/Game/Cinematics/MRG_McpContract.MRG_McpContract:MovieGraphGlobalOutputSettingNode_1",
+      "disabled": false,
+      "x": 300,
+      "y": 0,
+      "inputs": [
+        {
+          "label": "None",
+          "type": "Branch",
+          "connected": []
+        }
+      ],
+      "outputs": [
+        {
+          "label": "None",
+          "type": "Branch",
+          "connected": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "OutputDirectory",
+          "type": "Struct",
+          "type_object": "DirectoryPath",
+          "dynamic": false,
+          "value": "(Path=\"{project_dir}/Saved/MovieRenders/\")",
+          "overridden": false
+        },
+        {
+          "name": "OutputResolution",
+          "type": "Struct",
+          "type_object": "MovieGraphNamedResolution",
+          "dynamic": false,
+          "value": "(ProfileName=\"Custom\",Resolution=(X=640,Y=360),Description=\"\")",
+          "overridden": true
+        },
+        {
+          "name": "AdaptResolution",
+          "type": "Enum",
+          "type_object": "EMovieGraphAspectRatioAdaptBehavior",
+          "dynamic": false,
+          "value": "Disabled",
+          "overridden": false
+        },
+        {
+          "name": "OutputFrameRate",
+          "type": "Struct",
+          "type_object": "FrameRate",
+          "dynamic": false,
+          "value": "(Numerator=24,Denominator=1)",
+          "overridden": false
+        },
+        {
+          "name": "bOverwriteExistingOutput",
+          "type": "Bool",
+          "dynamic": false,
+          "value": "True",
+          "overridden": false
+        },
+        {
+          "name": "ZeroPadFrameNumbers",
+          "type": "Int32",
+          "dynamic": false,
+          "value": "4",
+          "overridden": false
+        },
+        {
+          "name": "FrameNumberOffset",
+          "type": "Int32",
+          "dynamic": false,
+          "value": "0",
+          "overridden": false
+        },
+        {
+          "name": "HandleFrameCount",
+          "type": "Int32",
+          "dynamic": false,
+          "value": "0",
+          "overridden": false
+        },
+        {
+          "name": "CustomPlaybackRangeStart",
+          "type": "Struct",
+          "type_object": "MovieGraphSequencePlaybackRangeBound",
+          "dynamic": false,
+          "value": "(Type=Custom,Value=0)",
+          "overridden": false
+        },
+        {
+          "name": "CustomPlaybackRangeEnd",
+          "type": "Struct",
+          "type_object": "MovieGraphSequencePlaybackRangeBound",
+          "dynamic": false,
+          "value": "(Type=Custom,Value=0)",
+          "overridden": false
+        },
+        {
+          "name": "CustomTimecodeStart",
+          "type": "Struct",
+          "type_object": "Timecode",
+          "dynamic": false,
+          "value": "(Hours=0,Minutes=0,Seconds=0,Frames=0,Subframe=0.000000,bDropFrameFormat=False)",
+          "overridden": false
+        },
+        {
+          "name": "bDropFrameTimecode",
+          "type": "Bool",
+          "dynamic": false,
+          "value": "True",
+          "overridden": false
+        },
+        {
+          "name": "VersioningSettings",
+          "type": "Struct",
+          "type_object": "MovieGraphVersioningSettings",
+          "dynamic": false,
+          "value": "(bAutoVersioning=True,VersionNumber=1)",
+          "overridden": false
+        },
+        {
+          "name": "bFlushDiskWritesPerShot",
+          "type": "Bool",
+          "dynamic": false,
+          "value": "False",
+          "overridden": false
+        }
+      ],
+      "applied": [
+        "OutputResolution"
+      ]
+    }
+  }
+}

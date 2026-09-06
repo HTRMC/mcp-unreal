@@ -1,0 +1,36 @@
+{
+  "name": "skeletal_mesh_ops_set_skin_weights",
+  "description": "skeletal_mesh_ops set_skin_weights: one vertex reweighted to two bones",
+  "route": "/api/anim/mesh",
+  "tool": "skeletal_mesh_ops",
+  "request": {
+    "operation": "set_skin_weights",
+    "mesh": "/Game/Anim/SK_McpContractWeights",
+    "weights": [
+      {
+        "vertex": 0,
+        "bones": [
+          {
+            "bone": "hand_l",
+            "weight": 0.75
+          },
+          {
+            "bone": "lowerarm_l",
+            "weight": 0.25
+          }
+        ]
+      }
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "mesh": "/Game/Anim/SK_McpContractWeights.SK_McpContractWeights",
+      "lod": 0,
+      "profile": "default",
+      "vertices_written": 1,
+      "note": "weights were normalized to sum to one; the render data was rebuilt"
+    }
+  }
+}

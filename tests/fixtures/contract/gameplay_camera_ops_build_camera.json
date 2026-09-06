@@ -1,0 +1,30 @@
+{
+  "name": "gameplay_camera_ops_build_camera",
+  "description": "gameplay_camera_ops build_camera: the camera and its rigs built",
+  "route": "/api/cameras/gameplay",
+  "tool": "gameplay_camera_ops",
+  "request": {
+    "operation": "build_camera",
+    "camera": "/Game/Cameras/CAM_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "camera": "/Game/Cameras/CAM_Contract.CAM_Contract",
+      "build_status": "clean",
+      "director": "SingleCameraDirector",
+      "rig": "/Game/Cameras/CR_Contract.CR_Contract",
+      "director_properties": {
+        "CameraRig": "/Script/GameplayCameras.CameraRigAsset'/Game/Cameras/CR_Contract.CR_Contract'",
+        "CameraRigProxyRedirectTable": {
+          "Entries": []
+        },
+        "bRunInEditor": false
+      },
+      "enter_transitions": 0,
+      "messages": [],
+      "ok": true
+    }
+  }
+}

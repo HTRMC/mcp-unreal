@@ -1,0 +1,49 @@
+{
+  "name": "rvt_ops_create",
+  "description": "rvt_ops create: a Runtime Virtual Texture with properties",
+  "route": "/api/world/virtual_texture",
+  "tool": "rvt_ops",
+  "request": {
+    "operation": "create",
+    "path": "/Game/VT/RVT_McpContract",
+    "properties": {
+      "TileCount": 8,
+      "MaterialType": "BaseColor_Normal_Roughness"
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "virtual_texture": "/Game/VT/RVT_McpContract.RVT_McpContract",
+      "properties": {
+        "TileCount": 8,
+        "TileSize": 2,
+        "TileBorderSize": 2,
+        "MaterialType": "BaseColor_Normal_Roughness",
+        "bCompressTextures": true,
+        "bUseLowQualityCompression": false,
+        "CustomPriority": "Lowest",
+        "bUseCustomPriority": false,
+        "bClearTextures": true,
+        "bSinglePhysicalSpace": true,
+        "bPrivateSpace": true,
+        "bAdaptive": false,
+        "bContinuousUpdate": false,
+        "RemoveLowMips": 0,
+        "CustomMaterialData": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "W": 0
+        },
+        "LODGroup": "TEXTUREGROUP_World"
+      },
+      "size": 65536,
+      "tile_size": 256,
+      "tile_border_size": 4,
+      "layer_count": 2,
+      "message": "created — spawn_volume places it, assign makes primitives and landscapes render into it"
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "name": "sequence_ops_add_subsequence",
+  "description": "sequence_ops add_subsequence: a Subsequences track section playing another Level Sequence for its own length",
+  "route": "/api/sequences/ops",
+  "tool": "sequence_ops",
+  "request": {
+    "operation": "add_subsequence",
+    "sequence": "/Game/Cinematics/LS_McpContractMain",
+    "subsequence": "/Game/Cinematics/LS_McpContractSub",
+    "start_seconds": 1
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "path": "/Game/Cinematics/LS_McpContractMain.LS_McpContractMain:MovieScene_0.MovieSceneSubTrack_0.MovieSceneSubSection_0",
+      "name": "MovieSceneSubSection_0",
+      "class": "MovieSceneSubSection",
+      "row_index": 0,
+      "active": true,
+      "range": {
+        "start_frame": 30,
+        "end_frame": 60,
+        "start_seconds": 1,
+        "end_seconds": 2,
+        "start_tick": 24000,
+        "end_tick": 48000
+      },
+      "channels": [
+        {
+          "name": "Override.Location.X",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Override.Location.Y",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Override.Location.Z",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Override.Rotation.X",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Override.Rotation.Y",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        },
+        {
+          "name": "Override.Rotation.Z",
+          "type": "MovieSceneDoubleChannel",
+          "num_keys": 0
+        }
+      ],
+      "subsequence": "/Game/Cinematics/LS_McpContractSub.LS_McpContractSub",
+      "track": "/Game/Cinematics/LS_McpContractMain.LS_McpContractMain:MovieScene_0.MovieSceneSubTrack_0"
+    }
+  }
+}

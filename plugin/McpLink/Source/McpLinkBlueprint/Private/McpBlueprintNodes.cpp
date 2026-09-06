@@ -57,6 +57,37 @@
 #include "McpJson.h"
 #include "McpResolve.h"
 
+// The gameplay-authoring kinds: input events, object construction, async
+// actions, interface messages, data tables, subsystems, promotable operators
+// and struct member writes.
+#include "Blueprint/UserWidget.h"
+#include "BlueprintFunctionNodeSpawner.h"
+#include "BlueprintTypePromotion.h"
+#include "Components/ActorComponent.h"
+#include "Engine/DataTable.h"
+#include "GameFramework/Actor.h"
+#include "InputAction.h"
+#include "InputCoreTypes.h"
+#include "K2Node_AddComponentByClass.h"
+#include "K2Node_AsyncAction.h"
+#include "K2Node_BaseAsyncTask.h"
+#include "K2Node_ConstructObjectFromClass.h"
+#include "K2Node_EnhancedInputAction.h"
+#include "K2Node_GenericCreateObject.h"
+#include "K2Node_GetDataTableRow.h"
+#include "K2Node_GetSubsystem.h"
+#include "K2Node_InputAction.h"
+#include "K2Node_InputAxisEvent.h"
+#include "K2Node_InputKey.h"
+#include "K2Node_Message.h"
+#include "K2Node_PromotableOperator.h"
+#include "K2Node_SetFieldsInStruct.h"
+#include "Kismet/BlueprintAsyncActionBase.h"
+#include "Subsystems/EngineSubsystem.h"
+#include "Subsystems/LocalPlayerSubsystem.h"
+#include "Subsystems/Subsystem.h"
+#include "UObject/UnrealType.h"
+
 namespace McpLink
 {
 	namespace
@@ -158,6 +189,148 @@ namespace McpLink
 				return false;
 			}
 			Node->SetFromProperty(Property, Owner == SelfClass(Blueprint), Owner);
+			return true;
+		}
+
+		/// The class a Construct-Object family node's `class` names, checked
+		/// against the base its class pin accepts. Resolved before the node
+		/// exists, so a bad class leaves no orphan behind. No `class` is
+		/// fine: OutClass stays null and the pin is left for a wire.
+		bool ResolveClassPin(
+			const TSharedRef<FJsonObject>& Body,
+			const UClass* Base,
+			const TCHAR* What,
+			UClass*& OutClass,
+			FString& OutError)
+		{
+			OutClass = nullptr;
+			const FString ClassSpec = StringField(Body, TEXT("class"));
+			if (ClassSpec.IsEmpty())
+			{
+				return true;
+			}
+			UClass* Class = ResolveClass(ClassSpec);
+			if (Class == nullptr)
+			{
+				OutError = FString::Printf(TEXT("no %s '%s'"), What, *ClassSpec);
+				return false;
+			}
+			if (!Class->IsChildOf(Base))
+			{
+				OutError = FString::Printf(
+					TEXT("'%s' is not a %s — it must derive from %s"), *Class->GetName(), What, *Base->GetName());
+				return false;
+			}
+			OutClass = Class;
+			return true;
+		}
+
+		/// Setting the class pin's default is what grows the node's
+		/// exposed-on-spawn pins.
+		void SetClassPin(UK2Node_ConstructObjectFromClass* Node, UEdGraph* Graph, UClass* Class)
+		{
+			if (Class == nullptr)
+			{
+				return;
+			}
+			if (UEdGraphPin* ClassPin = Node->GetClassPin())
+			{
+				Graph->GetSchema()->TrySetDefaultObject(*ClassPin, Class);
+				Node->ReconstructNode();
+			}
+		}
+
+		/// The Construct Object node's own compile-time rule (a BlueprintType
+		/// class that is not abstract, deprecated, an Actor, a component or
+		/// marked DontUseGenericSpawnObject), applied now so the refusal
+		/// names the node to use instead of arriving as a compile error.
+		bool CanConstructObject(const UClass* Class, FString& OutReason)
+		{
+			if (Class->IsChildOf(AActor::StaticClass()))
+			{
+				OutReason = TEXT("is an Actor — use spawn_actor");
+				return false;
+			}
+			if (Class->IsChildOf(UActorComponent::StaticClass()))
+			{
+				OutReason = TEXT("is a component — use add_component_by_class");
+				return false;
+			}
+			if (Class->IsChildOf(UUserWidget::StaticClass()))
+			{
+				OutReason = TEXT("is a widget — use create_widget");
+				return false;
+			}
+			if (Class->HasAnyClassFlags(CLASS_Abstract))
+			{
+				OutReason = TEXT("is abstract");
+				return false;
+			}
+			if (Class->HasAnyClassFlags(CLASS_Deprecated | CLASS_NewerVersionExists))
+			{
+				OutReason = TEXT("is deprecated");
+				return false;
+			}
+			static const FName BlueprintTypeName(TEXT("BlueprintType"));
+			static const FName NotBlueprintTypeName(TEXT("NotBlueprintType"));
+			static const FName DontUseGenericSpawnObjectName(TEXT("DontUseGenericSpawnObject"));
+			for (const UClass* Current = Class; Current != nullptr; Current = Current->GetSuperClass())
+			{
+				if (Current->GetBoolMetaData(NotBlueprintTypeName))
+				{
+					break;
+				}
+				if (Current->GetBoolMetaData(BlueprintTypeName))
+				{
+					if (Current->GetBoolMetaData(DontUseGenericSpawnObjectName))
+					{
+						OutReason = TEXT("is created through its own function (DontUseGenericSpawnObject) — call that with call_function");
+						return false;
+					}
+					return true;
+				}
+			}
+			OutReason = TEXT("is not a BlueprintType class");
+			return false;
+		}
+
+		/// The Play Montage node configures its proxy in its constructor; its
+		/// class is unexported, so it is spawned by class object.
+		UEdGraphNode* CreatePlayMontageNode(UEdGraph* Graph, FString& OutError)
+		{
+			UClass* NodeClass = FindObject<UClass>(nullptr, TEXT("/Script/AnimGraph.K2Node_PlayMontage"));
+			if (NodeClass == nullptr)
+			{
+				OutError = TEXT("the Play Montage node class is not loaded");
+				return nullptr;
+			}
+			FGraphNodeCreator<UK2Node_BaseAsyncTask> Creator(*Graph);
+			UK2Node_BaseAsyncTask* Node = Creator.CreateNode(true, NodeClass);
+			Creator.Finalize();
+			return Node;
+		}
+
+		bool SetReflectedName(UObject* Object, const TCHAR* PropertyName, FName Value, FString& OutError)
+		{
+			FNameProperty* Property = FindFProperty<FNameProperty>(Object->GetClass(), PropertyName);
+			if (Property == nullptr)
+			{
+				OutError = FString::Printf(TEXT("%s has no '%s' property"), *Object->GetClass()->GetName(), PropertyName);
+				return false;
+			}
+			Property->SetPropertyValue_InContainer(Object, Value);
+			return true;
+		}
+
+		bool SetReflectedObject(UObject* Object, const TCHAR* PropertyName, UObject* Value, FString& OutError)
+		{
+			FObjectPropertyBase* Property = FindFProperty<FObjectPropertyBase>(Object->GetClass(), PropertyName);
+			if (Property == nullptr)
+			{
+				OutError = FString::Printf(TEXT("%s has no '%s' property"), *Object->GetClass()->GetName(), PropertyName);
+				return false;
+			}
+			Property->SetObjectPropertyValue_InContainer(Object, Value);
 			return true;
 		}
 	}
@@ -501,26 +674,15 @@ namespace McpLink
 		// ------------------------------------------------------- spawning / structs
 		if (NodeType.Equals(TEXT("spawn_actor"), ESearchCase::IgnoreCase))
 		{
+			UClass* Spawned = nullptr;
+			if (!ResolveClassPin(Body, AActor::StaticClass(), TEXT("actor class"), Spawned, OutError))
+			{
+				return nullptr;
+			}
 			FGraphNodeCreator<UK2Node_SpawnActorFromClass> Creator(*Graph);
 			UK2Node_SpawnActorFromClass* Node = Creator.CreateNode();
 			Creator.Finalize();
-			const FString ClassSpec = StringField(Body, TEXT("class"));
-			if (!ClassSpec.IsEmpty())
-			{
-				UClass* Spawned = ResolveClass(ClassSpec);
-				if (Spawned == nullptr)
-				{
-					OutError = FString::Printf(TEXT("no class '%s' to spawn"), *ClassSpec);
-					return nullptr;
-				}
-				// Setting the class pin's default is what grows the node's
-				// exposed-on-spawn pins.
-				if (UEdGraphPin* ClassPin = Node->GetClassPin())
-				{
-					Graph->GetSchema()->TrySetDefaultObject(*ClassPin, Spawned);
-					Node->ReconstructNode();
-				}
-			}
+			SetClassPin(Node, Graph, Spawned);
 			return Node;
 		}
 
@@ -750,11 +912,526 @@ namespace McpLink
 			return Node;
 		}
 
+		// ------------------------------------------------------------ input events
+		if (NodeType.Equals(TEXT("enhanced_input_action"), ESearchCase::IgnoreCase))
+		{
+			const FString AssetSpec = StringField(Body, TEXT("object"));
+			if (AssetSpec.IsEmpty())
+			{
+				OutError = TEXT("'object' is required — the Input Action asset, e.g. /Game/Input/IA_Jump "
+								"(input_asset_ops lists and creates them)");
+				return nullptr;
+			}
+			const UInputAction* Action = Cast<UInputAction>(ResolveAsset(AssetSpec));
+			if (Action == nullptr)
+			{
+				OutError = FString::Printf(
+					TEXT("no Input Action asset at '%s' — input_asset_ops lists and creates them"), *AssetSpec);
+				return nullptr;
+			}
+			// The editor places one event node per action and jumps to the
+			// existing one after that, so a second is refused the same way a
+			// second ReceiveBeginPlay is.
+			TArray<UK2Node_EnhancedInputAction*> Existing;
+			FBlueprintEditorUtils::GetAllNodesOfClass(Blueprint, Existing);
+			for (const UK2Node_EnhancedInputAction* Node : Existing)
+			{
+				if (Node->InputAction == Action)
+				{
+					OutError = FString::Printf(
+						TEXT("'%s' already has an event node %s in graph '%s' — a Blueprint holds one per action"),
+						*Action->GetName(), *Node->NodeGuid.ToString(), *GraphPath(Node->GetGraph()));
+					return nullptr;
+				}
+			}
+			FGraphNodeCreator<UK2Node_EnhancedInputAction> Creator(*Graph);
+			UK2Node_EnhancedInputAction* Node = Creator.CreateNode();
+			Node->InputAction = Action;
+			Creator.Finalize();
+			return Node;
+		}
+
+		if (NodeType.Equals(TEXT("input_key"), ESearchCase::IgnoreCase))
+		{
+			const FString KeyName = StringField(Body, TEXT("key"));
+			if (KeyName.IsEmpty())
+			{
+				OutError = TEXT("'key' is required — a key name such as SpaceBar, E, LeftMouseButton or Gamepad_FaceButton_Bottom");
+				return nullptr;
+			}
+			const FKey Key(*KeyName);
+			if (!Key.IsValid())
+			{
+				OutError = FString::Printf(
+					TEXT("'%s' is not a key name — use the engine's FKey names (SpaceBar, E, LeftMouseButton, ")
+					TEXT("Gamepad_FaceButton_Bottom, ...)"),
+					*KeyName);
+				return nullptr;
+			}
+			FGraphNodeCreator<UK2Node_InputKey> Creator(*Graph);
+			UK2Node_InputKey* Node = Creator.CreateNode();
+			Node->InputKey = Key;
+			if (Body->HasField(TEXT("consume_input")))
+			{
+				Node->bConsumeInput = BoolOr(Body, TEXT("consume_input"), true);
+			}
+			const TArray<TSharedPtr<FJsonValue>>* Modifiers = nullptr;
+			if (Body->TryGetArrayField(TEXT("modifiers"), Modifiers))
+			{
+				for (const TSharedPtr<FJsonValue>& Value : *Modifiers)
+				{
+					FString Modifier;
+					if (Value.IsValid())
+					{
+						Value->TryGetString(Modifier);
+					}
+					if (Modifier.Equals(TEXT("control"), ESearchCase::IgnoreCase) || Modifier.Equals(TEXT("ctrl"), ESearchCase::IgnoreCase))
+					{
+						Node->bControl = true;
+					}
+					else if (Modifier.Equals(TEXT("alt"), ESearchCase::IgnoreCase))
+					{
+						Node->bAlt = true;
+					}
+					else if (Modifier.Equals(TEXT("shift"), ESearchCase::IgnoreCase))
+					{
+						Node->bShift = true;
+					}
+					else if (Modifier.Equals(TEXT("command"), ESearchCase::IgnoreCase) || Modifier.Equals(TEXT("cmd"), ESearchCase::IgnoreCase))
+					{
+						Node->bCommand = true;
+					}
+					else
+					{
+						OutError = FString::Printf(
+							TEXT("unknown modifier '%s' — modifiers are control, alt, shift and command"), *Modifier);
+						return nullptr;
+					}
+				}
+			}
+			Creator.Finalize();
+			return Node;
+		}
+
+		if (NodeType.Equals(TEXT("input_action"), ESearchCase::IgnoreCase)
+			|| NodeType.Equals(TEXT("input_axis"), ESearchCase::IgnoreCase))
+		{
+			const bool bAxis = NodeType.Equals(TEXT("input_axis"), ESearchCase::IgnoreCase);
+			const FString Name = StringField(Body, TEXT("name"));
+			if (Name.IsEmpty())
+			{
+				OutError = FString::Printf(
+					TEXT("'name' is required — the legacy %s mapping name from Project Settings > Input, e.g. %s"),
+					bAxis ? TEXT("axis") : TEXT("action"), bAxis ? TEXT("MoveForward") : TEXT("Jump"));
+				return nullptr;
+			}
+			if (bAxis)
+			{
+				FGraphNodeCreator<UK2Node_InputAxisEvent> Creator(*Graph);
+				UK2Node_InputAxisEvent* Node = Creator.CreateNode();
+				// Names the event function the node compiles to; must precede
+				// pin allocation.
+				Node->Initialize(FName(*Name));
+				if (Body->HasField(TEXT("consume_input")))
+				{
+					Node->bConsumeInput = BoolOr(Body, TEXT("consume_input"), true);
+				}
+				Creator.Finalize();
+				return Node;
+			}
+			FGraphNodeCreator<UK2Node_InputAction> Creator(*Graph);
+			UK2Node_InputAction* Node = Creator.CreateNode();
+			Node->InputActionName = FName(*Name);
+			if (Body->HasField(TEXT("consume_input")))
+			{
+				Node->bConsumeInput = BoolOr(Body, TEXT("consume_input"), true);
+			}
+			Creator.Finalize();
+			return Node;
+		}
+
+		// ----------------------------------------------------- object construction
+		if (NodeType.Equals(TEXT("construct_object"), ESearchCase::IgnoreCase))
+		{
+			UClass* Class = nullptr;
+			if (!ResolveClassPin(Body, UObject::StaticClass(), TEXT("class"), Class, OutError))
+			{
+				return nullptr;
+			}
+			FString Reason;
+			if (Class != nullptr && !CanConstructObject(Class, Reason))
+			{
+				OutError = FString::Printf(TEXT("'%s' %s"), *Class->GetName(), *Reason);
+				return nullptr;
+			}
+			FGraphNodeCreator<UK2Node_GenericCreateObject> Creator(*Graph);
+			UK2Node_GenericCreateObject* Node = Creator.CreateNode();
+			Creator.Finalize();
+			SetClassPin(Node, Graph, Class);
+			return Node;
+		}
+
+		if (NodeType.Equals(TEXT("add_component_by_class"), ESearchCase::IgnoreCase))
+		{
+			UClass* Class = nullptr;
+			if (!ResolveClassPin(Body, UActorComponent::StaticClass(), TEXT("component class"), Class, OutError))
+			{
+				return nullptr;
+			}
+			FGraphNodeCreator<UK2Node_AddComponentByClass> Creator(*Graph);
+			UK2Node_AddComponentByClass* Node = Creator.CreateNode();
+			Creator.Finalize();
+			SetClassPin(Node, Graph, Class);
+			return Node;
+		}
+
+		if (NodeType.Equals(TEXT("create_widget"), ESearchCase::IgnoreCase))
+		{
+			UClass* Class = nullptr;
+			if (!ResolveClassPin(Body, UUserWidget::StaticClass(), TEXT("widget class"), Class, OutError))
+			{
+				return nullptr;
+			}
+			// The node class lives in UMGEditor's private headers; the
+			// Construct Object base it derives from is the exported surface.
+			UClass* NodeClass = FindObject<UClass>(nullptr, TEXT("/Script/UMGEditor.K2Node_CreateWidget"));
+			if (NodeClass == nullptr)
+			{
+				OutError = TEXT("the UMG editor's Create Widget node class is not loaded");
+				return nullptr;
+			}
+			FGraphNodeCreator<UK2Node_ConstructObjectFromClass> Creator(*Graph);
+			UK2Node_ConstructObjectFromClass* Node = Creator.CreateNode(true, NodeClass);
+			Creator.Finalize();
+			SetClassPin(Node, Graph, Class);
+			return Node;
+		}
+
+		// ------------------------------------------------------------ async actions
+		if (NodeType.Equals(TEXT("async_action"), ESearchCase::IgnoreCase)
+			|| NodeType.Equals(TEXT("latent_action"), ESearchCase::IgnoreCase))
+		{
+			const FString FunctionName = StringField(Body, TEXT("function"));
+			UClass* Owner = TargetClass(Blueprint, Body, OutError);
+			if (Owner == nullptr)
+			{
+				return nullptr;
+			}
+			UFunction* Factory = Owner->FindFunctionByName(FName(*FunctionName));
+			if (Factory == nullptr)
+			{
+				OutError = FString::Printf(
+					TEXT("'%s' has no function '%s' — an async action is created by a static factory function on ")
+					TEXT("its proxy class, e.g. class AsyncActionLoadPrimaryAsset, function AsyncLoadPrimaryAsset, ")
+					TEXT("or class AbilityTask_WaitGameplayEvent, function WaitGameplayEvent"),
+					*Owner->GetName(), *FunctionName);
+				return nullptr;
+			}
+			const FObjectProperty* ReturnProperty = CastField<FObjectProperty>(Factory->GetReturnProperty());
+			if (!Factory->HasAnyFunctionFlags(FUNC_Static) || ReturnProperty == nullptr)
+			{
+				OutError = FString::Printf(
+					TEXT("'%s' is not an async action factory — it must be a static function returning the ")
+					TEXT("proxy object; a plain latent function (Delay, LoadAsset) is a call_function node"),
+					*FunctionName);
+				return nullptr;
+			}
+			UClass* Proxy = ReturnProperty->PropertyClass;
+
+			// Blueprint async actions have a node of their own that reads the
+			// factory function directly.
+			if (Proxy->IsChildOf(UBlueprintAsyncActionBase::StaticClass()))
+			{
+				FGraphNodeCreator<UK2Node_AsyncAction> Creator(*Graph);
+				UK2Node_AsyncAction* Node = Creator.CreateNode();
+				Node->InitializeProxyFromFunction(Factory);
+				Creator.Finalize();
+				return Node;
+			}
+
+			// Play Montage's node configures itself from its constructor.
+			const UClass* MontageProxy = FindObject<UClass>(nullptr, TEXT("/Script/AnimGraphRuntime.PlayMontageCallbackProxy"));
+			if (MontageProxy != nullptr && Proxy->IsChildOf(MontageProxy))
+			{
+				return CreatePlayMontageNode(Graph, OutError);
+			}
+
+			// Gameplay tasks (ability tasks included) use the latent task-call
+			// nodes, whose classes export nothing: the proxy fields are the
+			// same protected UPROPERTYs the engine's own menu spawner fills
+			// in, so they are set by reflection.
+			const UClass* GameplayTask = FindObject<UClass>(nullptr, TEXT("/Script/GameplayTasks.GameplayTask"));
+			if (GameplayTask != nullptr && Proxy->IsChildOf(GameplayTask))
+			{
+				UClass* NodeClass = nullptr;
+				const UClass* AbilityTask = FindObject<UClass>(nullptr, TEXT("/Script/GameplayAbilities.AbilityTask"));
+				if (AbilityTask != nullptr && Proxy->IsChildOf(AbilityTask))
+				{
+					NodeClass = FindObject<UClass>(nullptr, TEXT("/Script/GameplayAbilitiesEditor.K2Node_LatentAbilityCall"));
+				}
+				if (NodeClass == nullptr)
+				{
+					NodeClass = FindObject<UClass>(nullptr, TEXT("/Script/GameplayTasksEditor.K2Node_LatentGameplayTaskCall"));
+				}
+				if (NodeClass == nullptr)
+				{
+					OutError = TEXT("the gameplay task node classes are not loaded — enable the GameplayTasks (and GameplayAbilities) plugins");
+					return nullptr;
+				}
+				FGraphNodeCreator<UK2Node_BaseAsyncTask> Creator(*Graph);
+				UK2Node_BaseAsyncTask* Node = Creator.CreateNode(true, NodeClass);
+				if (!SetReflectedName(Node, TEXT("ProxyFactoryFunctionName"), Factory->GetFName(), OutError)
+					|| !SetReflectedObject(Node, TEXT("ProxyFactoryClass"), Owner, OutError)
+					|| !SetReflectedObject(Node, TEXT("ProxyClass"), Proxy, OutError))
+				{
+					return nullptr;
+				}
+				Creator.Finalize();
+				return Node;
+			}
+
+			OutError = FString::Printf(
+				TEXT("'%s' returns a %s, which is not an async action proxy — expected a BlueprintAsyncActionBase, ")
+				TEXT("a GameplayTask (ability tasks included) or the Play Montage proxy"),
+				*FunctionName, *Proxy->GetName());
+			return nullptr;
+		}
+
+		if (NodeType.Equals(TEXT("play_montage"), ESearchCase::IgnoreCase))
+		{
+			return CreatePlayMontageNode(Graph, OutError);
+		}
+
+		// -------------------------------------------------------------- interfaces
+		if (NodeType.Equals(TEXT("interface_message"), ESearchCase::IgnoreCase))
+		{
+			const FString FunctionName = StringField(Body, TEXT("function"));
+			UClass* Interface = TargetClass(Blueprint, Body, OutError);
+			if (Interface == nullptr)
+			{
+				return nullptr;
+			}
+			if (!Interface->HasAnyClassFlags(CLASS_Interface))
+			{
+				OutError = FString::Printf(
+					TEXT("'%s' is not an interface — pass a Blueprint Interface asset path or a UInterface class as 'class'"),
+					*Interface->GetName());
+				return nullptr;
+			}
+			UFunction* Function = Interface->FindFunctionByName(FName(*FunctionName));
+			if (Function == nullptr)
+			{
+				TArray<FString> Names;
+				for (TFieldIterator<UFunction> It(Interface, EFieldIteratorFlags::ExcludeSuper); It; ++It)
+				{
+					Names.Add(It->GetName());
+				}
+				OutError = FString::Printf(
+					TEXT("interface '%s' has no function '%s' — it has: %s"),
+					*Interface->GetName(), *FunctionName,
+					Names.IsEmpty() ? TEXT("(none)") : *FString::Join(Names, TEXT(", ")));
+				return nullptr;
+			}
+			FGraphNodeCreator<UK2Node_Message> Creator(*Graph);
+			UK2Node_Message* Node = Creator.CreateNode();
+			Node->SetFromFunction(Function);
+			Creator.Finalize();
+			return Node;
+		}
+
+		// ------------------------------------------------------- data and services
+		if (NodeType.Equals(TEXT("get_data_table_row"), ESearchCase::IgnoreCase))
+		{
+			UDataTable* Table = nullptr;
+			const FString TableSpec = StringField(Body, TEXT("object"));
+			if (!TableSpec.IsEmpty())
+			{
+				Table = Cast<UDataTable>(ResolveAsset(TableSpec));
+				if (Table == nullptr)
+				{
+					OutError = FString::Printf(
+						TEXT("no DataTable asset at '%s' — data_table_ops lists and creates them"), *TableSpec);
+					return nullptr;
+				}
+			}
+			// Checked before the node exists, so a bad row leaves no orphan.
+			const FString RowName = StringField(Body, TEXT("name"));
+			if (!RowName.IsEmpty())
+			{
+				if (Table == nullptr)
+				{
+					OutError = TEXT("'name' (the row) needs 'object' (the DataTable it lives in)");
+					return nullptr;
+				}
+				if (Table->GetRowMap().Find(FName(*RowName)) == nullptr)
+				{
+					OutError = FString::Printf(
+						TEXT("'%s' has no row '%s' — data_table_ops get_rows names them"),
+						*Table->GetName(), *RowName);
+					return nullptr;
+				}
+			}
+			FGraphNodeCreator<UK2Node_GetDataTableRow> Creator(*Graph);
+			UK2Node_GetDataTableRow* Node = Creator.CreateNode();
+			Creator.Finalize();
+			if (Table != nullptr)
+			{
+				// The table pin's default is what types the output row struct
+				// and offers the row names.
+				if (UEdGraphPin* TablePin = Node->GetDataTablePin())
+				{
+					Graph->GetSchema()->TrySetDefaultObject(*TablePin, Table);
+					Node->ReconstructNode();
+				}
+				if (!RowName.IsEmpty())
+				{
+					if (UEdGraphPin* RowPin = Node->GetRowNamePin())
+					{
+						Graph->GetSchema()->TrySetDefaultValue(*RowPin, RowName);
+					}
+				}
+			}
+			return Node;
+		}
+
+		if (NodeType.Equals(TEXT("get_subsystem"), ESearchCase::IgnoreCase))
+		{
+			const FString ClassSpec = StringField(Body, TEXT("class"));
+			UClass* SubsystemClass = ClassSpec.IsEmpty() ? nullptr : ResolveClass(ClassSpec);
+			if (SubsystemClass == nullptr || !SubsystemClass->IsChildOf(USubsystem::StaticClass()))
+			{
+				OutError = ClassSpec.IsEmpty()
+					? FString(TEXT("'class' is required — the subsystem class, e.g. EnhancedInputLocalPlayerSubsystem; subsystem_query lists the live ones"))
+					: FString::Printf(TEXT("'%s' is not a subsystem class — subsystem_query lists the live ones"), *ClassSpec);
+				return nullptr;
+			}
+			// Engine and editor subsystems have nodes of their own; local
+			// player subsystems can be fetched off a player controller.
+			TSubclassOf<UK2Node_GetSubsystem> NodeClass = UK2Node_GetSubsystem::StaticClass();
+			const UClass* EditorSubsystem = FindObject<UClass>(nullptr, TEXT("/Script/EditorSubsystem.EditorSubsystem"));
+			if (SubsystemClass->IsChildOf(UEngineSubsystem::StaticClass()))
+			{
+				NodeClass = FindObject<UClass>(nullptr, TEXT("/Script/BlueprintGraph.K2Node_GetEngineSubsystem"));
+			}
+			else if (EditorSubsystem != nullptr && SubsystemClass->IsChildOf(EditorSubsystem))
+			{
+				NodeClass = FindObject<UClass>(nullptr, TEXT("/Script/BlueprintGraph.K2Node_GetEditorSubsystem"));
+			}
+			else if (SubsystemClass->IsChildOf(ULocalPlayerSubsystem::StaticClass())
+				&& BoolOr(Body, TEXT("player_controller"), false))
+			{
+				NodeClass = FindObject<UClass>(nullptr, TEXT("/Script/BlueprintGraph.K2Node_GetSubsystemFromPC"));
+			}
+			if (NodeClass.Get() == nullptr)
+			{
+				OutError = TEXT("the subsystem node class is not loaded");
+				return nullptr;
+			}
+			FGraphNodeCreator<UK2Node_GetSubsystem> Creator(*Graph);
+			UK2Node_GetSubsystem* Node = Creator.CreateNode(true, NodeClass);
+			Node->Initialize(SubsystemClass);
+			Creator.Finalize();
+			return Node;
+		}
+
+		// ---------------------------------------------------- operators and structs
+		if (NodeType.Equals(TEXT("operator"), ESearchCase::IgnoreCase)
+			|| NodeType.Equals(TEXT("promotable_operator"), ESearchCase::IgnoreCase))
+		{
+			TArray<FName> OpNames = FTypePromotion::GetAllOpNames().Array();
+			OpNames.Sort(FNameLexicalLess());
+			TArray<FString> OpList;
+			for (const FName& Name : OpNames)
+			{
+				OpList.Add(Name.ToString());
+			}
+			const FString OpSpec = StringField(Body, TEXT("operator"));
+			FName Op = NAME_None;
+			for (const FName& Name : OpNames)
+			{
+				if (Name.ToString().Equals(OpSpec, ESearchCase::IgnoreCase))
+				{
+					Op = Name;
+				}
+			}
+			if (Op.IsNone())
+			{
+				OutError = OpSpec.IsEmpty()
+					? FString::Printf(TEXT("'operator' is required — one of: %s"), *FString::Join(OpList, TEXT(", ")))
+					: FString::Printf(TEXT("no promotable operator '%s' — one of: %s"), *OpSpec, *FString::Join(OpList, TEXT(", ")));
+				return nullptr;
+			}
+			// The node goes wildcard and promotes to whatever is wired, so
+			// the starting function only decides the title: the all-double
+			// overload reads as "Multiply", the palette's registered entry
+			// can be any overload ("Seconds * FrameRate").
+			TArray<UFunction*> Candidates;
+			FTypePromotion::GetAllFuncsForOp(Op, Candidates);
+			const UFunction* Function = nullptr;
+			for (const UFunction* Candidate : Candidates)
+			{
+				bool bAllDouble = true;
+				for (TFieldIterator<FProperty> It(Candidate); It && It->HasAnyPropertyFlags(CPF_Parm); ++It)
+				{
+					if (!It->HasAnyPropertyFlags(CPF_ReturnParm) && !It->IsA<FDoubleProperty>())
+					{
+						bAllDouble = false;
+					}
+				}
+				if (bAllDouble)
+				{
+					Function = Candidate;
+					break;
+				}
+			}
+			if (Function == nullptr)
+			{
+				if (const UBlueprintFunctionNodeSpawner* Spawner = FTypePromotion::GetOperatorSpawner(Op))
+				{
+					Function = Spawner->GetFunction();
+				}
+			}
+			if (Function == nullptr && !Candidates.IsEmpty())
+			{
+				Function = Candidates[0];
+			}
+			if (Function == nullptr)
+			{
+				OutError = FString::Printf(TEXT("no operator function registered for '%s'"), *Op.ToString());
+				return nullptr;
+			}
+			FGraphNodeCreator<UK2Node_PromotableOperator> Creator(*Graph);
+			UK2Node_PromotableOperator* Node = Creator.CreateNode();
+			// The override that records the operation name is unexported;
+			// the exported base entry point dispatches to it.
+			static_cast<UK2Node_CallFunction*>(Node)->SetFromFunction(Function);
+			Creator.Finalize();
+			return Node;
+		}
+
+		if (NodeType.Equals(TEXT("set_fields_in_struct"), ESearchCase::IgnoreCase))
+		{
+			UScriptStruct* Struct = ResolveStruct(StringField(Body, TEXT("struct")));
+			if (Struct == nullptr)
+			{
+				OutError = TEXT("'struct' is required — a struct name or path, e.g. Vector, /Script/Engine.HitResult");
+				return nullptr;
+			}
+			FGraphNodeCreator<UK2Node_SetFieldsInStruct> Creator(*Graph);
+			UK2Node_SetFieldsInStruct* Node = Creator.CreateNode();
+			Node->StructType = Struct;
+			Creator.Finalize();
+			return Node;
+		}
+
 		OutError = FString::Printf(
 			TEXT("unknown node_type '%s' — use call_function, call_parent_function, variable_get, ")
-			TEXT("variable_set, event, custom_event, component_bound_event, branch, sequence, select, ")
+			TEXT("variable_set, event, custom_event, component_bound_event, enhanced_input_action, ")
+			TEXT("input_key, input_action, input_axis, branch, sequence, select, ")
 			TEXT("switch_int, switch_string, switch_name, switch_enum, macro, cast, class_cast, ")
-			TEXT("spawn_actor, make_struct, break_struct, make_array, make_set, make_map, ")
+			TEXT("spawn_actor, construct_object, add_component_by_class, create_widget, async_action, ")
+			TEXT("play_montage, interface_message, get_data_table_row, get_subsystem, operator, ")
+			TEXT("make_struct, break_struct, set_fields_in_struct, make_array, make_set, make_map, ")
 			TEXT("get_array_item, format_text, self, literal, enum_literal, reroute, comment, ")
 			TEXT("timeline, call_delegate, bind_delegate, unbind_delegate, clear_delegate or assign_delegate"),
 			*NodeType);

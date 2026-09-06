@@ -6,7 +6,16 @@
 // resolves state / transition graphs by path ("Locomotion/Idle").
 
 #include "AnimGraphNode_AssetPlayerBase.h"
+#include "AnimGraphNode_LinkedAnimGraph.h"
+#include "AnimGraphNode_LinkedAnimLayer.h"
+#include "AnimGraphNode_Root.h"
 #include "AnimGraphNode_StateMachine.h"
+#include "Animation/AnimLayerInterface.h"
+#include "AnimationGraphSchema.h"
+#include "Engine/MemberReference.h"
+#include "Kismet2/KismetEditorUtilities.h"
+#include "McpAssetUtils.h"
+#include "UObject/UnrealType.h"
 #include "AnimStateNode.h"
 #include "AnimStateTransitionNode.h"
 #include "Animation/AnimBlueprint.h"
@@ -30,6 +39,147 @@
 #include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
 #include "UObject/Package.h"
+
+// Linked anim layers: interface assets declaring layer graphs, Blueprints
+// implementing them, and the nodes that run a layer or another anim class.
+namespace McpLink::AnimLayers
+{
+	// A layer graph declared on this Blueprint (interface or self layer), or
+	// one it received by implementing an interface.
+	UEdGraph* FindLayerGraph(UAnimBlueprint* Blueprint, FName Name, TSubclassOf<UInterface>& OutInterface, FGuid& OutGuid)
+	{
+		OutInterface = nullptr;
+		OutGuid = FGuid();
+		for (const FBPInterfaceDescription& Description : Blueprint->ImplementedInterfaces)
+		{
+			for (UEdGraph* Graph : Description.Graphs)
+			{
+				if (Graph != nullptr && Graph->GetFName() == Name)
+				{
+					OutInterface = Description.Interface;
+					OutGuid = Graph->InterfaceGuid;
+					return Graph;
+				}
+			}
+		}
+		for (UEdGraph* Graph : Blueprint->FunctionGraphs)
+		{
+			if (Graph != nullptr && Graph->GetFName() == Name && Graph->IsA<UAnimationGraph>())
+			{
+				return Graph;
+			}
+		}
+		return nullptr;
+	}
+
+	// The editor's New Animation Layer: an animation graph among the
+	// function graphs, with the group as its category.
+	UEdGraph* AddLayerGraph(UAnimBlueprint* Blueprint, const FString& Name, const FString& Group, FString& OutError)
+	{
+		if (!FName::IsValidXName(Name, INVALID_OBJECTNAME_CHARACTERS))
+		{
+			OutError = FString::Printf(TEXT("'%s' is not a valid layer name"), *Name);
+			return nullptr;
+		}
+		TSubclassOf<UInterface> Interface;
+		FGuid Guid;
+		if (FindLayerGraph(Blueprint, FName(*Name), Interface, Guid) != nullptr || FindObject<UEdGraph>(Blueprint, *Name) != nullptr)
+		{
+			OutError = FString::Printf(TEXT("the Blueprint already has a graph named '%s'"), *Name);
+			return nullptr;
+		}
+		UEdGraph* Graph = FBlueprintEditorUtils::CreateNewGraph(Blueprint, FName(*Name), UAnimationGraph::StaticClass(), UAnimationGraphSchema::StaticClass());
+		FBlueprintEditorUtils::AddDomainSpecificGraph(Blueprint, Graph);
+		if (!Group.IsEmpty())
+		{
+			// The group lives on the graph's root node and becomes the
+			// function's category when the interface compiles.
+			FBlueprintEditorUtils::SetAnimationGraphLayerGroup(Graph, FText::FromString(Group));
+		}
+		return Graph;
+	}
+
+	FString LayerGroupOf(UEdGraph* Graph)
+	{
+		for (UEdGraphNode* Node : Graph->Nodes)
+		{
+			if (const UAnimGraphNode_Root* Root = Cast<UAnimGraphNode_Root>(Node))
+			{
+				return Root->Node.GetGroup().ToString();
+			}
+		}
+		return FString();
+	}
+
+	TSharedRef<FJsonObject> LayersJson(UAnimBlueprint* Blueprint)
+	{
+		const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+		Data->SetStringField(TEXT("blueprint"), Blueprint->GetPathName());
+		Data->SetBoolField(TEXT("is_interface"), Blueprint->BlueprintType == BPTYPE_Interface);
+		TArray<TSharedPtr<FJsonValue>> Own;
+		for (UEdGraph* Graph : Blueprint->FunctionGraphs)
+		{
+			if (Graph != nullptr && Graph->IsA<UAnimationGraph>())
+			{
+				const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+				Entry->SetStringField(TEXT("layer"), Graph->GetName());
+				Entry->SetStringField(TEXT("group"), LayerGroupOf(Graph));
+				Entry->SetNumberField(TEXT("nodes"), Graph->Nodes.Num());
+				Own.Add(MakeShared<FJsonValueObject>(Entry));
+			}
+		}
+		Data->SetArrayField(TEXT("layers"), Own);
+		TArray<TSharedPtr<FJsonValue>> Interfaces;
+		for (const FBPInterfaceDescription& Description : Blueprint->ImplementedInterfaces)
+		{
+			const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+			Entry->SetStringField(TEXT("interface"), Description.Interface != nullptr ? Description.Interface->GetPathName() : FString());
+			TArray<TSharedPtr<FJsonValue>> Graphs;
+			for (UEdGraph* Graph : Description.Graphs)
+			{
+				if (Graph != nullptr)
+				{
+					const TSharedRef<FJsonObject> GraphEntry = MakeShared<FJsonObject>();
+					GraphEntry->SetStringField(TEXT("layer"), Graph->GetName());
+					GraphEntry->SetNumberField(TEXT("nodes"), Graph->Nodes.Num());
+					Graphs.Add(MakeShared<FJsonValueObject>(GraphEntry));
+				}
+			}
+			Entry->SetArrayField(TEXT("layers"), Graphs);
+			Interfaces.Add(MakeShared<FJsonValueObject>(Entry));
+		}
+		Data->SetArrayField(TEXT("implemented_interfaces"), Interfaces);
+		return Data;
+	}
+
+	bool ConnectPoseToGraphResult(UEdGraph* Graph, UEdGraphPin* PosePin, FString& OutError)
+	{
+		for (UEdGraphNode* Node : Graph->Nodes)
+		{
+			if (Node != nullptr && Node->IsA<UAnimGraphNode_Root>())
+			{
+				UEdGraphPin* Result = Node->FindPin(TEXT("Result"), EGPD_Input);
+				if (Result != nullptr && PosePin != nullptr && Graph->GetSchema()->TryCreateConnection(PosePin, Result))
+				{
+					return true;
+				}
+				OutError = TEXT("the graph's output pose did not accept the node's pose");
+				return false;
+			}
+		}
+		OutError = TEXT("the graph has no output pose node");
+		return false;
+	}
+
+	UClass* ResolveAnimClass(const FString& Spec)
+	{
+		if (UBlueprint* AsBlueprint = Cast<UBlueprint>(ResolveAsset(Spec)))
+		{
+			return AsBlueprint->GeneratedClass;
+		}
+		return ResolveClass(Spec);
+	}
+}
 
 namespace McpLink
 {
@@ -301,6 +451,9 @@ namespace McpLink
 						MachineValues.Add(MakeShared<FJsonValueObject>(Anim::StateMachineToJson(Machine)));
 					}
 					Data->SetArrayField(TEXT("state_machines"), MachineValues);
+					const TSharedRef<FJsonObject> Layers = AnimLayers::LayersJson(Blueprint);
+					Data->SetArrayField(TEXT("layers"), Layers->GetArrayField(TEXT("layers")));
+					Data->SetArrayField(TEXT("implemented_interfaces"), Layers->GetArrayField(TEXT("implemented_interfaces")));
 					Responder->Ok(Data);
 					return;
 				}
@@ -386,12 +539,220 @@ namespace McpLink
 					return;
 				}
 
+				if (Operation == TEXT("create_layer_interface"))
+				{
+					FString Path;
+					if (!RequireString(Body, TEXT("path"), Path, Responder, TEXT("the interface's package path, e.g. /Game/Anim/ALI_Hero")))
+					{
+						return;
+					}
+					if (FindPackage(nullptr, *Path) != nullptr || FPackageName::DoesPackageExist(Path))
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("already_exists"),
+							FString::Printf(TEXT("an asset already exists at '%s'"), *Path));
+						return;
+					}
+					const FScopedTransaction Transaction(
+						NSLOCTEXT("McpLink", "CreateAnimLayerInterface", "McpLink Create Animation Layer Interface"));
+					UPackage* Package = CreatePackage(*Path);
+					// What the Animation Layer Interface factory does: an interface-kind
+					// Animation Blueprint whose parent is the marker interface.
+					UAnimBlueprint* Interface = Cast<UAnimBlueprint>(FKismetEditorUtilities::CreateBlueprint(
+						UAnimLayerInterface::StaticClass(), Package, FName(*FPackageName::GetShortName(Path)), BPTYPE_Interface,
+						UAnimBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
+					if (Interface == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("create_failed"), TEXT("CreateBlueprint returned null"));
+						return;
+					}
+					FAssetRegistryModule::AssetCreated(Interface);
+					Interface->MarkPackageDirty();
+					FString Group;
+					Body->TryGetStringField(TEXT("group"), Group);
+					const TArray<TSharedPtr<FJsonValue>>* Layers = nullptr;
+					if (Body->TryGetArrayField(TEXT("layers"), Layers))
+					{
+						for (const TSharedPtr<FJsonValue>& Layer : *Layers)
+						{
+							FString Error;
+							if (!Layer.IsValid() || AnimLayers::AddLayerGraph(Interface, Layer->AsString(), Group, Error) == nullptr)
+							{
+								Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_layer"), Error);
+								return;
+							}
+						}
+					}
+					// Compiled, so the interface class carries the layer functions
+					// another Blueprint's implement_layer_interface looks for.
+					FKismetEditorUtilities::CompileBlueprint(Interface);
+					const TSharedRef<FJsonObject> Data = AnimLayers::LayersJson(Interface);
+					Data->SetStringField(TEXT("message"), TEXT("created in memory — implement_layer_interface on an Animation Blueprint, then blueprint_modify save both"));
+					Responder->Ok(Data);
+					return;
+				}
+
 				UAnimBlueprint* Blueprint = AnimBlueprintOrError(Body, Responder);
 				if (!Blueprint) { return; }
 
 				const FScopedTransaction Transaction(
 					NSLOCTEXT("McpLink", "ModifyAnimBlueprint", "McpLink Modify Animation Blueprint"));
 				Blueprint->Modify();
+
+				if (Operation == TEXT("add_layer"))
+				{
+					FString Name, Group;
+					if (!RequireString(Body, TEXT("name"), Name, Responder, TEXT("the layer's name")))
+					{
+						return;
+					}
+					Body->TryGetStringField(TEXT("group"), Group);
+					if (Blueprint->BlueprintType != BPTYPE_Interface)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("not_an_interface"),
+							TEXT("layers are declared on an Animation Layer Interface (create_layer_interface); a normal Animation Blueprint gets them through implement_layer_interface"));
+						return;
+					}
+					FString Error;
+					if (AnimLayers::AddLayerGraph(Blueprint, Name, Group, Error) == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("invalid_layer"), Error);
+						return;
+					}
+					FKismetEditorUtilities::CompileBlueprint(Blueprint);
+					Responder->Ok(AnimLayers::LayersJson(Blueprint));
+					return;
+				}
+
+				if (Operation == TEXT("implement_layer_interface"))
+				{
+					FString InterfaceSpec;
+					if (!RequireString(Body, TEXT("interface"), InterfaceSpec, Responder, TEXT("an Animation Layer Interface asset path")))
+					{
+						return;
+					}
+					UAnimBlueprint* Interface = Cast<UAnimBlueprint>(LoadAssetFlexible(InterfaceSpec));
+					if (Interface == nullptr || Interface->BlueprintType != BPTYPE_Interface || Interface->GeneratedClass == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("interface_not_found"),
+							FString::Printf(TEXT("'%s' is not a compiled Animation Layer Interface"), *InterfaceSpec));
+						return;
+					}
+					if (!FBlueprintEditorUtils::ImplementNewInterface(Blueprint, FTopLevelAssetPath(Interface->GeneratedClass)))
+					{
+						Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("implement_refused"),
+							TEXT("the Blueprint refused the interface — already implemented, or it is not an Animation Blueprint (see get_logs)"));
+						return;
+					}
+					const TSharedRef<FJsonObject> Data = AnimLayers::LayersJson(Blueprint);
+					Data->SetStringField(TEXT("message"), TEXT("each layer is now an animation graph named after it — build its pose with blueprint_modify, then add_linked_layer_node runs it in AnimGraph"));
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("add_linked_layer_node") || Operation == TEXT("add_linked_graph_node"))
+				{
+					FString GraphName;
+					Body->TryGetStringField(TEXT("graph"), GraphName);
+					UAnimationGraph* Graph = Anim::FindAnimGraph(Blueprint, GraphName);
+					if (Graph == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("graph_not_found"),
+							FString::Printf(TEXT("no animation graph '%s' in the Blueprint"), *GraphName));
+						return;
+					}
+					const int32 X = IntOr(Body, TEXT("x"), 0);
+					const int32 Y = IntOr(Body, TEXT("y"), 0);
+					UAnimGraphNode_LinkedAnimGraphBase* Node = nullptr;
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					if (Operation == TEXT("add_linked_layer_node"))
+					{
+						FString Layer;
+						if (!RequireString(Body, TEXT("layer"), Layer, Responder, TEXT("a layer name from an implemented interface, or a self layer")))
+						{
+							return;
+						}
+						TSubclassOf<UInterface> Interface;
+						FGuid Guid;
+						if (AnimLayers::FindLayerGraph(Blueprint, FName(*Layer), Interface, Guid) == nullptr)
+						{
+							Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("layer_not_found"),
+								FString::Printf(TEXT("the Blueprint has no layer '%s' — implement_layer_interface adds an interface's layers"), *Layer));
+							return;
+						}
+						FGraphNodeCreator<UAnimGraphNode_LinkedAnimLayer> Creator(*Graph);
+						UAnimGraphNode_LinkedAnimLayer* LayerNode = Creator.CreateNode();
+						LayerNode->NodePosX = X;
+						LayerNode->NodePosY = Y;
+						// What SetupFromLayerId does (it is not exported): the layer name,
+						// the interface and its graph guid, and the function reference
+						// the pins are allocated from.
+						LayerNode->Node.Layer = FName(*Layer);
+						LayerNode->Node.Interface = Interface != nullptr && Interface->IsChildOf(UAnimLayerInterface::StaticClass())
+							? TSubclassOf<UAnimLayerInterface>(*Interface) : nullptr;
+						LayerNode->InterfaceGuid = Guid;
+						if (FStructProperty* ReferenceProperty = CastField<FStructProperty>(UAnimGraphNode_LinkedAnimGraphBase::StaticClass()->FindPropertyByName(TEXT("FunctionReference"))))
+						{
+							FMemberReference* Reference = ReferenceProperty->ContainerPtrToValuePtr<FMemberReference>(LayerNode);
+							if (Interface != nullptr)
+							{
+								Reference->SetExternalMember(FName(*Layer), *Interface, Guid);
+							}
+							else
+							{
+								Reference->SetSelfMember(FName(*Layer));
+							}
+						}
+						Creator.Finalize();
+						Node = LayerNode;
+						Data->SetStringField(TEXT("layer"), Layer);
+						Data->SetStringField(TEXT("interface"), Interface != nullptr ? Interface->GetPathName() : TEXT("self"));
+					}
+					else
+					{
+						FString ClassSpec;
+						if (!RequireString(Body, TEXT("instance_class"), ClassSpec, Responder, TEXT("an Animation Blueprint (or AnimInstance class) to run")))
+						{
+							return;
+						}
+						UClass* InstanceClass = AnimLayers::ResolveAnimClass(ClassSpec);
+						if (InstanceClass == nullptr || !InstanceClass->IsChildOf(UAnimInstance::StaticClass()))
+						{
+							Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("class_not_found"),
+								FString::Printf(TEXT("'%s' is not an Animation Blueprint or AnimInstance class"), *ClassSpec));
+							return;
+						}
+						FGraphNodeCreator<UAnimGraphNode_LinkedAnimGraph> Creator(*Graph);
+						UAnimGraphNode_LinkedAnimGraph* GraphNode = Creator.CreateNode();
+						GraphNode->NodePosX = X;
+						GraphNode->NodePosY = Y;
+						GraphNode->Node.InstanceClass = InstanceClass;
+						Creator.Finalize();
+						Node = GraphNode;
+						Data->SetStringField(TEXT("instance_class"), InstanceClass->GetPathName());
+					}
+					Node->ReconstructNode();
+					if (BoolOr(Body, TEXT("connect_to_output"), true))
+					{
+						FString Error;
+						if (!AnimLayers::ConnectPoseToGraphResult(Graph, Node->FindPin(TEXT("Pose"), EGPD_Output), Error))
+						{
+							Data->SetStringField(TEXT("warning"), Error);
+						}
+					}
+					FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+					Data->SetStringField(TEXT("blueprint"), Blueprint->GetPathName());
+					Data->SetStringField(TEXT("graph"), Graph->GetName());
+					Data->SetStringField(TEXT("node"), Node->GetName());
+					TArray<TSharedPtr<FJsonValue>> Pins;
+					for (UEdGraphPin* Pin : Node->Pins)
+					{
+						Pins.Add(MakeShared<FJsonValueString>(FString::Printf(TEXT("%s (%s, %s)"), *Pin->PinName.ToString(),
+							Pin->Direction == EGPD_Input ? TEXT("in") : TEXT("out"), *Pin->PinType.PinCategory.ToString())));
+					}
+					Data->SetArrayField(TEXT("pins"), Pins);
+					Responder->Ok(Data);
+					return;
+				}
 
 				if (Operation == TEXT("add_state_machine"))
 				{
@@ -583,7 +944,8 @@ namespace McpLink
 				Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_operation"),
 					FString::Printf(
 						TEXT("unknown operation '%s' — use create, add_state_machine, add_state, ")
-						TEXT("set_state_animation, set_entry_state, add_transition, or set_transition"),
+						TEXT("set_state_animation, set_entry_state, add_transition, set_transition, create_layer_interface, ")
+						TEXT("add_layer, implement_layer_interface, add_linked_layer_node or add_linked_graph_node"),
 						*Operation));
 			});
 	}

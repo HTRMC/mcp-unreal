@@ -1,0 +1,58 @@
+{
+  "name": "landscape_ops_set_edit_layer",
+  "description": "landscape_ops set_edit_layer: visibility, lock and alpha",
+  "route": "/api/world/landscape",
+  "tool": "landscape_ops",
+  "request": {
+    "operation": "set_edit_layer",
+    "landscape": "McpContractLand",
+    "layer": "Detail",
+    "visible": true,
+    "heightmap_alpha": 0.5
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "landscape": "/Game/Maps/TestMap.TestMap:PersistentLevel.Landscape_1",
+      "has_edit_layers": true,
+      "editing_layer": "00000000000000000000000000000000",
+      "layers": [
+        {
+          "index": 0,
+          "name": "Layer",
+          "guid": "11DDCB8945ECB2FB5D91C09F8C89E86A",
+          "class": "LandscapeEditLayer",
+          "visible": true,
+          "locked": false,
+          "heightmap_alpha": 1,
+          "weightmap_alpha": 1,
+          "editing": false
+        },
+        {
+          "index": 1,
+          "name": "Detail",
+          "guid": "62B9BBB8418B9FDB103430B7B78985A1",
+          "class": "LandscapeEditLayer",
+          "visible": true,
+          "locked": false,
+          "heightmap_alpha": 0.5,
+          "weightmap_alpha": 1,
+          "editing": false
+        }
+      ],
+      "applied": "set_edit_layer",
+      "layer": {
+        "index": 1,
+        "name": "Detail",
+        "guid": "62B9BBB8418B9FDB103430B7B78985A1",
+        "class": "LandscapeEditLayer",
+        "visible": true,
+        "locked": false,
+        "heightmap_alpha": 0.5,
+        "weightmap_alpha": 1,
+        "editing": false
+      }
+    }
+  }
+}

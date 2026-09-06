@@ -1,0 +1,45 @@
+{
+  "name": "pose_search_ops_build_index",
+  "description": "pose_search_ops build_index: the search index built synchronously, with its pose count",
+  "route": "/api/anim/pose_search",
+  "tool": "pose_search_ops",
+  "request": {
+    "operation": "build_index",
+    "database": "/Game/MM/PSD_Contract",
+    "wait": true
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "database": "/Game/MM/PSD_Contract.PSD_Contract",
+      "schema": "/Game/MM/PSS_Contract.PSS_Contract",
+      "animations": [
+        {
+          "index": 0,
+          "AnimAsset": "/Script/Engine.AnimSequence'/Engine/Tutorial/SubEditors/TutorialAssets/Character/Tutorial_Walk_Fwd.Tutorial_Walk_Fwd'",
+          "bUseSingleSample": false,
+          "bUseGridForSampling": false,
+          "NumberOfHorizontalSamples": 9,
+          "NumberOfVerticalSamples": 2,
+          "BlendParamX": 0,
+          "BlendParamY": 0,
+          "SamplingRange": {
+            "Min": 0,
+            "Max": 0.5
+          },
+          "bEnabled": true,
+          "bDisableReselection": false,
+          "MirrorOption": "UnmirroredOnly",
+          "BranchInId": 0,
+          "animation": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/Tutorial_Walk_Fwd.Tutorial_Walk_Fwd",
+          "looping": false
+        }
+      ],
+      "index": "built",
+      "poses": 16,
+      "index_assets": 1,
+      "build": "built"
+    }
+  }
+}

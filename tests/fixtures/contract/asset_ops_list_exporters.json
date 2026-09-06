@@ -1,0 +1,72 @@
+{
+  "name": "asset_ops_list_exporters",
+  "description": "asset_ops list_exporters: the exporters that take a static mesh",
+  "route": "/api/assets/ops",
+  "tool": "asset_ops",
+  "request": {
+    "operation": "list_exporters",
+    "path": "/Engine/BasicShapes/Cube"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "asset_class": "StaticMesh",
+      "count": 4,
+      "exporters": [
+        {
+          "exporter": "ObjectExporterT3D",
+          "supported_class": "Object",
+          "formats": [
+            {
+              "extension": "T3D",
+              "description": "Unreal object text"
+            },
+            {
+              "extension": "COPY",
+              "description": "Unreal object text"
+            }
+          ],
+          "text": true
+        },
+        {
+          "exporter": "StaticMeshExporterFBX",
+          "supported_class": "StaticMesh",
+          "formats": [
+            {
+              "extension": "FBX",
+              "description": "FBX File"
+            }
+          ],
+          "text": false
+        },
+        {
+          "exporter": "StaticMeshExporterOBJ",
+          "supported_class": "StaticMesh",
+          "formats": [
+            {
+              "extension": "OBJ",
+              "description": "Object File"
+            }
+          ],
+          "text": true
+        },
+        {
+          "exporter": "GLTFStaticMeshExporter",
+          "supported_class": "StaticMesh",
+          "formats": [
+            {
+              "extension": "gltf",
+              "description": "GL Transmission Format"
+            },
+            {
+              "extension": "glb",
+              "description": "GL Transmission Format (Binary)"
+            }
+          ],
+          "text": false
+        }
+      ]
+    }
+  }
+}

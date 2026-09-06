@@ -1,0 +1,60 @@
+{
+  "name": "perf_ops_stat_group",
+  "description": "perf_ops stat_group: one stat group read as data after a frame window",
+  "route": "/api/editor/perf",
+  "tool": "perf_ops",
+  "request": {
+    "operation": "stat_group",
+    "group": "Game",
+    "frames": 5,
+    "max_stats": 3
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "group": "Game",
+      "frames": 5,
+      "flat": [
+        {
+          "name": "STAT_WorldTickTime",
+          "description": "World Tick Time",
+          "inc_avg_ms": 0.1145000010728836,
+          "inc_max_ms": 0.1145000010728836,
+          "exc_avg_ms": 0.031099999323487282,
+          "exc_max_ms": 0.031099999323487282,
+          "calls": 1
+        },
+        {
+          "name": "STAT_TickableGameObjectsTime",
+          "description": "TickableGameObjects Time",
+          "inc_avg_ms": 0.08820000290870667,
+          "inc_max_ms": 0.08820000290870667,
+          "exc_avg_ms": 0.030500000342726707,
+          "exc_max_ms": 0.030500000342726707,
+          "calls": 2
+        },
+        {
+          "name": "STAT_TickableTickTime",
+          "description": "GT Tickable Time",
+          "inc_avg_ms": 0.05730000138282776,
+          "inc_max_ms": 0.05730000138282776,
+          "exc_avg_ms": 0.0005000000237487257,
+          "exc_max_ms": 0.0005000000237487257,
+          "calls": 1
+        }
+      ],
+      "hierarchy": [],
+      "counters": [
+        {
+          "name": "STAT_NumHeapEntries",
+          "description": "TimerManager Heap Size",
+          "avg": 6,
+          "max": 6
+        }
+      ],
+      "memory": [],
+      "left_enabled": false
+    }
+  }
+}

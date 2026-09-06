@@ -1,0 +1,50 @@
+{
+  "name": "pose_search_ops_add_animation",
+  "description": "pose_search_ops add_animation: a sequence entry with a sampling range",
+  "route": "/api/anim/pose_search",
+  "tool": "pose_search_ops",
+  "request": {
+    "operation": "add_animation",
+    "database": "/Game/MM/PSD_Contract",
+    "animation": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/Tutorial_Walk_Fwd",
+    "properties": {
+      "MirrorOption": "UnmirroredOnly",
+      "SamplingRange": {
+        "Min": 0.0,
+        "Max": 0.5
+      }
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "database": "/Game/MM/PSD_Contract.PSD_Contract",
+      "schema": "/Game/MM/PSS_Contract.PSS_Contract",
+      "animations": [
+        {
+          "index": 0,
+          "AnimAsset": "/Script/Engine.AnimSequence'/Engine/Tutorial/SubEditors/TutorialAssets/Character/Tutorial_Walk_Fwd.Tutorial_Walk_Fwd'",
+          "bUseSingleSample": false,
+          "bUseGridForSampling": false,
+          "NumberOfHorizontalSamples": 9,
+          "NumberOfVerticalSamples": 2,
+          "BlendParamX": 0,
+          "BlendParamY": 0,
+          "SamplingRange": {
+            "Min": 0,
+            "Max": 0.5
+          },
+          "bEnabled": true,
+          "bDisableReselection": false,
+          "MirrorOption": "UnmirroredOnly",
+          "BranchInId": 0,
+          "animation": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/Tutorial_Walk_Fwd.Tutorial_Walk_Fwd",
+          "looping": false
+        }
+      ],
+      "index": "in_progress",
+      "added_index": 0
+    }
+  }
+}

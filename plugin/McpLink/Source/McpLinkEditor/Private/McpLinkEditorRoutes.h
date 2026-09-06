@@ -16,5 +16,6 @@ namespace McpLink
 	void RegisterUiOpsRoutes(FMcpLinkCoreModule& Core);
 	void RegisterPieRoutes(FMcpLinkCoreModule& Core);
 	void RegisterCaptureRoutes(FMcpLinkCoreModule& Core);
+	void RegisterReplayRoutes(FMcpLinkCoreModule& Core);
 	void RegisterIntrospectRoutes(FMcpLinkCoreModule& Core);
 }

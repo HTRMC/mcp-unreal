@@ -1,0 +1,42 @@
+{
+  "name": "geometry_script_ops_call",
+  "description": "geometry_script_ops call: a primitive appended through the reflected library",
+  "route": "/api/geometry/script",
+  "tool": "geometry_script_ops",
+  "request": {
+    "operation": "call",
+    "mesh": "/Engine/Transient.McpContractMesh",
+    "function": "AppendBox",
+    "args": {
+      "DimensionX": 100,
+      "DimensionY": 50,
+      "DimensionZ": 25
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "mesh": "/Engine/Transient.McpContractMesh",
+      "vertices": 8,
+      "triangles": 12,
+      "has_attributes": true,
+      "bounds": {
+        "min": [
+          -50,
+          -25,
+          -12.5
+        ],
+        "max": [
+          50,
+          25,
+          12.5
+        ]
+      },
+      "function": "MeshPrimitiveFunctions.AppendBox",
+      "outputs": {
+        "ReturnValue": "/Script/GeometryFramework.DynamicMesh'/Engine/Transient.McpContractMesh'"
+      }
+    }
+  }
+}

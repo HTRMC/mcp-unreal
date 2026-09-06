@@ -114,6 +114,56 @@ pub enum AnimBlueprintModify {
         rule_variable: Option<String>,
     },
     /// Change an existing transition's settings or rule.
+    /// Create an Animation Layer Interface (an Animation Blueprint of the
+    /// interface kind) declaring the named layers, each an animation graph
+    /// taking an input pose; compiled so other Blueprints can implement it.
+    CreateLayerInterface {
+        /// Destination package path, e.g. "/Game/Anim/ALI_Hero".
+        path: String,
+        /// Layer names, e.g. ["UpperBody", "FullBody"].
+        layers: Vec<String>,
+        /// Layer group (the function category): layers in one group share a
+        /// linked instance at runtime.
+        group: Option<String>,
+    },
+    /// Declare another layer on an Animation Layer Interface.
+    AddLayer {
+        /// The interface asset.
+        blueprint: String,
+        name: String,
+        group: Option<String>,
+    },
+    /// Implement an Animation Layer Interface on an Animation Blueprint: one
+    /// animation graph per layer appears (with its root and input pose),
+    /// addressed by the layer name in every 'graph' field.
+    ImplementLayerInterface {
+        blueprint: String,
+        /// The interface asset path.
+        interface: String,
+    },
+    /// Add a Linked Anim Layer node that runs a layer (of an implemented
+    /// interface, or a self layer) inside an animation graph; wired into the
+    /// graph's output unless `connect_to_output` is false.
+    AddLinkedLayerNode {
+        blueprint: String,
+        layer: String,
+        /// Animation graph to add to (default "AnimGraph").
+        graph: Option<String>,
+        connect_to_output: Option<bool>,
+        x: Option<i32>,
+        y: Option<i32>,
+    },
+    /// Add a Linked Anim Graph node running another Animation Blueprint's
+    /// class inside this graph.
+    AddLinkedGraphNode {
+        blueprint: String,
+        /// The Animation Blueprint (or its generated class) to run.
+        instance_class: String,
+        graph: Option<String>,
+        connect_to_output: Option<bool>,
+        x: Option<i32>,
+        y: Option<i32>,
+    },
     SetTransition {
         blueprint: String,
         state_machine: Option<String>,
@@ -145,7 +195,7 @@ impl UnrealMcp {
     }
 
     #[tool(
-        description = "Author Animation Blueprints: create one for a skeleton, add state machines, states with animations, entry state and transitions (crossfade, priority, automatic or bool-variable rules). Custom rules and other anim nodes are built with blueprint_modify inside the returned graph paths. Finish with blueprint_modify compile and save."
+        description = "Author Animation Blueprints: create one for a skeleton, add state machines, states with animations, entry state and transitions (crossfade, priority, automatic or bool-variable rules); create Animation Layer Interfaces, implement them and place Linked Anim Layer / Linked Anim Graph nodes. Custom rules and other anim nodes are built with blueprint_modify inside the returned graph paths. Finish with blueprint_modify compile and save."
     )]
     async fn anim_blueprint_modify(
         &self,

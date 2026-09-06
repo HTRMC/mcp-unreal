@@ -1,0 +1,42 @@
+{
+  "name": "live_link_ops_add_virtual_subject",
+  "description": "live_link_ops add_virtual_subject: an animation virtual subject on a virtual source",
+  "route": "/api/vp/live_link",
+  "tool": "live_link_ops",
+  "request": {
+    "operation": "add_virtual_subject",
+    "name": "ContractSubject",
+    "source": "McpContractVirtual"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "sources": [
+        {
+          "id": "4ED2DC4ECC5911CE4AF0635DA8B24A5A",
+          "type": "DefaultVirtualSource",
+          "status": "Active",
+          "machine": "",
+          "virtual": true
+        },
+        {
+          "id": "1B1C697B4B7C23E22F0A4BA8DEA4AC3A",
+          "type": "McpContractVirtual",
+          "status": "Active",
+          "machine": "",
+          "virtual": true
+        }
+      ],
+      "subjects": [
+        {
+          "name": "ContractSubject",
+          "source": "1B1C697B4B7C23E22F0A4BA8DEA4AC3A",
+          "role": "LiveLinkAnimationRole",
+          "enabled": true
+        }
+      ],
+      "applied": "add_virtual_subject"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "control_rig_ops_add_control_bad_type_error",
+  "description": "control_rig_ops add_control with a type that does not exist: 400",
+  "route": "/api/anim/control_rig",
+  "tool": "control_rig_ops",
+  "request": {
+    "operation": "add_control",
+    "rig": "/Game/Rigs/CR_McpContract",
+    "name": "Bad",
+    "type": "Nope"
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "bad_type",
+      "message": "'Nope' is not a control type"
+    }
+  }
+}

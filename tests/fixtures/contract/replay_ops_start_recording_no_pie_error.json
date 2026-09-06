@@ -1,0 +1,18 @@
+{
+  "name": "replay_ops_start_recording_no_pie_error",
+  "description": "replay_ops start_recording without PIE: 409",
+  "route": "/api/editor/replay",
+  "tool": "replay_ops",
+  "request": {
+    "operation": "start_recording",
+    "name": "McpContract"
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "no_pie",
+      "message": "replays record and play inside a PIE session — pie_control start first"
+    }
+  }
+}

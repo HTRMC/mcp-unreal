@@ -1,0 +1,38 @@
+{
+  "name": "skeletal_mesh_ops_bind_clothing",
+  "description": "skeletal_mesh_ops bind_clothing: the asset bound to its section",
+  "route": "/api/anim/mesh",
+  "tool": "skeletal_mesh_ops",
+  "request": {
+    "operation": "bind_clothing",
+    "mesh": "/Game/Anim/SK_McpContract",
+    "clothing": "Cape",
+    "section": 0
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "mesh": "/Game/Anim/SK_McpContract.SK_McpContract",
+      "lod": 0,
+      "section": 0,
+      "clothing": "Cape",
+      "asset_lod": 0,
+      "clothing_assets": [
+        {
+          "name": "Cape",
+          "guid": "4D48CA2A409866A114AEECAB7058AC78",
+          "lods": 1,
+          "physics_asset": "",
+          "bound_sections": [
+            {
+              "lod": 0,
+              "section": 0,
+              "asset_lod": 0
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

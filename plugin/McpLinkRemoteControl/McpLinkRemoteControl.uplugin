@@ -1,0 +1,27 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.3.0",
+	"EngineVersion": "5.8.0",
+	"FriendlyName": "McpLink Remote Control",
+	"Description": "McpLink interop for Remote Control: create presets and expose actors, properties and functions on them from the mcp-unreal MCP server.",
+	"Category": "Editor",
+	"CreatedBy": "mcp-unreal",
+	"CreatedByURL": "https://github.com/HTRMC/mcp-unreal",
+	"DocsURL": "https://github.com/HTRMC/mcp-unreal#readme",
+	"SupportURL": "https://github.com/HTRMC/mcp-unreal/issues",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "McpLinkRemoteControl",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	],
+	"Plugins": [
+		{ "Name": "McpLink", "Enabled": true },
+		{ "Name": "RemoteControl", "Enabled": true }
+	]
+}

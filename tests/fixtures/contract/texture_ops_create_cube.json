@@ -1,0 +1,29 @@
+{
+  "name": "texture_ops_create_cube",
+  "description": "texture_ops create_cube: a solid-fill cube map",
+  "route": "/api/textures/ops",
+  "tool": "texture_ops",
+  "request": {
+    "operation": "create_cube",
+    "path": "/Game/Textures/TC_McpContract",
+    "size": 4,
+    "fill": [
+      10,
+      20,
+      30,
+      255
+    ],
+    "srgb": false
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "texture": "/Game/Textures/TC_McpContract.TC_McpContract",
+      "kind": "cube",
+      "size": 4,
+      "srgb": false,
+      "message": "created — save writes it; the pixel operations are Texture2D only"
+    }
+  }
+}

@@ -15,6 +15,9 @@ namespace McpLink
 	void RegisterSequenceRoutes(FMcpLinkCoreModule& Core);
 	void RegisterAudioRoutes(FMcpLinkCoreModule& Core);
 	void RegisterStaticMeshRoutes(FMcpLinkCoreModule& Core);
+	void RegisterTableRoutes(FMcpLinkCoreModule& Core);
+	void RegisterMaterialCollectionRoutes(FMcpLinkCoreModule& Core);
+	void RegisterMediaRoutes(FMcpLinkCoreModule& Core);
 }
 
 class FMcpLinkContentModule : public IModuleInterface
@@ -35,6 +38,9 @@ public:
 		McpLink::RegisterSequenceRoutes(Core);
 		McpLink::RegisterAudioRoutes(Core);
 		McpLink::RegisterStaticMeshRoutes(Core);
+		McpLink::RegisterTableRoutes(Core);
+		McpLink::RegisterMaterialCollectionRoutes(Core);
+		McpLink::RegisterMediaRoutes(Core);
 	}
 };
 

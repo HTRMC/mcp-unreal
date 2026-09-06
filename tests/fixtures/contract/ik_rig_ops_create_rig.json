@@ -1,0 +1,206 @@
+{
+  "name": "ik_rig_ops_create_rig",
+  "description": "ik_rig_ops create_rig: an IK Rig for a skeletal mesh, characterized",
+  "route": "/api/anim/ik_rig",
+  "tool": "ik_rig_ops",
+  "request": {
+    "operation": "create_rig",
+    "path": "/Game/Rigs/IK_McpContract",
+    "skeletal_mesh": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP",
+    "auto_retarget": true
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "rig": "/Game/Rigs/IK_McpContract.IK_McpContract",
+      "skeletal_mesh": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP.TutorialTPP",
+      "retarget_root": "Root",
+      "bone_count": 68,
+      "bones": [
+        "Root",
+        "pelvis",
+        "spine_01",
+        "spine_02",
+        "spine_03",
+        "clavicle_l",
+        "upperarm_l",
+        "lowerarm_l",
+        "hand_l",
+        "index_01_l",
+        "index_02_l",
+        "index_03_l",
+        "middle_01_l",
+        "middle_02_l",
+        "middle_03_l",
+        "pinky_01_l",
+        "pinky_02_l",
+        "pinky_03_l",
+        "ring_01_l",
+        "ring_02_l",
+        "ring_03_l",
+        "thumb_01_l",
+        "thumb_02_l",
+        "thumb_03_l",
+        "lowerarm_twist_01_l",
+        "upperarm_twist_01_l",
+        "clavicle_r",
+        "upperarm_r",
+        "lowerarm_r",
+        "hand_r",
+        "index_01_r",
+        "index_02_r",
+        "index_03_r",
+        "middle_01_r",
+        "middle_02_r",
+        "middle_03_r",
+        "pinky_01_r",
+        "pinky_02_r",
+        "pinky_03_r",
+        "ring_01_r",
+        "ring_02_r",
+        "ring_03_r",
+        "thumb_01_r",
+        "thumb_02_r",
+        "thumb_03_r",
+        "lowerarm_twist_01_r",
+        "upperarm_twist_01_r",
+        "neck_01",
+        "head",
+        "thigh_l"
+      ],
+      "solvers": [],
+      "goals": [],
+      "chains": [
+        {
+          "name": "Spine",
+          "start_bone": "spine_01",
+          "end_bone": "spine_03",
+          "goal": "None"
+        },
+        {
+          "name": "Neck",
+          "start_bone": "neck_01",
+          "end_bone": "neck_01",
+          "goal": "None"
+        },
+        {
+          "name": "Head",
+          "start_bone": "head",
+          "end_bone": "head",
+          "goal": "None"
+        },
+        {
+          "name": "LeftLeg",
+          "start_bone": "thigh_l",
+          "end_bone": "foot_l",
+          "goal": "LeftFootIK"
+        },
+        {
+          "name": "LeftFoot",
+          "start_bone": "ball_l",
+          "end_bone": "ball_l",
+          "goal": "None"
+        },
+        {
+          "name": "LeftClavicle",
+          "start_bone": "clavicle_l",
+          "end_bone": "clavicle_l",
+          "goal": "None"
+        },
+        {
+          "name": "LeftArm",
+          "start_bone": "upperarm_l",
+          "end_bone": "hand_l",
+          "goal": "LeftHandIK"
+        },
+        {
+          "name": "LeftThumb",
+          "start_bone": "thumb_01_l",
+          "end_bone": "thumb_03_l",
+          "goal": "None"
+        },
+        {
+          "name": "LeftIndex",
+          "start_bone": "index_01_l",
+          "end_bone": "index_03_l",
+          "goal": "None"
+        },
+        {
+          "name": "LeftMiddle",
+          "start_bone": "middle_01_l",
+          "end_bone": "middle_03_l",
+          "goal": "None"
+        },
+        {
+          "name": "LeftRing",
+          "start_bone": "ring_01_l",
+          "end_bone": "ring_03_l",
+          "goal": "None"
+        },
+        {
+          "name": "LeftPinky",
+          "start_bone": "pinky_01_l",
+          "end_bone": "pinky_03_l",
+          "goal": "None"
+        },
+        {
+          "name": "RightLeg",
+          "start_bone": "thigh_r",
+          "end_bone": "foot_r",
+          "goal": "RightFootIK"
+        },
+        {
+          "name": "RightFoot",
+          "start_bone": "ball_r",
+          "end_bone": "ball_r",
+          "goal": "None"
+        },
+        {
+          "name": "RightClavicle",
+          "start_bone": "clavicle_r",
+          "end_bone": "clavicle_r",
+          "goal": "None"
+        },
+        {
+          "name": "RightArm",
+          "start_bone": "upperarm_r",
+          "end_bone": "hand_r",
+          "goal": "RightHandIK"
+        },
+        {
+          "name": "RightThumb",
+          "start_bone": "thumb_01_r",
+          "end_bone": "thumb_03_r",
+          "goal": "None"
+        },
+        {
+          "name": "RightIndex",
+          "start_bone": "index_01_r",
+          "end_bone": "index_03_r",
+          "goal": "None"
+        },
+        {
+          "name": "RightMiddle",
+          "start_bone": "middle_01_r",
+          "end_bone": "middle_03_r",
+          "goal": "None"
+        },
+        {
+          "name": "RightRing",
+          "start_bone": "ring_01_r",
+          "end_bone": "ring_03_r",
+          "goal": "None"
+        },
+        {
+          "name": "RightPinky",
+          "start_bone": "pinky_01_r",
+          "end_bone": "pinky_03_r",
+          "goal": "None"
+        }
+      ],
+      "auto_retarget_applied": true,
+      "message": "created — auto_retarget characterizes a humanoid (root + chains), add_solver / add_goal / add_chain do it by hand"
+    }
+  }
+}

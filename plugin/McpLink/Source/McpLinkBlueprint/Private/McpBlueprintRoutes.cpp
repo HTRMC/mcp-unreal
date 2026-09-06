@@ -20,6 +20,7 @@
 #include "Engine/SimpleConstructionScript.h"
 #include "K2Node_FunctionEntry.h"
 #include "K2Node_FunctionResult.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "McpBlueprintUtils.h"
@@ -30,6 +31,7 @@
 #include "Misc/PackageName.h"
 #include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
+#include "UObject/Interface.h"
 #include "UObject/Package.h"
 #include "UObject/SavePackage.h"
 
@@ -274,17 +276,59 @@ namespace McpLink
 							TEXT("'path' is required, e.g. /Game/Blueprints/BP_Thing"));
 						return;
 					}
+					// The same four kinds the New Blueprint dialog offers, with
+					// each factory's default parent.
+					FString TypeSpec = TEXT("normal");
+					Body->TryGetStringField(TEXT("blueprint_type"), TypeSpec);
+					EBlueprintType BlueprintType = BPTYPE_Normal;
+					UClass* DefaultParent = AActor::StaticClass();
+					if (TypeSpec.Equals(TEXT("interface"), ESearchCase::IgnoreCase))
+					{
+						BlueprintType = BPTYPE_Interface;
+						DefaultParent = UInterface::StaticClass();
+					}
+					else if (TypeSpec.Equals(TEXT("function_library"), ESearchCase::IgnoreCase))
+					{
+						BlueprintType = BPTYPE_FunctionLibrary;
+						DefaultParent = UBlueprintFunctionLibrary::StaticClass();
+					}
+					else if (TypeSpec.Equals(TEXT("macro_library"), ESearchCase::IgnoreCase))
+					{
+						BlueprintType = BPTYPE_MacroLibrary;
+					}
+					else if (!TypeSpec.Equals(TEXT("normal"), ESearchCase::IgnoreCase))
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_field"),
+							FString::Printf(
+								TEXT("unknown blueprint_type '%s' — normal, interface, function_library or macro_library"),
+								*TypeSpec));
+						return;
+					}
+
 					Body->TryGetStringField(TEXT("parent_class"), ParentSpec);
-					UClass* ParentClass = ParentSpec.IsEmpty()
-						? AActor::StaticClass()
-						: ResolveClass(ParentSpec);
+					UClass* ParentClass = ParentSpec.IsEmpty() ? DefaultParent : ResolveClass(ParentSpec);
 					if (ParentClass == nullptr)
 					{
 						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_class"),
 							FString::Printf(TEXT("parent class '%s' not found"), *ParentSpec));
 						return;
 					}
-					if (!FKismetEditorUtilities::CanCreateBlueprintOfClass(ParentClass))
+					if (BlueprintType == BPTYPE_Interface && ParentClass != UInterface::StaticClass())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_parent"),
+							TEXT("a Blueprint Interface has no parent class of its own — leave parent_class out"));
+						return;
+					}
+					if (BlueprintType == BPTYPE_FunctionLibrary && ParentClass != UBlueprintFunctionLibrary::StaticClass())
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_parent"),
+							TEXT("a Blueprint Function Library always derives from BlueprintFunctionLibrary — leave parent_class out"));
+						return;
+					}
+					// BlueprintFunctionLibrary is not itself blueprintable; its
+					// factory skips this check, having pinned the parent.
+					if (BlueprintType != BPTYPE_FunctionLibrary
+						&& !FKismetEditorUtilities::CanCreateBlueprintOfClass(ParentClass))
 					{
 						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_parent"),
 							FString::Printf(
@@ -306,7 +350,7 @@ namespace McpLink
 						NSLOCTEXT("McpLink", "CreateBlueprint", "McpLink Create Blueprint"));
 					UPackage* Package = CreatePackage(*PackageName);
 					UBlueprint* Blueprint = FKismetEditorUtilities::CreateBlueprint(
-						ParentClass, Package, FName(*AssetName), BPTYPE_Normal,
+						ParentClass, Package, FName(*AssetName), BlueprintType,
 						UBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass());
 					if (Blueprint == nullptr)
 					{
@@ -320,6 +364,7 @@ namespace McpLink
 					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
 					Data->SetStringField(TEXT("path"), Blueprint->GetPathName());
 					Data->SetStringField(TEXT("name"), Blueprint->GetName());
+					Data->SetStringField(TEXT("blueprint_type"), TypeSpec.ToLower());
 					Data->SetStringField(TEXT("parent_class"), ParentClass->GetPathName());
 					Data->SetStringField(TEXT("message"),
 						TEXT("created in memory — call blueprint_modify save to write it to disk"));

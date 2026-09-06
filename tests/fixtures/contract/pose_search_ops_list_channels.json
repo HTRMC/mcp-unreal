@@ -1,0 +1,350 @@
+{
+  "name": "pose_search_ops_list_channels",
+  "description": "pose_search_ops list_channels: feature channel classes with their defaults",
+  "route": "/api/anim/pose_search",
+  "tool": "pose_search_ops",
+  "request": {
+    "operation": "list_channels"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "channels": [
+        {
+          "class": "PoseSearchFeatureChannel_Curve",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Curve",
+          "defaults": {
+            "CurveName": "None",
+            "SampleRole": "None",
+            "Weight": 1,
+            "SampleTimeOffset": 0,
+            "DebugColor": {
+              "R": 0,
+              "G": 1,
+              "B": 0,
+              "A": 1
+            },
+            "InputQueryPose": "UseContinuingPose",
+            "NormalizationGroup": "None",
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_Distance",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Distance",
+          "defaults": {
+            "bDefaultWithRootBone": true,
+            "Bone": {
+              "BoneName": "None"
+            },
+            "SampleRole": "None",
+            "OriginBone": {
+              "BoneName": "None"
+            },
+            "OriginRole": "None",
+            "MaxDistance": 0,
+            "Weight": 1,
+            "SamplingAttributeId": -1,
+            "SampleTimeOffset": 0,
+            "OriginTimeOffset": 0,
+            "DebugColor": {
+              "R": 0,
+              "G": 0,
+              "B": 1,
+              "A": 1
+            },
+            "InputQueryPose": "UseContinuingPose",
+            "PermutationTimeType": "UseSampleTime",
+            "NormalizationGroup": "None",
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_FilterCrashingLegs",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_FilterCrashingLegs",
+          "defaults": {
+            "LeftThigh": {
+              "BoneName": "None"
+            },
+            "RightThigh": {
+              "BoneName": "None"
+            },
+            "LeftFoot": {
+              "BoneName": "None"
+            },
+            "RightFoot": {
+              "BoneName": "None"
+            },
+            "SampleRole": "None",
+            "Weight": 0.20000000298023224,
+            "InputQueryPose": "UseContinuingPose",
+            "AllowedTolerance": 0.30000001192092896,
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_Group",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Group",
+          "defaults": {
+            "SubChannels": [],
+            "SampleRole": "None",
+            "DebugWeightGroupID": -1,
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_Heading",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Heading",
+          "defaults": {
+            "bDefaultWithRootBone": true,
+            "Bone": {
+              "BoneName": "None"
+            },
+            "SampleRole": "None",
+            "OriginBone": {
+              "BoneName": "None"
+            },
+            "OriginRole": "None",
+            "Weight": 1,
+            "SamplingAttributeId": -1,
+            "SampleTimeOffset": 0,
+            "OriginTimeOffset": 0,
+            "HeadingAxis": "X",
+            "DebugColor": {
+              "R": 1,
+              "G": 1,
+              "B": 1,
+              "A": 1
+            },
+            "InputQueryPose": "UseContinuingPose",
+            "ComponentStripping": "None",
+            "PermutationTimeType": "UseSampleTime",
+            "NormalizationGroup": "None",
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_Padding",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Padding",
+          "defaults": {
+            "PaddingSize": 1,
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_PermutationTime",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_PermutationTime",
+          "defaults": {
+            "Weight": 1,
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_Phase",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Phase",
+          "defaults": {
+            "Bone": {
+              "BoneName": "None"
+            },
+            "SampleRole": "None",
+            "Weight": 1,
+            "DebugColor": {
+              "R": 1,
+              "G": 1,
+              "B": 0,
+              "A": 1
+            },
+            "InputQueryPose": "UseContinuingPose",
+            "NormalizationGroup": "None",
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_Pose",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Pose",
+          "defaults": {
+            "Weight": 1,
+            "SampledBones": [
+              {
+                "Reference": {
+                  "BoneName": "foot_l"
+                },
+                "Flags": 3,
+                "NormalizationGroup": "None",
+                "Weight": 1,
+                "DebugColor": {
+                  "R": 0,
+                  "G": 1,
+                  "B": 0,
+                  "A": 1
+                }
+              },
+              {
+                "Reference": {
+                  "BoneName": "foot_r"
+                },
+                "Flags": 3,
+                "NormalizationGroup": "None",
+                "Weight": 1,
+                "DebugColor": {
+                  "R": 0,
+                  "G": 1,
+                  "B": 0,
+                  "A": 1
+                }
+              }
+            ],
+            "InputQueryPose": "UseContinuingPose",
+            "bUseCharacterSpaceVelocities": true,
+            "PermutationTimeType": "UseSampleTime",
+            "SampleRole": "None",
+            "DebugWeightGroupID": -1,
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_Position",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Position",
+          "defaults": {
+            "bDefaultWithRootBone": true,
+            "Bone": {
+              "BoneName": "None"
+            },
+            "SampleRole": "None",
+            "OriginBone": {
+              "BoneName": "None"
+            },
+            "OriginRole": "None",
+            "Weight": 1,
+            "SamplingAttributeId": -1,
+            "SampleTimeOffset": 0,
+            "OriginTimeOffset": 0,
+            "DebugColor": {
+              "R": 0,
+              "G": 0,
+              "B": 1,
+              "A": 1
+            },
+            "InputQueryPose": "UseContinuingPose",
+            "ComponentStripping": "None",
+            "PermutationTimeType": "UseSampleTime",
+            "bNormalizeDisplacement": false,
+            "NormalizationGroup": "None",
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_SamplingTime",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_SamplingTime",
+          "defaults": {
+            "Weight": 0,
+            "TimeToMatch": 0,
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_TimeToEvent",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_TimeToEvent",
+          "defaults": {
+            "Weight": 0,
+            "SamplingAttributeId": 0,
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_Trajectory",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Trajectory",
+          "defaults": {
+            "Weight": 7,
+            "Samples": [
+              {
+                "Offset": -0.4000000059604645,
+                "Flags": 32,
+                "Weight": 0.4000000059604645,
+                "NormalizationGroup": "None",
+                "DebugColor": {
+                  "R": 1,
+                  "G": 0,
+                  "B": 0,
+                  "A": 1
+                }
+              },
+              {
+                "Offset": 0,
+                "Flags": 144,
+                "Weight": 2,
+                "NormalizationGroup": "None",
+                "DebugColor": {
+                  "R": 0,
+                  "G": 0,
+                  "B": 1,
+                  "A": 1
+                }
+              },
+              {
+                "Offset": 0.3499999940395355,
+                "Flags": 160,
+                "Weight": 0.699999988079071,
+                "NormalizationGroup": "None",
+                "DebugColor": {
+                  "R": 0,
+                  "G": 0,
+                  "B": 1,
+                  "A": 1
+                }
+              },
+              {
+                "Offset": 0.699999988079071,
+                "Flags": 176,
+                "Weight": 0.5,
+                "NormalizationGroup": "None",
+                "DebugColor": {
+                  "R": 0,
+                  "G": 0,
+                  "B": 1,
+                  "A": 1
+                }
+              }
+            ],
+            "SampleRole": "None",
+            "DebugWeightGroupID": -1,
+            "Filters": []
+          }
+        },
+        {
+          "class": "PoseSearchFeatureChannel_Velocity",
+          "path": "/Script/PoseSearch.PoseSearchFeatureChannel_Velocity",
+          "defaults": {
+            "bDefaultWithRootBone": true,
+            "Bone": {
+              "BoneName": "None"
+            },
+            "SampleRole": "None",
+            "OriginBone": {
+              "BoneName": "None"
+            },
+            "OriginRole": "None",
+            "Weight": 1,
+            "SamplingAttributeId": -1,
+            "SampleTimeOffset": 0,
+            "OriginTimeOffset": 0,
+            "DebugColor": {
+              "R": 0,
+              "G": 1,
+              "B": 0,
+              "A": 1
+            },
+            "InputQueryPose": "UseContinuingPose",
+            "bUseCharacterSpaceVelocities": true,
+            "bNormalize": false,
+            "ComponentStripping": "None",
+            "PermutationTimeType": "UseSampleTime",
+            "NormalizationGroup": "None",
+            "Filters": []
+          }
+        }
+      ]
+    }
+  }
+}

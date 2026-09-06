@@ -15,6 +15,7 @@ public class McpLinkCore : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"Json",
+			"JsonUtilities",
 			"HTTPServer"
 		});
 

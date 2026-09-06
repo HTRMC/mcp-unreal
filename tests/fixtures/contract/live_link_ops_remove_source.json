@@ -1,0 +1,34 @@
+{
+  "name": "live_link_ops_remove_source",
+  "description": "live_link_ops remove_source: a source removed by its type text",
+  "route": "/api/vp/live_link",
+  "tool": "live_link_ops",
+  "request": {
+    "operation": "remove_source",
+    "source": "McpContractVirtual"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "sources": [
+        {
+          "id": "4ED2DC4ECC5911CE4AF0635DA8B24A5A",
+          "type": "DefaultVirtualSource",
+          "status": "Active",
+          "machine": "",
+          "virtual": true
+        }
+      ],
+      "subjects": [
+        {
+          "name": "ContractSubject",
+          "source": "1B1C697B4B7C23E22F0A4BA8DEA4AC3A",
+          "role": "LiveLinkAnimationRole",
+          "enabled": true
+        }
+      ],
+      "removed": "1B1C697B4B7C23E22F0A4BA8DEA4AC3A"
+    }
+  }
+}

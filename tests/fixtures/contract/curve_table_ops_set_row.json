@@ -1,0 +1,44 @@
+{
+  "name": "curve_table_ops_set_row",
+  "description": "curve_table_ops set_row: a rich curve row from keys with interpolation",
+  "route": "/api/data/curve_table",
+  "tool": "curve_table_ops",
+  "request": {
+    "operation": "set_row",
+    "table": "/Game/Data/CT_McpContract",
+    "row": "Damage",
+    "keys": [
+      {
+        "time": 1.0,
+        "value": 10.0
+      },
+      {
+        "time": 10.0,
+        "value": 100.0,
+        "interp": "cubic"
+      }
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "row": "Damage",
+      "num_keys": 2,
+      "min_time": 1,
+      "max_time": 10,
+      "keys": [
+        {
+          "time": 1,
+          "value": 10,
+          "interp": "linear"
+        },
+        {
+          "time": 10,
+          "value": 100,
+          "interp": "cubic"
+        }
+      ]
+    }
+  }
+}

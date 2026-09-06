@@ -1,0 +1,77 @@
+{
+  "name": "chooser_ops_info",
+  "description": "chooser_ops info: signature, columns with cells, rows and fallback",
+  "route": "/api/data/chooser",
+  "tool": "chooser_ops",
+  "request": {
+    "operation": "info",
+    "chooser": "/Game/Choosers/CHT_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "chooser": "/Game/Choosers/CHT_Contract.CHT_Contract",
+      "result_type": "ObjectResult",
+      "output_class": "/Script/Engine.AnimSequence",
+      "context": [
+        {
+          "_structType": "/Script/Chooser.ContextObjectTypeClass",
+          "Class": "/Script/CoreUObject.Class'/Script/Engine.Pawn'",
+          "Direction": "Read"
+        }
+      ],
+      "columns": [
+        {
+          "index": 0,
+          "column": "FloatRangeColumn",
+          "category": "Filter",
+          "disabled": false,
+          "input": {
+            "_structType": "/Script/Chooser.FloatContextProperty",
+            "Binding": {
+              "PropertyBindingChain": [
+                "BaseEyeHeight"
+              ],
+              "ContextIndex": 0,
+              "IsBoundToRoot": false,
+              "DisplayName": "BaseEyeHeight"
+            }
+          },
+          "properties": {
+            "bWrapInput": false,
+            "MinValue": -180,
+            "MaxValue": 180,
+            "DefaultRowValue": {
+              "Min": 0,
+              "Max": 0,
+              "bNoMin": false,
+              "bNoMax": false
+            },
+            "bDisabled": false
+          },
+          "cell_property": "RowValues",
+          "cells": [
+            {
+              "Min": 0,
+              "Max": 100,
+              "bNoMin": false,
+              "bNoMax": false
+            }
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "index": 0,
+          "result": {
+            "_structType": "/Script/Chooser.AssetChooser",
+            "Asset": "/Script/Engine.AnimSequence'/Engine/Tutorial/SubEditors/TutorialAssets/Character/Tutorial_Idle.Tutorial_Idle'"
+          },
+          "disabled": false
+        }
+      ],
+      "fallback": {}
+    }
+  }
+}

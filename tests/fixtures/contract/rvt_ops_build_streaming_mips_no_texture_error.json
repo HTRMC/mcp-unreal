@@ -1,0 +1,18 @@
+{
+  "name": "rvt_ops_build_streaming_mips_no_texture_error",
+  "description": "rvt_ops build_streaming_mips without a Streaming Texture: 409",
+  "route": "/api/world/virtual_texture",
+  "tool": "rvt_ops",
+  "request": {
+    "operation": "build_streaming_mips",
+    "volume": "McpContractRvt"
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "no_streaming_texture",
+      "message": "the volume has no Streaming Texture — asset_ops create a VirtualTextureBuilder and set_property StreamingTexture on the component first"
+    }
+  }
+}

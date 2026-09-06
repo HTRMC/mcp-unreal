@@ -1,0 +1,19 @@
+{
+  "name": "mirror_table_ops_sync_bad_mode_error",
+  "description": "mirror_table_ops sync with an unknown mode: 400",
+  "route": "/api/anim/mirror_table",
+  "tool": "mirror_table_ops",
+  "request": {
+    "operation": "sync",
+    "table": "/Game/Anim/MDT_McpContract",
+    "mode": "bogus"
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "bad_mode",
+      "message": "'mode' is sync (default: rebuild every row from the expressions), add_missing (keep edited rows, add new names) or update_existing"
+    }
+  }
+}

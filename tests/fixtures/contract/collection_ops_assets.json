@@ -1,0 +1,21 @@
+{
+  "name": "collection_ops_assets",
+  "description": "collection_ops assets: the assets in a collection",
+  "route": "/api/workflow/collections",
+  "tool": "collection_ops",
+  "request": {
+    "operation": "assets",
+    "name": "McpContractCollection"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "collection": "McpContractCollection",
+      "assets": [
+        "/Game/Blueprints/BP_McpDebugProbe.BP_McpDebugProbe"
+      ],
+      "count": 1
+    }
+  }
+}

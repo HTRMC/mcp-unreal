@@ -1,0 +1,113 @@
+{
+  "name": "ik_rig_ops_create_retargeter",
+  "description": "ik_rig_ops create_retargeter: a retargeter between two rigs with chains auto-mapped",
+  "route": "/api/anim/ik_rig",
+  "tool": "ik_rig_ops",
+  "request": {
+    "operation": "create_retargeter",
+    "path": "/Game/Rigs/RTG_McpContract",
+    "source_rig": "/Game/Rigs/IK_McpContract",
+    "target_rig": "/Game/Rigs/IK_McpContract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "retargeter": "/Game/Rigs/RTG_McpContract.RTG_McpContract",
+      "source_rig": "/Game/Rigs/IK_McpContract.IK_McpContract",
+      "target_rig": "/Game/Rigs/IK_McpContract.IK_McpContract",
+      "source_mesh": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP.TutorialTPP",
+      "target_mesh": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP.TutorialTPP",
+      "source_pose": "Default Pose",
+      "target_pose": "Default Pose",
+      "ops": 5,
+      "chain_mapping": [
+        {
+          "target_chain": "Spine",
+          "source_chain": "Spine"
+        },
+        {
+          "target_chain": "Neck",
+          "source_chain": "Neck"
+        },
+        {
+          "target_chain": "Head",
+          "source_chain": "Head"
+        },
+        {
+          "target_chain": "LeftLeg",
+          "source_chain": "LeftLeg"
+        },
+        {
+          "target_chain": "LeftFoot",
+          "source_chain": "LeftFoot"
+        },
+        {
+          "target_chain": "LeftClavicle",
+          "source_chain": "LeftClavicle"
+        },
+        {
+          "target_chain": "LeftArm",
+          "source_chain": "LeftArm"
+        },
+        {
+          "target_chain": "LeftThumb",
+          "source_chain": "LeftThumb"
+        },
+        {
+          "target_chain": "LeftIndex",
+          "source_chain": "LeftIndex"
+        },
+        {
+          "target_chain": "LeftMiddle",
+          "source_chain": "LeftMiddle"
+        },
+        {
+          "target_chain": "LeftRing",
+          "source_chain": "LeftRing"
+        },
+        {
+          "target_chain": "LeftPinky",
+          "source_chain": "LeftPinky"
+        },
+        {
+          "target_chain": "RightLeg",
+          "source_chain": "RightLeg"
+        },
+        {
+          "target_chain": "RightFoot",
+          "source_chain": "RightFoot"
+        },
+        {
+          "target_chain": "RightClavicle",
+          "source_chain": "RightClavicle"
+        },
+        {
+          "target_chain": "RightArm",
+          "source_chain": "RightArm"
+        },
+        {
+          "target_chain": "RightThumb",
+          "source_chain": "RightThumb"
+        },
+        {
+          "target_chain": "RightIndex",
+          "source_chain": "RightIndex"
+        },
+        {
+          "target_chain": "RightMiddle",
+          "source_chain": "RightMiddle"
+        },
+        {
+          "target_chain": "RightRing",
+          "source_chain": "RightRing"
+        },
+        {
+          "target_chain": "RightPinky",
+          "source_chain": "RightPinky"
+        }
+      ],
+      "message": "created with fuzzy chain mapping — map_chain corrects pairs, retarget_animations runs the batch"
+    }
+  }
+}

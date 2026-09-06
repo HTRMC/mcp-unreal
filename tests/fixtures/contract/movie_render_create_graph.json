@@ -1,0 +1,61 @@
+{
+  "name": "movie_render_create_graph",
+  "description": "movie_render create_graph without the default template: a graph with only its Input and Output nodes",
+  "route": "/api/render/movie",
+  "tool": "movie_render",
+  "request": {
+    "operation": "create_graph",
+    "path": "/Game/Cinematics/MRG_McpContract",
+    "from_default": false
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "graph": "/Game/Cinematics/MRG_McpContract.MRG_McpContract",
+      "nodes": [
+        {
+          "name": "DefaultInputNode",
+          "guid": "00000000000000000000000000000000",
+          "class": "MovieGraphInputNode",
+          "title": "Input",
+          "kind": "input",
+          "path": "/Game/Cinematics/MRG_McpContract.MRG_McpContract:DefaultInputNode",
+          "disabled": false,
+          "x": 0,
+          "y": 0,
+          "inputs": [],
+          "outputs": [
+            {
+              "label": "Globals",
+              "type": "Branch",
+              "connected": []
+            }
+          ]
+        },
+        {
+          "name": "DefaultOutputNode",
+          "guid": "00000000000000000000000000000000",
+          "class": "MovieGraphOutputNode",
+          "title": "Output",
+          "kind": "output",
+          "path": "/Game/Cinematics/MRG_McpContract.MRG_McpContract:DefaultOutputNode",
+          "disabled": false,
+          "x": 900,
+          "y": 0,
+          "inputs": [
+            {
+              "label": "Globals",
+              "type": "Branch",
+              "connected": []
+            }
+          ],
+          "outputs": []
+        }
+      ],
+      "variables": [],
+      "from_default": false,
+      "message": "created in memory — movie_render save writes it to disk; render with graph=<path>"
+    }
+  }
+}

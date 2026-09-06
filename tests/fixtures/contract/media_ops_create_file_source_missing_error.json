@@ -1,0 +1,19 @@
+{
+  "name": "media_ops_create_file_source_missing_error",
+  "description": "media_ops create_file_source for a file that does not exist: 404",
+  "route": "/api/content/media",
+  "tool": "media_ops",
+  "request": {
+    "operation": "create_file_source",
+    "path": "/Game/Media/MS_McpMissing",
+    "file": "C:/nope/missing.mp4"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "file_not_found",
+      "message": "no file at 'C:/nope/missing.mp4'"
+    }
+  }
+}

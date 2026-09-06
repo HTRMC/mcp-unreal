@@ -1,0 +1,362 @@
+{
+  "name": "chooser_ops_list_types",
+  "description": "chooser_ops list_types: column, result and parameter structs",
+  "route": "/api/data/chooser",
+  "tool": "chooser_ops",
+  "request": {
+    "operation": "list_types"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "columns": [
+        {
+          "column": "BoolColumn",
+          "path": "/Script/Chooser.BoolColumn",
+          "category": "Filter",
+          "tooltip": "A column that filters rows based on the value of a Bool.",
+          "input_base": "ChooserParameterBoolBase",
+          "cell_property": "RowValuesWithAny",
+          "cell_type": "EBoolColumnCellValue"
+        },
+        {
+          "column": "EnumColumn",
+          "path": "/Script/Chooser.EnumColumn",
+          "category": "Filter",
+          "tooltip": "A column that filters rows based on the value of an Enum, with Equal Not Equal, or Any as cell comparison options.",
+          "input_base": "ChooserParameterEnumBase",
+          "cell_property": "RowValues",
+          "cell_type": "FChooserEnumRowData"
+        },
+        {
+          "column": "FloatDistanceColumn",
+          "path": "/Script/Chooser.FloatDistanceColumn",
+          "category": "Scoring",
+          "tooltip": "A column which scores rows based on their difference from an Input float.",
+          "input_base": "ChooserParameterFloatBase",
+          "cell_property": "RowValues",
+          "cell_type": "FChooserFloatDistanceRowData"
+        },
+        {
+          "column": "FloatRangeColumn",
+          "path": "/Script/Chooser.FloatRangeColumn",
+          "category": "Filter",
+          "tooltip": "A column which filters rows if an input value is not within the range specified for the row.",
+          "input_base": "ChooserParameterFloatBase",
+          "cell_property": "RowValues",
+          "cell_type": "FChooserFloatRangeRowData"
+        },
+        {
+          "column": "GameplayTagColumn",
+          "path": "/Script/Chooser.GameplayTagColumn",
+          "category": "Filter",
+          "tooltip": "A column which filters rows by comparing Gameplay Tags.",
+          "input_base": "ChooserParameterGameplayTagBase",
+          "cell_property": "RowValues",
+          "cell_type": "FGameplayTagContainer"
+        },
+        {
+          "column": "GameplayTagQueryColumn",
+          "path": "/Script/Chooser.GameplayTagQueryColumn",
+          "category": "Filter",
+          "tooltip": "A column which filters rows by matching the input against a Gameplay Tag Query.",
+          "input_base": "ChooserParameterGameplayTagBase",
+          "cell_property": "RowValues",
+          "cell_type": "FGameplayTagQuery"
+        },
+        {
+          "column": "MultiEnumColumn",
+          "path": "/Script/Chooser.MultiEnumColumn",
+          "category": "Filter",
+          "tooltip": "A column which filters rows using an Enum variable, where rows pass if the enum is one of any of the checked values.",
+          "input_base": "ChooserParameterEnumBase",
+          "cell_property": "RowValues",
+          "cell_type": "FChooserMultiEnumRowData"
+        },
+        {
+          "column": "ChooserNameColumn",
+          "path": "/Script/Chooser.ChooserNameColumn",
+          "category": "Filter",
+          "tooltip": "A column which filters rows by an input Name compared to Names specified on each row.",
+          "input_base": "ChooserParameterNameBase",
+          "cell_property": "RowValues",
+          "cell_type": "FChooserNameRowData"
+        },
+        {
+          "column": "ObjectClassColumn",
+          "path": "/Script/Chooser.ObjectClassColumn",
+          "category": "Filter",
+          "tooltip": "A column which filters rows using an Object reference variable, by checking if that object is of a certain Class.",
+          "input_base": "ChooserParameterObjectBase",
+          "cell_property": "RowValues",
+          "cell_type": "FChooserObjectClassRowData"
+        },
+        {
+          "column": "ObjectColumn",
+          "path": "/Script/Chooser.ObjectColumn",
+          "category": "Filter",
+          "tooltip": "A column which filters rows by an input Object to specified Objects for each row.",
+          "input_base": "ChooserParameterObjectBase",
+          "cell_property": "RowValues",
+          "cell_type": "FChooserObjectRowData"
+        },
+        {
+          "column": "OutputBoolColumn",
+          "path": "/Script/Chooser.OutputBoolColumn",
+          "category": "Output",
+          "tooltip": "A column which writes a Bool value.",
+          "input_base": "ChooserParameterBoolBase",
+          "cell_property": "RowValues",
+          "cell_type": "bool"
+        },
+        {
+          "column": "OutputEnumColumn",
+          "path": "/Script/Chooser.OutputEnumColumn",
+          "category": "Output",
+          "tooltip": "A column which writes an Enum value.",
+          "input_base": "ChooserParameterEnumBase",
+          "cell_property": "RowValues",
+          "cell_type": "FChooserOutputEnumRowData"
+        },
+        {
+          "column": "OutputFloatColumn",
+          "path": "/Script/Chooser.OutputFloatColumn",
+          "category": "Output",
+          "tooltip": "A column which writes a Float value.",
+          "input_base": "ChooserParameterFloatBase",
+          "cell_property": "RowValues",
+          "cell_type": "double"
+        },
+        {
+          "column": "OutputGameplayTagColumn",
+          "path": "/Script/Chooser.OutputGameplayTagColumn",
+          "category": "Output",
+          "tooltip": "A column which writes a Gameplay Tag Container value.",
+          "input_base": "ChooserParameterGameplayTagBase",
+          "cell_property": "RowValues",
+          "cell_type": "FGameplayTagContainer"
+        },
+        {
+          "column": "OutputGameplayTagQueryColumn",
+          "path": "/Script/Chooser.OutputGameplayTagQueryColumn",
+          "category": "Output",
+          "tooltip": "A column which writes a Gameplay Tag Query value.",
+          "input_base": "ChooserParameterGameplayTagQueryBase",
+          "cell_property": "RowValues",
+          "cell_type": "FGameplayTagQuery"
+        },
+        {
+          "column": "ChooserOutputNameColumn",
+          "path": "/Script/Chooser.ChooserOutputNameColumn",
+          "category": "Output",
+          "tooltip": "A column which writes a FName value.",
+          "input_base": "ChooserParameterNameBase",
+          "cell_property": "RowValues",
+          "cell_type": "FName"
+        },
+        {
+          "column": "OutputObjectColumn",
+          "path": "/Script/Chooser.OutputObjectColumn",
+          "category": "Output",
+          "tooltip": "A column which an Object Reference.",
+          "input_base": "ChooserParameterObjectBase",
+          "cell_property": "RowValues",
+          "cell_type": "FChooserOutputObjectRowData"
+        },
+        {
+          "column": "OutputStructColumn",
+          "path": "/Script/Chooser.OutputStructColumn",
+          "category": "Output",
+          "tooltip": "A column which writes all elements of a Struct.\n The data for each row must be set in the details panel, and the table cells will display values which differ from the struct default.",
+          "input_base": "ChooserParameterStructBase",
+          "cell_property": "RowValues",
+          "cell_type": "FInstancedStruct"
+        },
+        {
+          "column": "RandomizeColumn",
+          "path": "/Script/Chooser.RandomizeColumn",
+          "category": "Random",
+          "tooltip": "The Randomize column will randomly select between whatever values have passed all filters.\n The value specified in each cell is a probability weighting for the row.\n  A row with a value twice as likely as another will be twice as likely to be selected.\n Using the optional RandomizationContext binding, it can track the most recent selection, and reduce the probability of randomly picking the same entry twice",
+          "input_base": "ChooserParameterRandomizeBase",
+          "cell_property": "RowValues",
+          "cell_type": "float"
+        },
+        {
+          "column": "PoseSearchColumn",
+          "path": "/Script/PoseSearch.PoseSearchColumn",
+          "category": "Experimental",
+          "tooltip": "This column filters out all assets except the one which is selected by motion matching query.  Results must be AnimationAssets with a PoseSearchBranchIn notify state.  It also outputs OutputStartTime to specify the frame which matched pose best.  To work as intended it must be placed last (furthest right) in the Chooser so that other filters are applied first.",
+          "input_base": "PoseHistoryContextProperty",
+          "cell_property": "RowValues",
+          "cell_type": "FPoseSearchColumnRow"
+        }
+      ],
+      "results": [
+        {
+          "result": "NestedChooser",
+          "path": "/Script/Chooser.NestedChooser",
+          "result_type": "",
+          "category": "Chooser"
+        },
+        {
+          "result": "EvaluateChooser",
+          "path": "/Script/Chooser.EvaluateChooser",
+          "result_type": "",
+          "category": "Chooser"
+        },
+        {
+          "result": "AssetChooser",
+          "path": "/Script/Chooser.AssetChooser",
+          "result_type": "Object",
+          "category": "Basic"
+        },
+        {
+          "result": "SoftAssetChooser",
+          "path": "/Script/Chooser.SoftAssetChooser",
+          "result_type": "Object",
+          "category": "Basic"
+        },
+        {
+          "result": "ClassChooser",
+          "path": "/Script/Chooser.ClassChooser",
+          "result_type": "Class",
+          "category": "Basic"
+        },
+        {
+          "result": "LookupProxy",
+          "path": "/Script/ProxyTable.LookupProxy",
+          "result_type": "",
+          "category": "Proxy Table"
+        }
+      ],
+      "parameters": [
+        {
+          "parameter": "ChooserParameterNameBase",
+          "path": "/Script/Chooser.ChooserParameterNameBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "ChooserParameterBoolBase",
+          "path": "/Script/Chooser.ChooserParameterBoolBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "ChooserParameterEnumBase",
+          "path": "/Script/Chooser.ChooserParameterEnumBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "ChooserParameterFloatBase",
+          "path": "/Script/Chooser.ChooserParameterFloatBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "ChooserParameterGameplayTagBase",
+          "path": "/Script/Chooser.ChooserParameterGameplayTagBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "ChooserParameterGameplayTagQueryBase",
+          "path": "/Script/Chooser.ChooserParameterGameplayTagQueryBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "ChooserParameterObjectBase",
+          "path": "/Script/Chooser.ChooserParameterObjectBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "ChooserParameterRandomizeBase",
+          "path": "/Script/Chooser.ChooserParameterRandomizeBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "ChooserParameterStructBase",
+          "path": "/Script/Chooser.ChooserParameterStructBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "BoolContextProperty",
+          "path": "/Script/Chooser.BoolContextProperty",
+          "base": "ChooserParameterBoolBase"
+        },
+        {
+          "parameter": "BoolCVarProperty",
+          "path": "/Script/Chooser.BoolCVarProperty",
+          "base": "ChooserParameterBoolBase"
+        },
+        {
+          "parameter": "FloatCVarProperty",
+          "path": "/Script/Chooser.FloatCVarProperty",
+          "base": "ChooserParameterFloatBase"
+        },
+        {
+          "parameter": "EnumCVarProperty",
+          "path": "/Script/Chooser.EnumCVarProperty",
+          "base": "ChooserParameterEnumBase"
+        },
+        {
+          "parameter": "EnumContextProperty",
+          "path": "/Script/Chooser.EnumContextProperty",
+          "base": "ChooserParameterEnumBase"
+        },
+        {
+          "parameter": "FloatContextProperty",
+          "path": "/Script/Chooser.FloatContextProperty",
+          "base": "ChooserParameterFloatBase"
+        },
+        {
+          "parameter": "GameplayTagContextProperty",
+          "path": "/Script/Chooser.GameplayTagContextProperty",
+          "base": "ChooserParameterGameplayTagBase"
+        },
+        {
+          "parameter": "NameContextProperty",
+          "path": "/Script/Chooser.NameContextProperty",
+          "base": "ChooserParameterNameBase"
+        },
+        {
+          "parameter": "ObjectContextProperty",
+          "path": "/Script/Chooser.ObjectContextProperty",
+          "base": "ChooserParameterObjectBase"
+        },
+        {
+          "parameter": "GameplayTagQueryContextProperty",
+          "path": "/Script/Chooser.GameplayTagQueryContextProperty",
+          "base": "ChooserParameterGameplayTagQueryBase"
+        },
+        {
+          "parameter": "StructContextProperty",
+          "path": "/Script/Chooser.StructContextProperty",
+          "base": "ChooserParameterStructBase"
+        },
+        {
+          "parameter": "RandomizeContextProperty",
+          "path": "/Script/Chooser.RandomizeContextProperty",
+          "base": "ChooserParameterRandomizeBase"
+        },
+        {
+          "parameter": "ChooserParameterPoseHistoryBase",
+          "path": "/Script/PoseSearch.ChooserParameterPoseHistoryBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "PoseHistoryContextProperty",
+          "path": "/Script/PoseSearch.PoseHistoryContextProperty",
+          "base": "ChooserParameterPoseHistoryBase"
+        },
+        {
+          "parameter": "ChooserParameterProxyTableBase",
+          "path": "/Script/ProxyTable.ChooserParameterProxyTableBase",
+          "base": "ChooserParameterBase"
+        },
+        {
+          "parameter": "ProxyTableContextProperty",
+          "path": "/Script/ProxyTable.ProxyTableContextProperty",
+          "base": "ChooserParameterProxyTableBase"
+        }
+      ]
+    }
+  }
+}

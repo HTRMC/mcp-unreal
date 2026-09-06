@@ -14,10 +14,13 @@
 #include "Animation/BlendSpace.h"
 #include "Animation/BlendSpace1D.h"
 #include "Animation/Skeleton.h"
+#include "AnimationModifier.h"
+#include "AnimationModifiersAssetUserData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Factories/AnimMontageFactory.h"
+#include "JsonObjectConverter.h"
 #include "McpAnimUtils.h"
 #include "McpAssetUtils.h"
 #include "McpJson.h"
@@ -27,6 +30,8 @@
 #include "Misc/PackageName.h"
 #include "ScopedTransaction.h"
 #include "UObject/Package.h"
+#include "UObject/UObjectIterator.h"
+#include "UObject/UnrealType.h"
 
 namespace McpLink
 {
@@ -69,6 +74,59 @@ namespace McpLink
 				}
 			}
 			return nullptr;
+		}
+
+		/// Every loaded Animation Modifier class — the engine's library
+		/// (distance curves, motion extraction, footsteps, root re-orient …)
+		/// and any Blueprint modifier that has been loaded.
+		TArray<UClass*> ModifierClasses()
+		{
+			TArray<UClass*> Out;
+			for (TObjectIterator<UClass> It; It; ++It)
+			{
+				if (!It->IsChildOf(UAnimationModifier::StaticClass()) || *It == UAnimationModifier::StaticClass()
+					|| It->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists)
+					|| It->GetName().StartsWith(TEXT("SKEL_")) || It->GetName().StartsWith(TEXT("REINST_")))
+				{
+					continue;
+				}
+				Out.Add(*It);
+			}
+			Out.Sort([](const UClass& A, const UClass& B) { return A.GetName() < B.GetName(); });
+			return Out;
+		}
+
+		TSharedRef<FJsonObject> ModifierJson(const UAnimationModifier& Modifier, UAnimSequence* Sequence)
+		{
+			const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+			Entry->SetStringField(TEXT("modifier"), Modifier.GetPathName());
+			Entry->SetStringField(TEXT("class"), Modifier.GetClass()->GetName());
+			if (Sequence != nullptr)
+			{
+				Entry->SetBoolField(TEXT("applied"), Modifier.IsLatestRevisionApplied(Sequence));
+				Entry->SetBoolField(TEXT("can_revert"), Modifier.CanRevert(Sequence));
+			}
+			const TSharedRef<FJsonObject> Properties = MakeShared<FJsonObject>();
+			FJsonObjectConverter::UStructToJsonObject(Modifier.GetClass(), &Modifier, Properties, CPF_Edit, 0,
+				nullptr, EJsonObjectConversionFlags::SkipStandardizeCase);
+			Entry->SetObjectField(TEXT("properties"), Properties);
+			return Entry;
+		}
+
+		TArray<TSharedPtr<FJsonValue>> AppliedModifiersJson(UAnimSequence& Sequence)
+		{
+			TArray<TSharedPtr<FJsonValue>> Out;
+			if (const UAnimationModifiersAssetUserData* UserData = Sequence.GetAssetUserData<UAnimationModifiersAssetUserData>())
+			{
+				for (const UAnimationModifier* Modifier : UserData->GetAnimationModifierInstances())
+				{
+					if (Modifier != nullptr)
+					{
+						Out.Add(MakeShared<FJsonValueObject>(ModifierJson(*Modifier, &Sequence)));
+					}
+				}
+			}
+			return Out;
 		}
 
 		UAnimationAsset* AnimAssetOrError(
@@ -284,11 +342,35 @@ namespace McpLink
 				}
 
 				// ---- everything below targets an existing asset ------------
+				if (Operation == TEXT("list_modifiers"))
+				{
+					TArray<TSharedPtr<FJsonValue>> Classes;
+					for (UClass* Class : ModifierClasses())
+					{
+						const TSharedRef<FJsonObject> Entry = MakeShared<FJsonObject>();
+						Entry->SetStringField(TEXT("class"), Class->GetName());
+						Entry->SetStringField(TEXT("path"), Class->GetPathName());
+						Entry->SetBoolField(TEXT("blueprint"), Class->ClassGeneratedBy != nullptr);
+						const TSharedRef<FJsonObject> Defaults = MakeShared<FJsonObject>();
+						FJsonObjectConverter::UStructToJsonObject(Class, Class->GetDefaultObject(), Defaults, CPF_Edit, 0,
+							nullptr, EJsonObjectConversionFlags::SkipStandardizeCase);
+						Entry->SetObjectField(TEXT("defaults"), Defaults);
+						Classes.Add(MakeShared<FJsonValueObject>(Entry));
+					}
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetArrayField(TEXT("modifiers"), Classes);
+					Data->SetStringField(TEXT("note"),
+						TEXT("Blueprint modifiers appear once loaded — asset_ops load / search_assets class AnimationModifier finds them"));
+					Responder->Ok(Data);
+					return;
+				}
+
 				static const TCHAR* AssetOperations[] = {
 					TEXT("info"), TEXT("save"), TEXT("add_slot"), TEXT("add_section"),
 					TEXT("set_section"), TEXT("remove_section"), TEXT("add_segment"),
 					TEXT("remove_segment"), TEXT("add_sample"), TEXT("set_sample"),
-					TEXT("remove_sample"), TEXT("set_axis")};
+					TEXT("remove_sample"), TEXT("set_axis"), TEXT("list_applied_modifiers"),
+					TEXT("apply_modifier"), TEXT("revert_modifier"), TEXT("remove_modifier")};
 				bool bKnown = false;
 				for (const TCHAR* Known : AssetOperations)
 				{
@@ -300,13 +382,156 @@ namespace McpLink
 						FString::Printf(
 							TEXT("unknown operation '%s' — use list_kinds, create, info, add_slot, ")
 							TEXT("add_section, set_section, remove_section, add_segment, remove_segment, ")
-							TEXT("add_sample, set_sample, remove_sample, set_axis, or save"),
+							TEXT("add_sample, set_sample, remove_sample, set_axis, list_modifiers, ")
+							TEXT("list_applied_modifiers, apply_modifier, revert_modifier, remove_modifier, or save"),
 							*Operation));
 					return;
 				}
 				UAnimationAsset* Asset = AnimAssetOrError(Body, Responder);
 				if (Asset == nullptr)
 				{
+					return;
+				}
+
+				if (Operation == TEXT("list_applied_modifiers") || Operation == TEXT("apply_modifier")
+					|| Operation == TEXT("revert_modifier") || Operation == TEXT("remove_modifier"))
+				{
+					UAnimSequence* Sequence = Cast<UAnimSequence>(Asset);
+					if (Sequence == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("not_a_sequence"),
+							TEXT("Animation Modifiers run on Animation Sequences"));
+						return;
+					}
+					if (Operation == TEXT("list_applied_modifiers"))
+					{
+						const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+						Data->SetStringField(TEXT("asset"), Sequence->GetPathName());
+						Data->SetArrayField(TEXT("modifiers"), AppliedModifiersJson(*Sequence));
+						Responder->Ok(Data);
+						return;
+					}
+					const FScopedTransaction Transaction(NSLOCTEXT("McpLink", "AnimModifier", "McpLink Animation Modifier"));
+					Sequence->Modify();
+					if (Operation == TEXT("apply_modifier"))
+					{
+						FString ClassSpec;
+						if (!RequireString(Body, TEXT("modifier"), ClassSpec, Responder,
+								TEXT("a modifier class from list_modifiers, e.g. DistanceCurveModifier")))
+						{
+							return;
+						}
+						UClass* Class = nullptr;
+						for (UClass* Candidate : ModifierClasses())
+						{
+							if (Candidate->GetName() == ClassSpec || Candidate->GetPathName() == ClassSpec
+								|| Candidate->GetName().Equals(ClassSpec, ESearchCase::IgnoreCase))
+							{
+								Class = Candidate;
+								break;
+							}
+						}
+						if (Class == nullptr)
+						{
+							Class = Cast<UClass>(ResolveClass(ClassSpec));
+						}
+						if (Class == nullptr || !Class->IsChildOf(UAnimationModifier::StaticClass()))
+						{
+							Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("modifier_not_found"),
+								FString::Printf(TEXT("'%s' is not an Animation Modifier class — list_modifiers shows them"), *ClassSpec));
+							return;
+						}
+						// The Animation Modifiers panel's "Add": an instance on the
+						// sequence's asset user data, which is what re-applies it
+						// after edits and remembers it for revert.
+						if (!UAnimationModifiersAssetUserData::AddAnimationModifierOfClass(Sequence, Class))
+						{
+							Responder->Error(EHttpServerResponseCodes::Conflict, TEXT("add_refused"),
+								TEXT("the sequence refused the modifier instance"));
+							return;
+						}
+						UAnimationModifiersAssetUserData* UserData = Sequence->GetAssetUserData<UAnimationModifiersAssetUserData>();
+						UAnimationModifier* Instance = UserData != nullptr && UserData->GetAnimationModifierInstances().Num() > 0
+							? UserData->GetAnimationModifierInstances().Last() : nullptr;
+						if (Instance == nullptr)
+						{
+							Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("no_instance"),
+								TEXT("the modifier instance was not created"));
+							return;
+						}
+						const TSharedPtr<FJsonObject>* Properties = nullptr;
+						if (Body->TryGetObjectField(TEXT("properties"), Properties)
+							&& !FJsonObjectConverter::JsonObjectToUStruct(Properties->ToSharedRef(), Instance->GetClass(), Instance, 0, 0))
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("bad_properties"),
+								TEXT("'properties' did not apply — keys are the modifier's UPROPERTY names (list_modifiers shows defaults)"));
+							return;
+						}
+						Instance->ApplyToAnimationSequence(Sequence);
+						Sequence->MarkPackageDirty();
+						const TSharedRef<FJsonObject> Data = ModifierJson(*Instance, Sequence);
+						Data->SetStringField(TEXT("asset"), Sequence->GetPathName());
+						Data->SetArrayField(TEXT("modifiers"), AppliedModifiersJson(*Sequence));
+						Responder->Ok(Data);
+						return;
+					}
+					// revert / remove: by class name or index into list_applied_modifiers.
+					UAnimationModifiersAssetUserData* UserData = Sequence->GetAssetUserData<UAnimationModifiersAssetUserData>();
+					FString Spec;
+					Body->TryGetStringField(TEXT("modifier"), Spec);
+					UAnimationModifier* Instance = nullptr;
+					if (UserData != nullptr)
+					{
+						const TArray<UAnimationModifier*>& Instances = UserData->GetAnimationModifierInstances();
+						const int32 Index = Spec.IsNumeric() ? FCString::Atoi(*Spec) : IntOr(Body, TEXT("index"), Spec.IsEmpty() && Instances.Num() == 1 ? 0 : -1);
+						if (Instances.IsValidIndex(Index))
+						{
+							Instance = Instances[Index];
+						}
+						else
+						{
+							for (UAnimationModifier* Candidate : Instances)
+							{
+								if (Candidate != nullptr && (Candidate->GetClass()->GetName() == Spec || Candidate->GetName() == Spec
+									|| Candidate->GetClass()->GetName().Equals(Spec, ESearchCase::IgnoreCase)))
+								{
+									Instance = Candidate;
+									break;
+								}
+							}
+						}
+					}
+					if (Instance == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("modifier_not_found"),
+							FString::Printf(TEXT("no applied modifier matches '%s' — list_applied_modifiers shows them"), *Spec));
+						return;
+					}
+					Instance->RevertFromAnimationSequence(Sequence);
+					if (Operation == TEXT("remove_modifier"))
+					{
+						// The panel's remove goes through a protected member; the
+						// instance list is a UPROPERTY, so reflection drops it.
+						UserData->Modify();
+						if (FArrayProperty* Property = FindFProperty<FArrayProperty>(UserData->GetClass(), TEXT("AnimationModifierInstances")))
+						{
+							FScriptArrayHelper Helper(Property, Property->ContainerPtrToValuePtr<void>(UserData));
+							FObjectPropertyBase* Inner = CastField<FObjectPropertyBase>(Property->Inner);
+							for (int32 Index = Helper.Num() - 1; Index >= 0; --Index)
+							{
+								if (Inner != nullptr && Inner->GetObjectPropertyValue(Helper.GetRawPtr(Index)) == Instance)
+								{
+									Helper.RemoveValues(Index, 1);
+								}
+							}
+						}
+					}
+					Sequence->MarkPackageDirty();
+					const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
+					Data->SetStringField(TEXT("asset"), Sequence->GetPathName());
+					Data->SetStringField(TEXT("applied"), Operation);
+					Data->SetArrayField(TEXT("modifiers"), AppliedModifiersJson(*Sequence));
+					Responder->Ok(Data);
 					return;
 				}
 

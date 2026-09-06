@@ -1,0 +1,59 @@
+{
+  "name": "live_link_ops_save_preset",
+  "description": "live_link_ops save_preset: the client captured into a Live Link Preset asset",
+  "route": "/api/vp/live_link",
+  "tool": "live_link_ops",
+  "request": {
+    "operation": "save_preset",
+    "preset": "/Game/VP/LLP_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "sources": [
+        {
+          "id": "4ED2DC4ECC5911CE4AF0635DA8B24A5A",
+          "type": "DefaultVirtualSource",
+          "status": "Active",
+          "machine": "",
+          "virtual": true
+        },
+        {
+          "id": "1B1C697B4B7C23E22F0A4BA8DEA4AC3A",
+          "type": "McpContractVirtual",
+          "status": "Active",
+          "machine": "",
+          "virtual": true
+        }
+      ],
+      "subjects": [
+        {
+          "name": "ContractSubject",
+          "source": "1B1C697B4B7C23E22F0A4BA8DEA4AC3A",
+          "role": "LiveLinkAnimationRole",
+          "enabled": true
+        }
+      ],
+      "preset": "/Game/VP/LLP_Contract.LLP_Contract",
+      "file": "C:/Users/HTRMC/Dev/Projects/mcp-unreal/test-project/Content/VP/LLP_Contract.uasset",
+      "source_presets": [
+        {
+          "id": "1B1C697B4B7C23E22F0A4BA8DEA4AC3A",
+          "type": "McpContractVirtual",
+          "settings_class": "LiveLinkVirtualSubjectSourceSettings",
+          "virtual": true
+        }
+      ],
+      "subject_presets": [
+        {
+          "name": "ContractSubject",
+          "source": "1B1C697B4B7C23E22F0A4BA8DEA4AC3A",
+          "role": "LiveLinkAnimationRole",
+          "virtual": true,
+          "enabled": true
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "anim_blueprint_modify_implement_layer_interface",
+  "description": "anim_blueprint_modify implement_layer_interface: the interface's layer graphs added to a Blueprint",
+  "route": "/api/anim_blueprints/modify",
+  "tool": "anim_blueprint_modify",
+  "request": {
+    "operation": "implement_layer_interface",
+    "blueprint": "/Game/Anim/ABP_LayerContract",
+    "interface": "/Game/Anim/ALI_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "blueprint": "/Game/Anim/ABP_LayerContract.ABP_LayerContract",
+      "is_interface": false,
+      "layers": [
+        {
+          "layer": "AnimGraph",
+          "group": "DefaultSharedGroup",
+          "nodes": 1
+        }
+      ],
+      "implemented_interfaces": [
+        {
+          "interface": "/Game/Anim/ALI_Contract.ALI_Contract_C",
+          "layers": [
+            {
+              "layer": "FullBody",
+              "nodes": 1
+            },
+            {
+              "layer": "UpperBody",
+              "nodes": 1
+            }
+          ]
+        }
+      ],
+      "message": "each layer is now an animation graph named after it — build its pose with blueprint_modify, then add_linked_layer_node runs it in AnimGraph"
+    }
+  }
+}

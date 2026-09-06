@@ -1,0 +1,49 @@
+{
+  "name": "blueprint_modify_add_node_input_key",
+  "description": "blueprint_modify add_node input_key: a key event node with Pressed/Released and a modifier",
+  "route": "/api/blueprints/modify",
+  "tool": "blueprint_modify",
+  "request": {
+    "operation": "add_node",
+    "blueprint": "/Game/Blueprints/BP_McpDebugProbe",
+    "node_type": "input_key",
+    "key": "SpaceBar",
+    "modifiers": [
+      "shift"
+    ],
+    "x": 100,
+    "y": 200
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "guid": "A2B2634442A9E5B9EAE56896729B5633",
+      "class": "K2Node_InputKey",
+      "title": "Shift Space Bar",
+      "x": 100,
+      "y": 200,
+      "pins": [
+        {
+          "name": "Pressed",
+          "direction": "output",
+          "type": "exec",
+          "linked_to": []
+        },
+        {
+          "name": "Released",
+          "direction": "output",
+          "type": "exec",
+          "linked_to": []
+        },
+        {
+          "name": "Key",
+          "direction": "output",
+          "type": "struct",
+          "subtype_object": "/Script/InputCore.Key",
+          "linked_to": []
+        }
+      ]
+    }
+  }
+}

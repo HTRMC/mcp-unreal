@@ -1,0 +1,19 @@
+{
+  "name": "movie_render_add_graph_node_unknown_error",
+  "description": "movie_render add_graph_node with an unknown class: 404",
+  "route": "/api/render/movie",
+  "tool": "movie_render",
+  "request": {
+    "operation": "add_graph_node",
+    "graph": "/Game/Cinematics/MRG_McpContract",
+    "class": "NoSuchNode"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "node_class_not_found",
+      "message": "'NoSuchNode' is not an addable Movie Render Graph node class — see list_graph_node_classes"
+    }
+  }
+}

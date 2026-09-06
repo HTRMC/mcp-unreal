@@ -1,0 +1,26 @@
+{
+  "name": "niagara_author_list_dynamic_inputs",
+  "description": "dynamic input scripts with the type each one produces, filtered by output type",
+  "route": "/api/niagara/author",
+  "tool": "niagara_author",
+  "request": {
+    "operation": "list_dynamic_inputs",
+    "name_contains": "RandomRangeFloat",
+    "output_type": "float",
+    "max_results": 5
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "total": 1,
+      "scripts": [
+        {
+          "name": "RandomRangeFloat",
+          "path": "/Niagara/DynamicInputs/UniformRange/V2/RandomRangeFloat.RandomRangeFloat",
+          "output_type": "float"
+        }
+      ]
+    }
+  }
+}

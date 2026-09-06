@@ -1,0 +1,38 @@
+{
+  "name": "remote_control_ops_info",
+  "description": "remote_control_ops info: every exposed entity with label, id and bound objects",
+  "route": "/api/vp/remote_control",
+  "tool": "remote_control_ops",
+  "request": {
+    "operation": "info",
+    "preset": "/Game/VP/RCP_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "preset": "/Game/VP/RCP_Contract.RCP_Contract",
+      "count": 2,
+      "exposed": [
+        {
+          "kind": "property",
+          "label": "Hidden",
+          "id": "0A0D44294C79DB0BEB1DA7977BC39E78",
+          "bound_objects": [
+            "/Game/Maps/TestMap.TestMap:PersistentLevel.PointLight_0"
+          ],
+          "field": "bHidden"
+        },
+        {
+          "kind": "function",
+          "label": "Set Actor Hidden In Game",
+          "id": "0CF5EA8D41EFA8675DE8379C89F5C539",
+          "bound_objects": [
+            "/Game/Maps/TestMap.TestMap:PersistentLevel.PointLight_0"
+          ],
+          "function": "SetActorHiddenInGame"
+        }
+      ]
+    }
+  }
+}

@@ -8,6 +8,7 @@ namespace McpLink
 	void RegisterStreamingRoutes(FMcpLinkCoreModule& Core);
 	void RegisterPartitionRoutes(FMcpLinkCoreModule& Core);
 	void RegisterLevelInstanceRoutes(FMcpLinkCoreModule& Core);
+	void RegisterRvtRoutes(FMcpLinkCoreModule& Core);
 }
 
 class FMcpLinkWorldModule : public IModuleInterface
@@ -21,6 +22,7 @@ public:
 		McpLink::RegisterStreamingRoutes(Core);
 		McpLink::RegisterPartitionRoutes(Core);
 		McpLink::RegisterLevelInstanceRoutes(Core);
+		McpLink::RegisterRvtRoutes(Core);
 	}
 };
 

@@ -11,7 +11,7 @@ use serde_json::Value;
 
 use crate::budget::truncate_chars;
 
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 const PING_TIMEOUT: Duration = Duration::from_secs(2);
 
 #[derive(Clone)]
@@ -46,11 +46,22 @@ impl EditorClient {
 
     /// POST a JSON body to a plugin endpoint and unwrap the envelope.
     pub async fn post(&self, path: &str, body: Value) -> Result<Value, EditorError> {
+        self.post_with_timeout(path, body, REQUEST_TIMEOUT).await
+    }
+
+    /// `post` with its own deadline, for a route that waits on the editor.
+    pub async fn post_with_timeout(
+        &self,
+        path: &str,
+        body: Value,
+        timeout: Duration,
+    ) -> Result<Value, EditorError> {
         let url = format!("{}{}", self.base, path);
         let resp = self
             .http
             .post(&url)
             .json(&body)
+            .timeout(timeout)
             .send()
             .await
             .map_err(|e| EditorError::Unreachable(e.to_string()))?;

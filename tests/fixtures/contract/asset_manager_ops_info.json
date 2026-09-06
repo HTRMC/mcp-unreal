@@ -1,0 +1,24 @@
+{
+  "name": "asset_manager_ops_info",
+  "description": "asset_manager_ops info: a map's primary asset id and rules from its path",
+  "route": "/api/workflow/asset_manager",
+  "tool": "asset_manager_ops",
+  "request": {
+    "operation": "info",
+    "id": "/Game/Maps/TestMap"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "id": "Map:/Game/Maps/TestMap",
+      "path": "/Game/Maps/TestMap.TestMap",
+      "rules": {
+        "priority": 1,
+        "chunk_id": -1,
+        "apply_recursively": true,
+        "cook_rule": "unknown"
+      }
+    }
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "name": "mass_ops_create_spawner",
+  "description": "mass_ops create_spawner: a Mass Spawner with an entity type and a radius generator",
+  "route": "/api/mass/ops",
+  "tool": "mass_ops",
+  "request": {
+    "operation": "create_spawner",
+    "name": "MassContractSpawner",
+    "location": [
+      0,
+      0,
+      100
+    ],
+    "count": 10,
+    "auto_spawn": false,
+    "entity_types": [
+      {
+        "config": "/Game/Mass/EC_Contract"
+      }
+    ],
+    "generators": [
+      {
+        "class": "McpMassRadiusSpawnGenerator",
+        "properties": {
+          "Radius": 200
+        }
+      }
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "actor": "MassContractSpawner",
+      "path": "/Game/Maps/TestMap.TestMap:PersistentLevel.MassContractSpawner",
+      "location": [
+        0,
+        0,
+        100
+      ],
+      "properties": {
+        "Count": 10,
+        "EntityTypes": [
+          {
+            "EntityConfig": "/Game/Mass/EC_Contract.EC_Contract",
+            "Proportion": 1
+          }
+        ],
+        "SpawnDataGenerators": [
+          {
+            "Proportion": 1
+          }
+        ],
+        "bAutoSpawnOnBeginPlay": false,
+        "bOverrideSchematics": false,
+        "SpawningCountScale": 1,
+        "PrimaryActorTick": {
+          "TickGroup": "TG_PrePhysics",
+          "EndTickGroup": "TG_PrePhysics",
+          "bTickEvenWhenPaused": false,
+          "bStartWithTickEnabled": true,
+          "bAllowTickOnDedicatedServer": true,
+          "TickInterval": 0
+        },
+        "bOnlyRelevantToOwner": false,
+        "bAlwaysRelevant": false,
+        "bReplicateMovement": false,
+        "bCallPreReplication": true,
+        "bCallPreReplicationForReplay": true,
+        "bHidden": false,
+        "bIsMainWorldOnly": false,
+        "bNetLoadOnClient": true,
+        "bNetUseOwnerRelevancy": false,
+        "bRelevantForLevelBounds": true,
+        "bReplayRewindable": false,
+        "bAllowTickBeforeBeginPlay": false,
+        "bCanBeDamaged": false,
+        "bBlockInput": false,
+        "bFindCameraComponentWhenViewTarget": true,
+        "bGenerateOverlapEventsDuringLevelStreaming": false,
+        "bIgnoresOriginShifting": false,
+        "bEnableAutoLODGeneration": true,
+        "bIsEditorOnlyActor": false,
+        "bReplicates": false,
+        "bCanBeInCluster": false,
+        "bMigratingAsset": false,
+        "bReplicateUsingRegisteredSubObjectList": false,
+        "bAsyncPhysicsTickEnabled": false,
+        "UpdateOverlapsMethodDuringLevelStreaming": "UseConfigDefault",
+        "DefaultUpdateOverlapsMethodDuringLevelStreaming": "OnlyUpdateMovable",
+        "RemoteRole": "ROLE_None",
+        "InitialLifeSpan": 0,
+        "RuntimeGrid": "None",
+        "ReplicatedMovement": {
+          "LocationQuantizationLevel": "RoundWholeNumber",
+          "VelocityQuantizationLevel": "RoundWholeNumber",
+          "RotationQuantizationLevel": "ByteComponents"
+        },
+        "Role": "ROLE_Authority",
+        "NetDormancy": "DORM_Awake",
+        "SpawnCollisionHandlingMethod": "AlwaysSpawn",
+        "AutoReceiveInput": "Disabled",
+        "InputPriority": 0,
+        "NetCullDistanceSquared": 225000000,
+        "NetUpdateFrequency": 100,
+        "MinNetUpdateFrequency": 2,
+        "NetPriority": 1,
+        "PhysicsReplicationMode": "Default",
+        "PivotOffset": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "HLODLayer": "None",
+        "Layers": [],
+        "DataLayerAssets": [],
+        "ExternalDataLayerAsset": "None",
+        "SpriteScale": 1,
+        "bOptimizeBPComponentData": false,
+        "bIsSpatiallyLoaded": true,
+        "Tags": []
+      },
+      "generators": [
+        {
+          "class": "McpMassRadiusSpawnGenerator",
+          "proportion": 1,
+          "properties": {
+            "Points": [],
+            "Radius": 200,
+            "HeightOffset": 0,
+            "bRandomYaw": true,
+            "RandomSelectionSeed": 0
+          }
+        }
+      ],
+      "count": 10
+    }
+  }
+}

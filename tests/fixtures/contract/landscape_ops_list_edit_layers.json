@@ -1,0 +1,32 @@
+{
+  "name": "landscape_ops_list_edit_layers",
+  "description": "landscape_ops list_edit_layers: the landscape's edit layers",
+  "route": "/api/world/landscape",
+  "tool": "landscape_ops",
+  "request": {
+    "operation": "list_edit_layers",
+    "landscape": "McpContractLand"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "landscape": "/Game/Maps/TestMap.TestMap:PersistentLevel.Landscape_1",
+      "has_edit_layers": true,
+      "editing_layer": "00000000000000000000000000000000",
+      "layers": [
+        {
+          "index": 0,
+          "name": "Layer",
+          "guid": "11DDCB8945ECB2FB5D91C09F8C89E86A",
+          "class": "LandscapeEditLayer",
+          "visible": true,
+          "locked": false,
+          "heightmap_alpha": 1,
+          "weightmap_alpha": 1,
+          "editing": false
+        }
+      ]
+    }
+  }
+}

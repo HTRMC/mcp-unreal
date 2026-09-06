@@ -35,6 +35,23 @@
 #include "Sections/MovieSceneVectorSection.h"
 #include "Tracks/MovieSceneCameraCutTrack.h"
 #include "Tracks/MovieSceneEnumTrack.h"
+
+// Subsequences, camera shakes and events with payloads into the director
+// Blueprint.
+#include "Camera/CameraShakeBase.h"
+#include "Channels/MovieSceneEventChannel.h"
+#include "EdGraph/EdGraphPin.h"
+#include "EdGraphSchema_K2.h"
+#include "K2Node_CustomEvent.h"
+#include "MovieSceneEventUtils.h"
+#include "MovieSceneSequenceEditor.h"
+#include "Sections/MovieSceneCameraShakeSection.h"
+#include "Sections/MovieSceneEventRepeaterSection.h"
+#include "Sections/MovieSceneEventTriggerSection.h"
+#include "Sections/MovieSceneSubSection.h"
+#include "Tracks/MovieSceneCameraShakeTrack.h"
+#include "Tracks/MovieSceneEventTrack.h"
+#include "Tracks/MovieSceneSubTrack.h"
 #include "Tracks/MovieSceneObjectPropertyTrack.h"
 #include "Tracks/MovieScenePropertyTrack.h"
 #include "Tracks/MovieSceneVectorTrack.h"
@@ -226,6 +243,78 @@ namespace McpLink
 		{
 			Sequence.GetMovieScene()->MarkAsChanged();
 			Sequence.MarkPackageDirty();
+		}
+
+		/// The pin type for an event payload parameter: the scalar and
+		/// common struct names, or "object:<Class>".
+		bool PayloadPinType(const FString& TypeName, FEdGraphPinType& OutType, FString& OutError)
+		{
+			const FString Lower = TypeName.ToLower();
+			OutType = FEdGraphPinType();
+			if (Lower == TEXT("bool") || Lower == TEXT("boolean"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
+			}
+			else if (Lower == TEXT("int") || Lower == TEXT("integer") || Lower == TEXT("int32"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Int;
+			}
+			else if (Lower == TEXT("int64"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Int64;
+			}
+			else if (Lower == TEXT("float") || Lower == TEXT("double") || Lower == TEXT("real"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Real;
+				OutType.PinSubCategory = UEdGraphSchema_K2::PC_Double;
+			}
+			else if (Lower == TEXT("string"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_String;
+			}
+			else if (Lower == TEXT("name"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Name;
+			}
+			else if (Lower == TEXT("text"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Text;
+			}
+			else if (Lower == TEXT("vector"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Struct;
+				OutType.PinSubCategoryObject = TBaseStructure<FVector>::Get();
+			}
+			else if (Lower == TEXT("rotator"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Struct;
+				OutType.PinSubCategoryObject = TBaseStructure<FRotator>::Get();
+			}
+			else if (Lower == TEXT("transform"))
+			{
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Struct;
+				OutType.PinSubCategoryObject = TBaseStructure<FTransform>::Get();
+			}
+			else if (Lower.StartsWith(TEXT("object:")))
+			{
+				UClass* Class = ResolveClass(TypeName.Mid(7));
+				if (Class == nullptr)
+				{
+					OutError = FString::Printf(TEXT("no class '%s' for an object parameter"), *TypeName.Mid(7));
+					return false;
+				}
+				OutType.PinCategory = UEdGraphSchema_K2::PC_Object;
+				OutType.PinSubCategoryObject = Class;
+			}
+			else
+			{
+				OutError = FString::Printf(
+					TEXT("unknown parameter type '%s' — bool, int, int64, float, string, name, text, vector, ")
+					TEXT("rotator, transform or object:<Class>"),
+					*TypeName);
+				return false;
+			}
+			return true;
 		}
 	}
 
@@ -856,6 +945,397 @@ namespace McpLink
 					return;
 				}
 
+				if (Operation == TEXT("add_subsequence"))
+				{
+					FString SubSpec;
+					if (!RequireString(Body, TEXT("subsequence"), SubSpec, Responder,
+						TEXT("the Level Sequence asset to nest")))
+					{
+						return;
+					}
+					UMovieSceneSequence* Sub = Find(SubSpec);
+					if (Sub == nullptr || Sub->GetMovieScene() == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("sequence_not_found"),
+							FString::Printf(TEXT("no sequence at '%s'"), *SubSpec));
+						return;
+					}
+					if (Sub == Sequence)
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("self_reference"),
+							TEXT("a sequence cannot nest itself"));
+						return;
+					}
+					FString BindingSpec;
+					Body->TryGetStringField(TEXT("binding"), BindingSpec);
+					UMovieSceneSubTrack* SubTrack = nullptr;
+					if (!BindingSpec.IsEmpty())
+					{
+						const FGuid Guid = BindingOrError(MovieScene, Body, TEXT("binding"), Responder);
+						if (!Guid.IsValid()) { return; }
+						SubTrack = Cast<UMovieSceneSubTrack>(MovieScene.FindTrack(UMovieSceneSubTrack::StaticClass(), Guid));
+						if (SubTrack == nullptr)
+						{
+							SubTrack = Cast<UMovieSceneSubTrack>(MovieScene.AddTrack(UMovieSceneSubTrack::StaticClass(), Guid));
+						}
+					}
+					else
+					{
+						// One root Subsequences track holds every nested sequence,
+						// on rows, as Sequencer lays them out.
+						for (UMovieSceneTrack* Existing : MovieScene.GetTracks())
+						{
+							if (Existing != nullptr && Existing->GetClass() == UMovieSceneSubTrack::StaticClass())
+							{
+								SubTrack = Cast<UMovieSceneSubTrack>(Existing);
+								break;
+							}
+						}
+						if (SubTrack == nullptr)
+						{
+							SubTrack = Cast<UMovieSceneSubTrack>(MovieScene.AddTrack(UMovieSceneSubTrack::StaticClass()));
+						}
+					}
+					if (SubTrack == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("add_track_failed"),
+							TEXT("this sequence would not take a Subsequences track"));
+						return;
+					}
+
+					// Start where asked, else at the playback start; run for the
+					// nested sequence's own length unless an end is given.
+					FFrameNumber Start = MovieScene.GetPlaybackRange().GetLowerBoundValue();
+					ReadTime(Body, MovieScene, TEXT("start_frame"), TEXT("start_seconds"), Start);
+					FFrameNumber End(0);
+					int32 Duration = 0;
+					if (ReadTime(Body, MovieScene, TEXT("end_frame"), TEXT("end_seconds"), End))
+					{
+						Duration = FMath::Max(1, (End - Start).Value);
+					}
+					else
+					{
+						const UMovieScene* SubScene = Sub->GetMovieScene();
+						const FFrameTime SubLength = FFrameTime(SubScene->GetPlaybackRange().Size<FFrameNumber>());
+						Duration = FMath::Max(1,
+							FFrameRate::TransformTime(SubLength, SubScene->GetTickResolution(), MovieScene.GetTickResolution())
+								.RoundToFrame().Value);
+					}
+					double RowIndex = -1.0;
+					Body->TryGetNumberField(TEXT("row_index"), RowIndex);
+					SubTrack->Modify();
+					UMovieSceneSubSection* Section =
+						SubTrack->AddSequenceOnRow(Sub, Start, Duration, static_cast<int32>(RowIndex));
+					if (Section == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("add_section_failed"),
+							TEXT("the Subsequences track would not create a section"));
+						return;
+					}
+					MarkSequenceChanged(*Sequence);
+					const TSharedRef<FJsonObject> Data = SectionToJson(MovieScene, *Section, false);
+					Data->SetStringField(TEXT("subsequence"), Sub->GetPathName());
+					Data->SetStringField(TEXT("track"), SubTrack->GetPathName());
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("add_camera_shake"))
+				{
+					const FGuid Guid = BindingOrError(MovieScene, Body, TEXT("binding"), Responder);
+					if (!Guid.IsValid()) { return; }
+					FString ShakeSpec;
+					if (!RequireString(Body, TEXT("shake_class"), ShakeSpec, Responder,
+						TEXT("a CameraShakeBase subclass, e.g. a Blueprint camera shake asset path")))
+					{
+						return;
+					}
+					UClass* ShakeClass = ResolveClass(ShakeSpec);
+					if (ShakeClass == nullptr || !ShakeClass->IsChildOf(UCameraShakeBase::StaticClass()))
+					{
+						Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("shake_class_not_found"),
+							FString::Printf(
+								TEXT("'%s' is not a CameraShakeBase subclass — a camera shake is a Blueprint (or C++) class deriving from CameraShakeBase, e.g. one with a PerlinNoiseCameraShakePattern"),
+								*ShakeSpec));
+						return;
+					}
+					UMovieSceneTrack* Track = MovieScene.FindTrack(UMovieSceneCameraShakeTrack::StaticClass(), Guid);
+					if (Track == nullptr)
+					{
+						Track = MovieScene.AddTrack(UMovieSceneCameraShakeTrack::StaticClass(), Guid);
+					}
+					if (Track == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("add_track_failed"),
+							TEXT("this binding would not take a Camera Shake track"));
+						return;
+					}
+					double RowIndex = 0.0;
+					Body->TryGetNumberField(TEXT("row_index"), RowIndex);
+					UMovieSceneCameraShakeSection* Section = Cast<UMovieSceneCameraShakeSection>(
+						AddSectionTo(*Track, ReadRange(Body, MovieScene), static_cast<int32>(RowIndex)));
+					if (Section == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("add_section_failed"),
+							TEXT("the Camera Shake track would not create a section"));
+						return;
+					}
+					Section->Modify();
+					Section->ShakeData.ShakeClass = ShakeClass;
+					Section->ShakeData.PlayScale = static_cast<float>(DoubleOr(Body, TEXT("play_scale"), 1.0));
+					FString PlaySpace;
+					Body->TryGetStringField(TEXT("play_space"), PlaySpace);
+					if (!PlaySpace.IsEmpty())
+					{
+						const FString Lower = PlaySpace.ToLower();
+						if (Lower == TEXT("camera_local") || Lower == TEXT("camera"))
+						{
+							Section->ShakeData.PlaySpace = ECameraShakePlaySpace::CameraLocal;
+						}
+						else if (Lower == TEXT("world"))
+						{
+							Section->ShakeData.PlaySpace = ECameraShakePlaySpace::World;
+						}
+						else if (Lower == TEXT("user_defined"))
+						{
+							Section->ShakeData.PlaySpace = ECameraShakePlaySpace::UserDefined;
+						}
+						else
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_play_space"),
+								FString::Printf(
+									TEXT("unknown play_space '%s' — use camera_local, world or user_defined"), *PlaySpace));
+							return;
+						}
+					}
+					GetRotator(Body, TEXT("play_space_rotation"), Section->ShakeData.UserDefinedPlaySpace);
+					MarkSequenceChanged(*Sequence);
+					const TSharedRef<FJsonObject> Data = SectionToJson(MovieScene, *Section, false);
+					Data->SetStringField(TEXT("shake_class"), ShakeClass->GetPathName());
+					Data->SetStringField(TEXT("track"), Track->GetPathName());
+					Responder->Ok(Data);
+					return;
+				}
+
+				if (Operation == TEXT("add_event"))
+				{
+					// Events call a custom event in the sequence's director
+					// Blueprint; the sequence editor knows which Blueprint that
+					// is (the Level Sequence's own, a widget animation's Widget
+					// Blueprint) and creates it on first use.
+					FMovieSceneSequenceEditor* SequenceEditor = FMovieSceneSequenceEditor::Find(Sequence);
+					if (SequenceEditor == nullptr || !SequenceEditor->SupportsEvents(Sequence))
+					{
+						Responder->Error(EHttpServerResponseCodes::NotSupported, TEXT("events_not_supported"),
+							FString::Printf(TEXT("%s does not support event tracks"), *Sequence->GetClass()->GetName()));
+						return;
+					}
+					UBlueprint* DirectorBlueprint = SequenceEditor->GetOrCreateDirectorBlueprint(Sequence);
+					if (DirectorBlueprint == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("no_director_blueprint"),
+							TEXT("the sequence has no director Blueprint and one could not be created"));
+						return;
+					}
+
+					// Parameters become the custom event's output pins, and the
+					// payload values are what the sequence passes into them.
+					struct FEventParameter
+					{
+						FString Name;
+						FEdGraphPinType Type;
+					};
+					TArray<FEventParameter> Parameters;
+					const TArray<TSharedPtr<FJsonValue>>* ParameterValues = nullptr;
+					if (Body->TryGetArrayField(TEXT("parameters"), ParameterValues))
+					{
+						for (const TSharedPtr<FJsonValue>& Value : *ParameterValues)
+						{
+							const TSharedPtr<FJsonObject>* Object = nullptr;
+							if (!Value.IsValid() || !Value->TryGetObject(Object) || !Object->IsValid())
+							{
+								continue;
+							}
+							FEventParameter Parameter;
+							(*Object)->TryGetStringField(TEXT("name"), Parameter.Name);
+							FString TypeName;
+							(*Object)->TryGetStringField(TEXT("type"), TypeName);
+							FString Error;
+							if (Parameter.Name.IsEmpty() || !PayloadPinType(TypeName, Parameter.Type, Error))
+							{
+								Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("invalid_parameter"),
+									Parameter.Name.IsEmpty()
+										? FString(TEXT("every entry of 'parameters' needs a 'name' and a 'type'"))
+										: Error);
+								return;
+							}
+							Parameters.Add(MoveTemp(Parameter));
+						}
+					}
+
+					FString BindingSpec;
+					Body->TryGetStringField(TEXT("binding"), BindingSpec);
+					UMovieSceneTrack* Track = nullptr;
+					if (!BindingSpec.IsEmpty())
+					{
+						const FGuid Guid = BindingOrError(MovieScene, Body, TEXT("binding"), Responder);
+						if (!Guid.IsValid()) { return; }
+						Track = MovieScene.FindTrack(UMovieSceneEventTrack::StaticClass(), Guid);
+						if (Track == nullptr)
+						{
+							Track = MovieScene.AddTrack(UMovieSceneEventTrack::StaticClass(), Guid);
+						}
+					}
+					else
+					{
+						for (UMovieSceneTrack* Existing : MovieScene.GetTracks())
+						{
+							if (Existing != nullptr && Existing->GetClass() == UMovieSceneEventTrack::StaticClass())
+							{
+								Track = Existing;
+								break;
+							}
+						}
+						if (Track == nullptr)
+						{
+							Track = MovieScene.AddTrack(UMovieSceneEventTrack::StaticClass());
+						}
+					}
+					if (Track == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("add_track_failed"),
+							TEXT("this sequence would not take an Event track"));
+						return;
+					}
+					Track->Modify();
+
+					// A trigger fires once at a frame; a repeater fires every
+					// evaluation while its section is active.
+					const bool bRepeat = BoolOr(Body, TEXT("repeat"), false);
+					UMovieSceneEventSectionBase* Section = nullptr;
+					FMovieSceneEvent* Entry = nullptr;
+					FFrameNumber Tick = MovieScene.GetPlaybackRange().GetLowerBoundValue();
+					if (bRepeat)
+					{
+						UMovieSceneEventRepeaterSection* Repeater =
+							NewObject<UMovieSceneEventRepeaterSection>(Track, NAME_None, RF_Transactional);
+						Repeater->SetRange(ReadRange(Body, MovieScene));
+						Track->AddSection(*Repeater);
+						Section = Repeater;
+						Entry = &Repeater->Event;
+					}
+					else
+					{
+						if (!ReadTime(Body, MovieScene, TEXT("frame"), TEXT("seconds"), Tick))
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("missing_field"),
+								TEXT("'frame' or 'seconds' is required — when the event fires (or pass repeat=true with a range)"));
+							return;
+						}
+						// Trigger sections span the sequence; their keys are the
+						// events. Reuse the first one on the track.
+						UMovieSceneEventTriggerSection* Trigger = nullptr;
+						for (UMovieSceneSection* Existing : Track->GetAllSections())
+						{
+							if (UMovieSceneEventTriggerSection* Found = Cast<UMovieSceneEventTriggerSection>(Existing))
+							{
+								Trigger = Found;
+								break;
+							}
+						}
+						if (Trigger == nullptr)
+						{
+							Trigger = NewObject<UMovieSceneEventTriggerSection>(Track, NAME_None, RF_Transactional);
+							Trigger->SetRange(MovieScene.GetPlaybackRange());
+							Track->AddSection(*Trigger);
+						}
+						Trigger->Modify();
+						const int32 KeyIndex = Trigger->EventChannel.GetData().AddKey(Tick, FMovieSceneEvent());
+						Section = Trigger;
+						Entry = &Trigger->EventChannel.GetData().GetValues()[KeyIndex];
+					}
+
+					UK2Node_CustomEvent* EventNode =
+						FMovieSceneEventUtils::BindNewUserFacingEvent(Entry, Section, DirectorBlueprint);
+					if (EventNode == nullptr)
+					{
+						Responder->Error(EHttpServerResponseCodes::ServerError, TEXT("endpoint_failed"),
+							TEXT("the director Blueprint would not take a new event"));
+						return;
+					}
+					FString Name;
+					if (Body->TryGetStringField(TEXT("name"), Name) && !Name.IsEmpty())
+					{
+						EventNode->CustomFunctionName = FName(*Name);
+						// The engine's renamer always appends a number, so it is
+						// only asked when the name is actually taken.
+						TArray<UK2Node_CustomEvent*> Events;
+						FBlueprintEditorUtils::GetAllNodesOfClass(DirectorBlueprint, Events);
+						for (const UK2Node_CustomEvent* Other : Events)
+						{
+							if (Other != EventNode && Other->CustomFunctionName == EventNode->CustomFunctionName)
+							{
+								EventNode->RenameCustomEventCloseToName();
+								break;
+							}
+						}
+					}
+					for (const FEventParameter& Parameter : Parameters)
+					{
+						EventNode->CreateUserDefinedPin(FName(*Parameter.Name), Parameter.Type, EGPD_Output);
+					}
+					const TSharedPtr<FJsonObject>* Payload = nullptr;
+					if (Body->TryGetObjectField(TEXT("payload"), Payload) && Payload->IsValid())
+					{
+						for (const auto& Pair : (*Payload)->Values)
+						{
+							FMovieSceneEventPayloadVariable Variable;
+							if (Pair.Value.IsValid())
+							{
+								if (!Pair.Value->TryGetString(Variable.Value))
+								{
+									// Numbers, bools and structs travel as the text the
+									// pin's default would show.
+									TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Variable.Value);
+									FJsonSerializer::Serialize(Pair.Value.ToSharedRef(), FString(), Writer);
+									Variable.Value.TrimQuotesInline();
+								}
+							}
+							Entry->PayloadVariables.Add(FName(*FString(Pair.Key.ToView())), Variable);
+						}
+					}
+					FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(DirectorBlueprint);
+					MarkSequenceChanged(*Sequence);
+
+					const TSharedRef<FJsonObject> Data = SectionToJson(MovieScene, *Section, false);
+					Data->SetStringField(TEXT("track"), Track->GetPathName());
+					const TSharedRef<FJsonObject> Event = MakeShared<FJsonObject>();
+					Event->SetStringField(TEXT("name"), EventNode->CustomFunctionName.ToString());
+					Event->SetStringField(TEXT("node"), EventNode->NodeGuid.ToString());
+					Event->SetStringField(TEXT("director_blueprint"), DirectorBlueprint->GetPathName());
+					Event->SetStringField(TEXT("graph"), EventNode->GetGraph() ? EventNode->GetGraph()->GetName() : FString());
+					if (!bRepeat)
+					{
+						Event->SetNumberField(TEXT("frame"), DisplayFrameFromTick(MovieScene, Tick));
+					}
+					TArray<TSharedPtr<FJsonValue>> Pins;
+					for (const UEdGraphPin* Pin : EventNode->Pins)
+					{
+						if (Pin != nullptr && Pin->Direction == EGPD_Output
+							&& Pin->PinType.PinCategory != UEdGraphSchema_K2::PC_Exec
+							&& Pin->PinType.PinCategory != UEdGraphSchema_K2::PC_Delegate)
+						{
+							Pins.Add(MakeShared<FJsonValueString>(Pin->PinName.ToString()));
+						}
+					}
+					Event->SetArrayField(TEXT("parameters"), Pins);
+					Event->SetStringField(TEXT("note"),
+						TEXT("wire the event's logic in the director Blueprint with blueprint_modify add_node (blueprint = director_blueprint)"));
+					Data->SetObjectField(TEXT("event"), Event);
+					Responder->Ok(Data);
+					return;
+				}
+
 				if (Operation == TEXT("add_camera_cut"))
 				{
 					const FGuid Guid = BindingOrError(MovieScene, Body, TEXT("camera_binding"), Responder);
@@ -1032,7 +1512,8 @@ namespace McpLink
 						TEXT("unknown operation '%s' — use list_track_classes, create, inspect, ")
 						TEXT("set_playback_range, set_display_rate, add_marked_frame, add_binding, ")
 						TEXT("remove_binding, set_binding_name, add_track, add_property_track, remove_track, ")
-						TEXT("add_section, set_section_range, remove_section, add_camera_cut, add_key, ")
+						TEXT("add_section, set_section_range, remove_section, add_subsequence, add_camera_shake, ")
+						TEXT("add_event, add_camera_cut, add_key, ")
 						TEXT("remove_keys, set_channel_default, add_to_level, save, ")
 						TEXT("list_widget_animations, create_widget_animation, remove_widget_animation, ")
 						TEXT("or add_widget_binding"),

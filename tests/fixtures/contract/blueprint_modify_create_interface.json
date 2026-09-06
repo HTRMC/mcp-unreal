@@ -1,0 +1,22 @@
+{
+  "name": "blueprint_modify_create_interface",
+  "description": "blueprint_modify create with blueprint_type interface: a Blueprint Interface asset in memory",
+  "route": "/api/blueprints/modify",
+  "tool": "blueprint_modify",
+  "request": {
+    "operation": "create",
+    "path": "/Game/Blueprints/BPI_McpContract",
+    "blueprint_type": "interface"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "path": "/Game/Blueprints/BPI_McpContract.BPI_McpContract",
+      "name": "BPI_McpContract",
+      "blueprint_type": "interface",
+      "parent_class": "/Script/CoreUObject.Interface",
+      "message": "created in memory — call blueprint_modify save to write it to disk"
+    }
+  }
+}

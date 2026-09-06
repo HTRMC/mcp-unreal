@@ -1,0 +1,36 @@
+{
+  "name": "mass_ops_add_trait",
+  "description": "mass_ops add_trait: a trait added to a config, with its properties",
+  "route": "/api/mass/ops",
+  "tool": "mass_ops",
+  "request": {
+    "operation": "add_trait",
+    "config": "/Game/Mass/EC_Contract",
+    "trait": "MassSimpleMovementTrait"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "config": "/Game/Mass/EC_Contract.EC_Contract",
+      "parent": "",
+      "traits": [
+        {
+          "class": "MassSimpleMovementTrait",
+          "path": "/Game/Mass/EC_Contract.EC_Contract:MassSimpleMovementTrait_0",
+          "properties": {
+            "ValidTargetConfig": "AllNetModes"
+          }
+        }
+      ],
+      "inherited_traits": [],
+      "trait": {
+        "class": "MassSimpleMovementTrait",
+        "path": "/Game/Mass/EC_Contract.EC_Contract:MassSimpleMovementTrait_0",
+        "properties": {
+          "ValidTargetConfig": "AllNetModes"
+        }
+      }
+    }
+  }
+}

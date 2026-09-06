@@ -1,0 +1,22 @@
+{
+  "name": "texture_ops_create_volume_wrong_pixel_count_error",
+  "description": "texture_ops create_volume with too few pixels: 400",
+  "route": "/api/textures/ops",
+  "tool": "texture_ops",
+  "request": {
+    "operation": "create_volume",
+    "path": "/Game/Textures/TV_McpContractBad",
+    "width": 2,
+    "height": 2,
+    "depth": 2,
+    "pixels": "AAAA"
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "wrong_pixel_count",
+      "message": "'pixels' decoded to 3 bytes; expected 32 — depth slices of width x height BGRA8, front to back"
+    }
+  }
+}

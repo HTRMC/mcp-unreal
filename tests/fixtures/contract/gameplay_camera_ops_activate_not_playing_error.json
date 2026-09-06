@@ -1,0 +1,18 @@
+{
+  "name": "gameplay_camera_ops_activate_not_playing_error",
+  "description": "gameplay_camera_ops activate: outside PIE is a 409",
+  "route": "/api/cameras/gameplay",
+  "tool": "gameplay_camera_ops",
+  "request": {
+    "operation": "activate",
+    "camera": "/Game/Cameras/CAM_Contract"
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "not_playing",
+      "message": "a camera is activated on a player controller in a running world — start PIE and pass world='pie'"
+    }
+  }
+}

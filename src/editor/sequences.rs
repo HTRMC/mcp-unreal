@@ -9,6 +9,16 @@ use serde_json::Value;
 
 use crate::UnrealMcp;
 
+/// A pin on a sequence event's custom event node.
+#[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
+pub struct EventParameter {
+    pub name: String,
+    /// bool, int, int64, float, string, name, text, vector, rotator,
+    /// transform or "object:<Class>".
+    #[serde(rename = "type")]
+    pub param_type: String,
+}
+
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
 #[serde(tag = "operation", rename_all = "snake_case")]
 #[schemars(transform = crate::schema::object_with_oneof)]
@@ -188,6 +198,71 @@ pub enum SequenceOp {
         channel: String,
         value: Option<Value>,
     },
+    /// Nest another sequence: a section on the Subsequences track (root, or
+    /// on a binding) that plays it, for its own length unless an end is given.
+    AddSubsequence {
+        sequence: String,
+        /// The Level Sequence asset to nest.
+        subsequence: String,
+        /// Binding GUID or name; omit for the root Subsequences track.
+        binding: Option<String>,
+        start_frame: Option<f64>,
+        start_seconds: Option<f64>,
+        end_frame: Option<f64>,
+        end_seconds: Option<f64>,
+        /// Row within the track (default: a new row).
+        row_index: Option<i32>,
+    },
+    /// Shake a camera: a Camera Shake track on the camera's binding with a
+    /// section playing a CameraShakeBase class over the range.
+    AddCameraShake {
+        sequence: String,
+        /// Binding GUID or name of the camera actor.
+        binding: String,
+        /// A CameraShakeBase subclass — a Blueprint camera shake asset path
+        /// or a native class.
+        shake_class: String,
+        start_frame: Option<f64>,
+        start_seconds: Option<f64>,
+        end_frame: Option<f64>,
+        end_seconds: Option<f64>,
+        /// Intensity multiplier (default 1).
+        play_scale: Option<f64>,
+        /// "camera_local" (default), "world" or "user_defined".
+        play_space: Option<String>,
+        /// [Pitch, Yaw, Roll] for a user_defined play space.
+        play_space_rotation: Option<[f64; 3]>,
+        row_index: Option<i32>,
+    },
+    /// Fire an event into the sequence's director Blueprint: a custom event
+    /// node is created there (with the bound object as a pin on a binding's
+    /// track) and the key calls it. `parameters` add pins the event carries
+    /// and `payload` sets what the sequence passes into them; wire the logic
+    /// under the node with blueprint_modify on the reported
+    /// `director_blueprint`.
+    AddEvent {
+        sequence: String,
+        /// Binding GUID or name; omit for a sequence-wide event.
+        binding: Option<String>,
+        /// Name of the custom event (default SequenceEvent_N).
+        name: Option<String>,
+        /// When a one-shot trigger fires.
+        frame: Option<f64>,
+        seconds: Option<f64>,
+        /// Fire every evaluation while a section spanning start..end is
+        /// active, instead of once.
+        repeat: Option<bool>,
+        start_frame: Option<f64>,
+        start_seconds: Option<f64>,
+        end_frame: Option<f64>,
+        end_seconds: Option<f64>,
+        /// Pins to add to the event: [{"name": "Strength", "type": "float"}],
+        /// types bool, int, int64, float, string, name, text, vector,
+        /// rotator, transform or "object:<Class>".
+        parameters: Option<Vec<EventParameter>>,
+        /// Values passed for those pins, keyed by name: {"Strength": 2.5}.
+        payload: Option<Value>,
+    },
     /// Spawn a LevelSequenceActor so the sequence plays in the level.
     AddToLevel {
         sequence: String,
@@ -234,7 +309,7 @@ pub enum SequenceOp {
 #[tool_router(router = sequence_router, vis = "pub(crate)")]
 impl UnrealMcp {
     #[tool(
-        description = "Author Sequencer content: Level Sequence cinematics and UMG widget animations, which share the same MovieScene machinery. Create a sequence or a widget animation, bind level actors and their components (or widgets, for an animation), add transform/animation/camera-cut/audio and property tracks, add sections, and keyframe any channel. A widget animation is addressed as \"/Game/UI/WBP_Menu:Anim_FadeIn\" wherever `sequence` is taken. Frame numbers are in the sequence's display rate, and seconds work everywhere a frame does. Section and track options that are plain UPROPERTYs (a skeletal animation section's Params.Animation, an audio section's Sound, easing) are set with set_property on the path each operation reports. add_to_level spawns a LevelSequenceActor so PIE plays a Level Sequence; play a widget animation with call_function PlayAnimation on the widget."
+        description = "Author Sequencer content: Level Sequence cinematics and UMG widget animations, which share the same MovieScene machinery. Create a sequence or a widget animation, bind level actors and their components (or widgets, for an animation), add transform/animation/camera-cut/audio and property tracks, add sections, keyframe any channel, nest subsequences, add camera shakes, and fire events into the director Blueprint with typed payloads. A widget animation is addressed as \"/Game/UI/WBP_Menu:Anim_FadeIn\" wherever `sequence` is taken. Frame numbers are in the sequence's display rate, and seconds work everywhere a frame does. Section and track options that are plain UPROPERTYs (a skeletal animation section's Params.Animation, an audio section's Sound, easing) are set with set_property on the path each operation reports. add_to_level spawns a LevelSequenceActor so PIE plays a Level Sequence; play a widget animation with call_function PlayAnimation on the widget."
     )]
     async fn sequence_ops(
         &self,

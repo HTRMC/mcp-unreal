@@ -1,0 +1,24 @@
+{
+  "name": "live_coding_ops_status",
+  "description": "live_coding_ops status: Live Coding and hot reload availability",
+  "route": "/api/workflow/live_coding",
+  "tool": "live_coding_ops",
+  "request": {
+    "operation": "status"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "live_coding_available": true,
+      "enabled": false,
+      "enabled_by_default": true,
+      "can_enable": true,
+      "started": false,
+      "compiling": false,
+      "hot_reload_available": true,
+      "hot_reload_compiling": false,
+      "game_modules_loaded": true
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "pose_asset_ops_rename_pose_missing_error",
+  "description": "pose_asset_ops rename_pose on a pose that does not exist: 404",
+  "route": "/api/anim/pose_asset",
+  "tool": "pose_asset_ops",
+  "request": {
+    "operation": "rename_pose",
+    "pose_asset": "/Game/Anim/PA_McpContract",
+    "name": "Nope",
+    "new_name": "X"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "pose_not_found",
+      "message": "no pose named 'Nope'"
+    }
+  }
+}

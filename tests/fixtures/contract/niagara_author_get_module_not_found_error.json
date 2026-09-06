@@ -1,0 +1,21 @@
+{
+  "name": "niagara_author_get_module_not_found_error",
+  "description": "get_module names the modules the stack does hold when the requested one is missing",
+  "route": "/api/niagara/author",
+  "tool": "niagara_author",
+  "request": {
+    "operation": "get_module",
+    "system": "/Game/FX/NS_McpAuthored2",
+    "stage": "particle_update",
+    "emitter": "Sparks",
+    "module": "NoSuchModule"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "module_not_found",
+      "message": "no module 'NoSuchModule' in this stack — it holds: ParticleState, ScaleColor, SolveForcesAndVelocity"
+    }
+  }
+}

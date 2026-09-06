@@ -1,0 +1,21 @@
+{
+  "name": "geometry_script_ops_new_mesh",
+  "description": "geometry_script_ops new_mesh: an empty dynamic mesh in the transient package",
+  "route": "/api/geometry/script",
+  "tool": "geometry_script_ops",
+  "request": {
+    "operation": "new_mesh",
+    "name": "McpContractMesh"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "mesh": "/Engine/Transient.McpContractMesh",
+      "vertices": 0,
+      "triangles": 0,
+      "has_attributes": true,
+      "message": "empty — call AppendBox / AppendSphere / CopyMeshFromStaticMesh and the rest on it, then to_static_mesh; release when done"
+    }
+  }
+}

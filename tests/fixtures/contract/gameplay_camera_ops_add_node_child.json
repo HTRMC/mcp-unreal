@@ -1,0 +1,76 @@
+{
+  "name": "gameplay_camera_ops_add_node_child",
+  "description": "gameplay_camera_ops add_node: a boom arm under the sequence with a literal parameter",
+  "route": "/api/cameras/gameplay",
+  "tool": "gameplay_camera_ops",
+  "request": {
+    "operation": "add_node",
+    "rig": "/Game/Cameras/CR_Contract",
+    "node": "BoomArm",
+    "parent": "Sequence",
+    "name": "Boom",
+    "properties": {
+      "BoomOffset": [
+        0,
+        0,
+        300
+      ]
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "rig": "/Game/Cameras/CR_Contract.CR_Contract",
+      "build_status": "dirty",
+      "root": {
+        "node": "Sequence",
+        "class": "ArrayCameraNode",
+        "display_name": "Sequence",
+        "properties": {
+          "bIsEnabled": true
+        },
+        "children": [
+          {
+            "node": "Boom",
+            "class": "BoomArmCameraNode",
+            "display_name": "Boom Arm Camera Node",
+            "properties": {
+              "BoomOffset": {
+                "Value": {
+                  "X": 0,
+                  "Y": 0,
+                  "Z": 300
+                },
+                "Variable": "None"
+              },
+              "BoomLengthInterpolator": "None",
+              "MaxForwardInterpolationFactor": {
+                "Value": -1,
+                "Variable": "None"
+              },
+              "MaxBackwardInterpolationFactor": {
+                "Value": -1,
+                "Variable": "None"
+              },
+              "bAdditiveRotation": false,
+              "bIsEnabled": true
+            },
+            "children": [
+              {
+                "slot": "InputSlot",
+                "accepts": "Input2DCameraNode"
+              }
+            ],
+            "slot": "Children",
+            "slot_index": 0
+          }
+        ]
+      },
+      "enter_transitions": 0,
+      "exit_transitions": 0,
+      "blendable_parameters": 0,
+      "added": "Boom"
+    }
+  }
+}

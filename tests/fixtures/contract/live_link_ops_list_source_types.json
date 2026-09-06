@@ -1,0 +1,35 @@
+{
+  "name": "live_link_ops_list_source_types",
+  "description": "live_link_ops list_source_types: source factories, roles and virtual subject classes",
+  "route": "/api/vp/live_link",
+  "tool": "live_link_ops",
+  "request": {
+    "operation": "list_source_types"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "source_factories": [
+        {
+          "factory": "LiveLinkMessageBusSourceFactory",
+          "display_name": "Message Bus Source",
+          "tooltip": "Creates a connection to a Message Bus based Live Link Source"
+        }
+      ],
+      "roles": [
+        "LiveLinkBasicRole",
+        "LiveLinkAnimationRole",
+        "LiveLinkTransformRole",
+        "LiveLinkCameraRole",
+        "LiveLinkCharacterRole",
+        "LiveLinkInputDeviceRole",
+        "LiveLinkLightRole",
+        "LiveLinkLocatorRole"
+      ],
+      "virtual_subject_classes": [
+        "LiveLinkAnimationVirtualSubject"
+      ]
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "name": "chooser_ops_add_column",
+  "description": "chooser_ops add_column: a float range column bound to a context property",
+  "route": "/api/data/chooser",
+  "tool": "chooser_ops",
+  "request": {
+    "operation": "add_column",
+    "chooser": "/Game/Choosers/CHT_Contract",
+    "column": "FloatRangeColumn",
+    "property": "BaseEyeHeight"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "chooser": "/Game/Choosers/CHT_Contract.CHT_Contract",
+      "result_type": "ObjectResult",
+      "output_class": "/Script/Engine.AnimSequence",
+      "context": [
+        {
+          "_structType": "/Script/Chooser.ContextObjectTypeClass",
+          "Class": "/Script/CoreUObject.Class'/Script/Engine.Pawn'",
+          "Direction": "Read"
+        }
+      ],
+      "columns": [
+        {
+          "index": 0,
+          "column": "FloatRangeColumn",
+          "category": "Filter",
+          "disabled": false,
+          "input": {
+            "_structType": "/Script/Chooser.FloatContextProperty",
+            "Binding": {
+              "PropertyBindingChain": [
+                "BaseEyeHeight"
+              ],
+              "ContextIndex": 0,
+              "IsBoundToRoot": false,
+              "DisplayName": "BaseEyeHeight"
+            }
+          },
+          "properties": {
+            "bWrapInput": false,
+            "MinValue": -180,
+            "MaxValue": 180,
+            "DefaultRowValue": {
+              "Min": 0,
+              "Max": 0,
+              "bNoMin": false,
+              "bNoMax": false
+            },
+            "bDisabled": false
+          },
+          "cell_property": "RowValues",
+          "cells": []
+        }
+      ],
+      "rows": [],
+      "fallback": {},
+      "added_index": 0
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "string_table_ops_set_string",
+  "description": "string_table_ops set_string: one key with its text and developer notes",
+  "route": "/api/data/string_table",
+  "tool": "string_table_ops",
+  "request": {
+    "operation": "set_string",
+    "table": "/Game/Text/ST_McpContract",
+    "key": "Greeting",
+    "text": "Hello there",
+    "notes": "Title screen"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "table": "/Game/Text/ST_McpContract.ST_McpContract",
+      "namespace": "McpContract",
+      "strings": [
+        {
+          "key": "Greeting",
+          "text": "Hello there",
+          "notes": "Title screen"
+        }
+      ],
+      "count": 1,
+      "truncated": false,
+      "written": 1
+    }
+  }
+}

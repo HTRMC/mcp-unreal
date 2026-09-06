@@ -1,0 +1,19 @@
+{
+  "name": "live_link_ops_add_source_refused_error",
+  "description": "live_link_ops add_source: a Message Bus factory makes no source from an empty connection string (409)",
+  "route": "/api/vp/live_link",
+  "tool": "live_link_ops",
+  "request": {
+    "operation": "add_source",
+    "factory": "LiveLinkMessageBusSourceFactory",
+    "connection": ""
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "source_refused",
+      "message": "the factory made no source from that connection string — a Message Bus source needs the provider's address, which only the factory's picker discovers; the status route lists what exists"
+    }
+  }
+}

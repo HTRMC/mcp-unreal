@@ -5,6 +5,8 @@
 #include "Dom/JsonValue.h"
 #include "Engine/Texture.h"
 #include "Engine/Texture2D.h"
+#include "Engine/TextureCube.h"
+#include "Engine/VolumeTexture.h"
 #include "Factories/MaterialFactoryNew.h"
 #include "Factories/MaterialInstanceConstantFactoryNew.h"
 #include "Materials/Material.h"
@@ -389,31 +391,60 @@ namespace McpLink
 					Object = ResolveObject(
 						FString::Printf(TEXT("%s.%s"), *Path, *FPackageName::GetShortName(Path)));
 				}
-				UTexture2D* Texture = Cast<UTexture2D>(Object);
+				UTexture* Texture = Cast<UTexture>(Object);
 				if (Texture == nullptr)
 				{
 					Responder->Error(EHttpServerResponseCodes::NotFound, TEXT("texture_not_found"),
-						FString::Printf(TEXT("no Texture2D at '%s'"), *Path));
+						FString::Printf(TEXT("no texture at '%s'"), *Path));
 					return;
 				}
 				// The platform (streamed) size is 0 until the texture resource
 				// exists, which never happens under -nullrhi; the editor-only
 				// source data is always available, so fall back to it.
-				int64 Width = Texture->GetSizeX();
-				int64 Height = Texture->GetSizeY();
+				int64 Width = 0, Height = 0, Depth = 0;
+				EPixelFormat PixelFormat = PF_Unknown;
+				const TCHAR* Kind = TEXT("other");
+				if (const UTexture2D* Texture2D = Cast<UTexture2D>(Texture))
+				{
+					Kind = TEXT("2d");
+					Width = Texture2D->GetSizeX();
+					Height = Texture2D->GetSizeY();
+					PixelFormat = Texture2D->GetPixelFormat();
+				}
+				else if (const UTextureCube* Cube = Cast<UTextureCube>(Texture))
+				{
+					Kind = TEXT("cube");
+					Width = Height = Cube->GetSizeX();
+					Depth = 6;
+					PixelFormat = Cube->GetPixelFormat();
+				}
+				else if (const UVolumeTexture* Volume = Cast<UVolumeTexture>(Texture))
+				{
+					Kind = TEXT("volume");
+					Width = Volume->GetSizeX();
+					Height = Volume->GetSizeY();
+					Depth = Volume->GetSizeZ();
+					PixelFormat = Volume->GetPixelFormat();
+				}
 				const bool bFromSource = Width == 0 || Height == 0;
 				if (bFromSource)
 				{
 					Width = Texture->Source.GetSizeX();
 					Height = Texture->Source.GetSizeY();
+					Depth = Texture->Source.GetNumSlices();
 				}
 
 				const TSharedRef<FJsonObject> Data = MakeShared<FJsonObject>();
 				Data->SetStringField(TEXT("path"), Texture->GetPathName());
+				Data->SetStringField(TEXT("class"), Texture->GetClass()->GetName());
+				Data->SetStringField(TEXT("kind"), Kind);
 				Data->SetNumberField(TEXT("width"), static_cast<double>(Width));
 				Data->SetNumberField(TEXT("height"), static_cast<double>(Height));
-				Data->SetStringField(TEXT("pixel_format"),
-					GPixelFormats[Texture->GetPixelFormat()].Name);
+				if (Depth > 0 && FCString::Strcmp(Kind, TEXT("2d")) != 0)
+				{
+					Data->SetNumberField(TEXT("depth"), static_cast<double>(Depth));
+				}
+				Data->SetStringField(TEXT("pixel_format"), GPixelFormats[PixelFormat].Name);
 				Data->SetStringField(TEXT("source_format"),
 					StaticEnum<ETextureSourceFormat>()->GetNameStringByValue(
 						static_cast<int64>(Texture->Source.GetFormat())));

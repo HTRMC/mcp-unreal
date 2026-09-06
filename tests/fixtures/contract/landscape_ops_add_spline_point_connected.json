@@ -1,0 +1,60 @@
+{
+  "name": "landscape_ops_add_spline_point_connected",
+  "description": "landscape_ops add_spline_point with connect_to: a second point and the segment between",
+  "route": "/api/world/landscape",
+  "tool": "landscape_ops",
+  "request": {
+    "operation": "add_spline_point",
+    "landscape": "McpContractLand",
+    "location": [
+      9500,
+      9200,
+      0
+    ],
+    "connect_to": 0,
+    "segment_mesh": "/Engine/BasicShapes/Cube"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "landscape": "/Game/Maps/TestMap.TestMap:PersistentLevel.Landscape_1",
+      "point": {
+        "index": 1,
+        "location": [
+          9500,
+          9200,
+          0
+        ],
+        "rotation": [
+          0,
+          14.036243467926479,
+          0
+        ],
+        "width": 150,
+        "side_falloff": 1000,
+        "end_falloff": 2000,
+        "layer_name": "None",
+        "mesh": "",
+        "segments": [
+          0
+        ]
+      },
+      "segment": {
+        "index": 0,
+        "start": 0,
+        "end": 1,
+        "start_tangent": 412.3105773925781,
+        "end_tangent": 412.3105773925781,
+        "layer_name": "None",
+        "raise_terrain": true,
+        "lower_terrain": true,
+        "meshes": [
+          "/Engine/BasicShapes/Cube.Cube"
+        ]
+      },
+      "control_points": 2,
+      "segments": 1
+    }
+  }
+}

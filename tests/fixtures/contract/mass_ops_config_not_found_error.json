@@ -1,0 +1,18 @@
+{
+  "name": "mass_ops_config_not_found_error",
+  "description": "mass_ops config_info: a missing config is a 404",
+  "route": "/api/mass/ops",
+  "tool": "mass_ops",
+  "request": {
+    "operation": "config_info",
+    "config": "/Game/Mass/NoSuchConfig"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "config_not_found",
+      "message": "no Mass Entity Config asset at '/Game/Mass/NoSuchConfig'"
+    }
+  }
+}

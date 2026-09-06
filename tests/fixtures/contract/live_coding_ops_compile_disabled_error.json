@@ -1,0 +1,17 @@
+{
+  "name": "live_coding_ops_compile_disabled_error",
+  "description": "live_coding_ops compile while Live Coding is disabled: 409",
+  "route": "/api/workflow/live_coding",
+  "tool": "live_coding_ops",
+  "request": {
+    "operation": "compile"
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "live_coding_disabled",
+      "message": "Live Coding is not enabled for this session — live_coding_ops enable first"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "remote_control_ops_unexpose_not_found_error",
+  "description": "remote_control_ops unexpose: an unknown label is a 404",
+  "route": "/api/vp/remote_control",
+  "tool": "remote_control_ops",
+  "request": {
+    "operation": "unexpose",
+    "preset": "/Game/VP/RCP_Contract",
+    "label": "NoSuchLabel"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "entity_not_found",
+      "message": "nothing exposed as 'NoSuchLabel' — info lists the labels"
+    }
+  }
+}

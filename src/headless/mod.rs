@@ -10,3 +10,4 @@ pub mod project_ops;
 pub mod runner;
 pub mod tests;
 pub mod trace;
+pub mod wpbuild;

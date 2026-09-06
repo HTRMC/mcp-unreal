@@ -1,0 +1,24 @@
+{
+  "name": "level_snapshot_ops_take",
+  "description": "level_snapshot_ops take: a snapshot of the open level",
+  "route": "/api/world/snapshot",
+  "tool": "level_snapshot_ops",
+  "request": {
+    "operation": "take",
+    "path": "/Game/Snapshots/LS_McpContract",
+    "description": "contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "snapshot": "/Game/Snapshots/LS_McpContract.LS_McpContract",
+      "name": "LS_McpContract",
+      "description": "contract",
+      "map": "/Game/Maps/TestMap.TestMap",
+      "captured": "2026-09-06T18:04:27.390Z",
+      "actors": 8,
+      "message": "captured — diff shows what changes from here, apply restores it; save keeps the asset"
+    }
+  }
+}

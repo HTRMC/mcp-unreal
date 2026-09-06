@@ -163,6 +163,17 @@ impl UnrealMcp {
                 ("/api/gas/", "gameplay_abilities"),
                 ("/api/pcg/", "pcg"),
                 ("/api/python/", "python"),
+                ("/api/toolsets/", "toolset_registry"),
+                ("/api/geometry/", "geometry_script"),
+                ("/api/anim/control_rig", "control_rig"),
+                ("/api/world/snapshot", "level_snapshots"),
+                ("/api/anim/ik_rig", "ik_rig"),
+                ("/api/vp/remote_control", "remote_control"),
+                ("/api/vp/live_link", "live_link"),
+                ("/api/anim/pose_search", "pose_search"),
+                ("/api/mass/", "mass"),
+                ("/api/data/chooser", "chooser"),
+                ("/api/cameras/", "gameplay_cameras"),
             ] {
                 if routes.iter().any(|r| r.starts_with(prefix)) {
                     features.push(feature.to_string());

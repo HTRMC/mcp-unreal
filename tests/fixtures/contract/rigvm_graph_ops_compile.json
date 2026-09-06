@@ -1,0 +1,21 @@
+{
+  "name": "rigvm_graph_ops_compile",
+  "description": "rigvm_graph_ops compile: the VM recompiled with its log",
+  "route": "/api/anim/rigvm_graph",
+  "tool": "rigvm_graph_ops",
+  "request": {
+    "operation": "compile",
+    "rig": "/Game/Rigs/CR_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "rig": "/Game/Rigs/CR_Contract.CR_Contract",
+      "status": "BS_UpToDate",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  }
+}

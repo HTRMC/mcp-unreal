@@ -101,6 +101,11 @@ pub enum NiagaraOp {
 #[derive(serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
 #[serde(tag = "operation", rename_all = "snake_case")]
 #[schemars(transform = crate::schema::object_with_oneof)]
+// set_module_input carries every way an input can be driven, which makes it
+// much larger than the other variants. Boxing it would turn the generated tool
+// schema into a $ref indirection, and the schema is the contract with the MCP
+// client, so the size stays: one of these exists per tool call.
+#[allow(clippy::large_enum_variant)]
 pub enum NiagaraAuthorOp {
     /// The script stacks a module can be added to, and whether each belongs to
     /// the system or to an emitter.
@@ -111,6 +116,18 @@ pub enum NiagaraAuthorOp {
         /// Only modules valid in this stage, e.g. "particle_update".
         stage: Option<String>,
         /// Include modules the library hides (default false).
+        include_non_library: Option<bool>,
+        max_results: Option<u32>,
+    },
+    /// Dynamic input scripts — the graphs a module input can be driven by
+    /// instead of a literal (Random Range Float, Curve, Multiply Float, ...),
+    /// each with the type it produces. `list_input_options` answers the same
+    /// question for one specific input, already filtered to what fits it.
+    ListDynamicInputs {
+        name_contains: Option<String>,
+        /// Only dynamic inputs producing this type, e.g. "float", "Vector", "LinearColor".
+        output_type: Option<String>,
+        /// Include scripts the library hides (default false).
         include_non_library: Option<bool>,
         max_results: Option<u32>,
     },
@@ -129,10 +146,32 @@ pub enum NiagaraAuthorOp {
     },
     /// The whole authoring view of a system: every emitter, its four script
     /// stacks with their ordered modules and typed inputs, and its renderers.
+    ///
+    /// Each input reports its `path` (what `set_module_input` takes), type
+    /// and `mode` — "local" with its `value`, "linked" with the parameter it
+    /// reads, "dynamic" with the dynamic input script and that script's own
+    /// `inputs` nested underneath (paths like "Drag/Minimum"), "data_interface",
+    /// "object_asset", "expression", or "default_function" — plus `can_reset`,
+    /// `enum_options`, `static` for static switches and any edit condition.
     Stack {
         system: String,
-        /// Include each module's input names and types (default true).
+        /// Include each module's inputs with their current values (default true).
+        /// Reading them builds the editor's stack view, so pass false for a
+        /// quick module and renderer listing.
         include_inputs: Option<bool>,
+        /// Also list inputs the stack panel hides — the other branches of a
+        /// static switch (default false). They report `visible: false`.
+        include_hidden: Option<bool>,
+    },
+    /// One module with its full input tree — the same detail `stack` gives,
+    /// for a single module.
+    GetModule {
+        system: String,
+        stage: String,
+        emitter: Option<String>,
+        /// Module id or name from `stack`.
+        module: String,
+        include_hidden: Option<bool>,
     },
     /// Add an emitter to a system from an emitter asset.
     AddEmitter {
@@ -173,6 +212,8 @@ pub enum NiagaraAuthorOp {
         index: Option<i32>,
         /// Name for the module in the stack.
         name: Option<String>,
+        /// Report the new module's hidden inputs too (default false).
+        include_hidden: Option<bool>,
     },
     /// Remove a module and relink the stack around it.
     RemoveModule {
@@ -189,16 +230,70 @@ pub enum NiagaraAuthorOp {
         module: String,
         enabled: bool,
     },
-    /// Set a literal value on one of a module's inputs.
+    /// Set one of a module's inputs, exactly as the stack panel would: a
+    /// literal `value`, a `dynamic_input` script (with its own `inputs` set
+    /// in the same call), a `link` to a parameter, an HLSL `expression`, a
+    /// `data_interface` class with `properties`, an `object_asset`, or
+    /// `reset` back to the module's default. Pass one of those per call.
+    /// Whatever drove the input before is replaced — a `value` on an input a
+    /// template handed to a dynamic input turns it back into a literal.
+    /// Inputs nested under a dynamic input are addressed by path, e.g.
+    /// "Drag/Minimum"; `stack` and `get_module` print every path.
     SetModuleInput {
         system: String,
         stage: String,
         emitter: Option<String>,
         module: String,
-        /// Input name from `stack`, e.g. "SpawnRate".
+        /// Input path from `stack`: "SpawnRate", or "Drag/Minimum" for the
+        /// Minimum input of the dynamic input driving Drag.
         input: String,
-        /// Number, bool, or [x,y] / [x,y,z] / [x,y,z,w], matching the input type.
-        value: Value,
+        /// Literal: number, bool, enum name, or [x,y] / [x,y,z] / [x,y,z,w],
+        /// matching the input type (static switches included).
+        value: Option<Value>,
+        /// Dynamic input script — an asset path, or a name such as
+        /// "Random Range Float"; `list_input_options` lists what fits.
+        dynamic_input: Option<String>,
+        /// With `dynamic_input`: literal values for the new dynamic input's own
+        /// inputs, keyed by name, e.g. {"Minimum": 1, "Maximum": 4}.
+        inputs: Option<Value>,
+        /// Parameter to read instead of a value: "Emitter.SpawnRate",
+        /// "User.Strength", "Particles.Age", "Engine.Owner.Velocity", ... A new
+        /// name in a readable namespace creates that parameter (a "User."
+        /// name becomes an exposed user parameter).
+        link: Option<String>,
+        /// Custom HLSL expression producing the input's type.
+        expression: Option<String>,
+        /// Data interface class for a data-interface input, e.g.
+        /// "NiagaraDataInterfaceCurve"; `list_input_options` names the classes that fit.
+        data_interface: Option<String>,
+        /// Property values to apply to the input's data interface (with
+        /// `data_interface`, or alone when it already has one).
+        properties: Option<Value>,
+        /// Asset path for an object input (a mesh, texture, ...).
+        object_asset: Option<String>,
+        /// Reset the input to the module's default.
+        reset: Option<bool>,
+        /// Toggle the input's edit condition (its inline checkbox), on its own
+        /// or alongside a value.
+        edit_condition_enabled: Option<bool>,
+        /// Report hidden nested inputs in the result (default false).
+        include_hidden: Option<bool>,
+    },
+    /// What one input can be given: the dynamic inputs whose output fits its
+    /// type, the parameters it can link to (and any conversion script the
+    /// editor would insert), the namespaces a new parameter may be created
+    /// in, the data-interface classes that fit, and its enum options.
+    ListInputOptions {
+        system: String,
+        stage: String,
+        emitter: Option<String>,
+        module: String,
+        /// Input path from `stack`, e.g. "SpawnRate" or "Drag/Minimum".
+        input: String,
+        name_contains: Option<String>,
+        /// Include dynamic inputs the library hides (default false).
+        include_non_library: Option<bool>,
+        max_results: Option<u32>,
     },
     /// Add a renderer to an emitter. Its options are ordinary properties on the
     /// reported path, so set_property tunes them.
@@ -246,7 +341,7 @@ impl UnrealMcp {
     }
 
     #[tool(
-        description = "Author Niagara systems rather than just drive them: create system and emitter assets, add/remove/rename/enable emitters, read the full stack (every emitter's emitter-spawn/update and particle-spawn/update module lists with typed inputs, plus renderers), add and remove modules from any stack, set literal module input values, add and remove renderers, then compile and save. Renderer and module *options* are ordinary properties on the reported paths, so set_property tunes them. Compile after authoring — that is what reports a broken stack. Needs the McpLinkNiagara plugin enabled."
+        description = "Author Niagara systems rather than just drive them: create system and emitter assets, add/remove/rename/enable emitters, read the full stack (every emitter's emitter-spawn/update and particle-spawn/update module lists, plus renderers) with each module's inputs as the Niagara editor shows them — current value and mode (literal, linked parameter, dynamic input with its own nested inputs, data interface, expression), add and remove modules from any stack, and set any input at any depth: a literal, a dynamic input such as Random Range Float with its sub-inputs, a link to a parameter, an HLSL expression, a data interface with properties, or a reset to default. list_input_options says what fits a given input. Renderer options are ordinary properties on the reported paths, so set_property tunes them. Compile after authoring — that is what reports a broken stack. Needs the McpLinkNiagara plugin enabled."
     )]
     async fn niagara_author(
         &self,

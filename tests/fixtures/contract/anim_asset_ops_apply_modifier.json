@@ -1,0 +1,67 @@
+{
+  "name": "anim_asset_ops_apply_modifier",
+  "description": "anim_asset_ops apply_modifier: a motion extractor modifier applied to a sequence",
+  "route": "/api/anim/assets",
+  "tool": "anim_asset_ops",
+  "request": {
+    "operation": "apply_modifier",
+    "asset": "/Game/Anim/A_McpContractWalk",
+    "modifier": "MotionExtractorModifier",
+    "properties": {
+      "BoneName": "Root"
+    }
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "modifier": "/Game/Anim/A_McpContractWalk.A_McpContractWalk:AnimationModifiersAssetUserData_0.MotionExtractorModifier_0",
+      "class": "MotionExtractorModifier",
+      "applied": true,
+      "can_revert": true,
+      "properties": {
+        "BoneName": "Root",
+        "RelativeToBoneName": "None",
+        "MotionType": "Translation",
+        "Axis": "Y",
+        "bRemoveCurveOnRevert": false,
+        "bRelativeToFirstFrame": false,
+        "Space": "ComponentSpace",
+        "bAbsoluteValue": false,
+        "MathOperation": "None",
+        "Modifier": 0,
+        "bNormalize": false,
+        "SampleRate": 30,
+        "bUseCustomCurveName": false,
+        "CustomCurveName": "None",
+        "bReapplyPostOwnerChange": false
+      },
+      "asset": "/Game/Anim/A_McpContractWalk.A_McpContractWalk",
+      "modifiers": [
+        {
+          "modifier": "/Game/Anim/A_McpContractWalk.A_McpContractWalk:AnimationModifiersAssetUserData_0.MotionExtractorModifier_0",
+          "class": "MotionExtractorModifier",
+          "applied": true,
+          "can_revert": true,
+          "properties": {
+            "BoneName": "Root",
+            "RelativeToBoneName": "None",
+            "MotionType": "Translation",
+            "Axis": "Y",
+            "bRemoveCurveOnRevert": false,
+            "bRelativeToFirstFrame": false,
+            "Space": "ComponentSpace",
+            "bAbsoluteValue": false,
+            "MathOperation": "None",
+            "Modifier": 0,
+            "bNormalize": false,
+            "SampleRate": 30,
+            "bUseCustomCurveName": false,
+            "CustomCurveName": "None",
+            "bReapplyPostOwnerChange": false
+          }
+        }
+      ]
+    }
+  }
+}

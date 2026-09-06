@@ -41,6 +41,7 @@ impl UnrealMcp {
                 + Self::headless_package_router()
                 + Self::headless_code_router()
                 + Self::headless_trace_router()
+                + Self::headless_wp_router()
                 + Self::localization_router()
                 + Self::project_ops_router()
                 + Self::object_router()
@@ -72,6 +73,18 @@ impl UnrealMcp {
                 + Self::gas_router()
                 + Self::pcg_router()
                 + Self::python_router()
+                + Self::toolset_router()
+                + Self::geometry_router()
+                + Self::control_rig_router()
+                + Self::snapshot_router()
+                + Self::ik_rig_router()
+                + Self::remote_control_router()
+                + Self::live_link_router()
+                + Self::pose_search_router()
+                + Self::mass_router()
+                + Self::chooser_router()
+                + Self::gameplay_camera_router()
+                + Self::rigvm_graph_router()
                 + Self::material_graph_router()
                 + Self::render_router()
                 + Self::widget_blueprint_router()
@@ -87,13 +100,25 @@ impl UnrealMcp {
     pub(crate) async fn call_plugin(
         &self,
         path: &str,
+        body: Value,
+    ) -> Result<Value, rmcp::ErrorData> {
+        self.call_plugin_with_timeout(path, body, crate::editor::client::REQUEST_TIMEOUT)
+            .await
+    }
+
+    /// `call_plugin` with a longer wait, for a route that blocks on work the
+    /// editor finishes asynchronously.
+    pub(crate) async fn call_plugin_with_timeout(
+        &self,
+        path: &str,
         mut body: Value,
+        timeout: std::time::Duration,
     ) -> Result<Value, rmcp::ErrorData> {
         if let Some(obj) = body.as_object_mut() {
             obj.retain(|_, v| !v.is_null());
         }
         self.editor
-            .post(path, body)
+            .post_with_timeout(path, body, timeout)
             .await
             .map_err(|e| e.into_tool_error(self.cfg.plugin_port))
     }

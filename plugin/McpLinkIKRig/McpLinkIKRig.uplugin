@@ -1,0 +1,27 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.3.0",
+	"EngineVersion": "5.8.0",
+	"FriendlyName": "McpLink IK Rig",
+	"Description": "McpLink interop for IK Rig and IK Retargeter: build rigs (solvers, goals, retarget chains), retargeters (chain mapping, settings) and retarget animations between skeletons from the mcp-unreal MCP server.",
+	"Category": "Editor",
+	"CreatedBy": "mcp-unreal",
+	"CreatedByURL": "https://github.com/HTRMC/mcp-unreal",
+	"DocsURL": "https://github.com/HTRMC/mcp-unreal#readme",
+	"SupportURL": "https://github.com/HTRMC/mcp-unreal/issues",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "McpLinkIKRig",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	],
+	"Plugins": [
+		{ "Name": "McpLink", "Enabled": true },
+		{ "Name": "IKRig", "Enabled": true }
+	]
+}

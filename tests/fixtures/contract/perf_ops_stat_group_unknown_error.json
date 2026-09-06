@@ -1,0 +1,18 @@
+{
+  "name": "perf_ops_stat_group_unknown_error",
+  "description": "perf_ops stat_group on an unknown group: 404 listing the known groups",
+  "route": "/api/editor/perf",
+  "tool": "perf_ops",
+  "request": {
+    "operation": "stat_group",
+    "group": "NoSuchGroup"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "unknown_stat_group",
+      "message": "no stat group 'NoSuchGroup' — known groups: AbilitySystem, Accessibility, AI, AI_EQS, AIBehaviorTree, AICrowd, Anim, AnimationSharing, AnimSequenceTransformProvider, AsyncIO, AsyncLoad, AsyncLoadGameThread, Audio, AudioMixer, BackChannel, BeamParticles, Buoyancy, CableComponent, CameraAnimation, CameraSystem, Canvas, Chaos, ChaosCloth, ChaosClothAsset, ChaosCollision, ChaosCollisionCounters, ChaosConstraintDetails, ChaosConstraintSolver, ChaosCounters, ChaosDedicated, ChaosEngine, ChaosIslands, ChaosJoint, ChaosMinEvolution, ChaosNiagara, ChaosThread, ChaosUserDataPT, ChaosWide, Character, Collision, CollisionTags, CollisionVerbose, Component, Compression, ControlRig, Cooking, CPUStalls, Culling, D3DMemory, DDC, Default, Emitters, EmittersRT, Engine, Foliage, FunctionalTest, Game, GameplayTags, GameplayTasks, GC, GeometryCache, GPU0_Graphics0, GPUParticles, GPUSkinCache, GroupPaintTool, HeterogeneousVolumesGT, HeterogeneousVolumesRT, HTTPThread, IMEWindows, ImgMediaPlugin, ImmediatePhysics, ImmediatePhysicsCounters, InitViews, InstanceData, KismetCompiler, KismetReinstancer, Landscape, LightRendering, LinkerCount, LinkerLoad, LLM, LLMFULL, LLMOverhead, LLMPlatform, LoadTime, LoadTimeVerbose, MapBuildData, Mass, Media, Memory, MemoryAllocator, MemoryPlatform, MemoryStaticMesh, MorphTarget, MoviePipeline, MovieSceneECS, MovieSceneEval, MovieSceneRepl, MRMESH, Mutable, MutableCore, Nanite, NaniteCoarseMeshStreaming, NaniteRayTracing, NaniteStreaming, Navigation, Net, Niagara, NiagaraDataChannels, NiagaraEditor, NiagaraOverview, NiagaraRibbons, NiagaraStateless, NiagaraSystemCounts, Object, ObjectVerbose, Online, OodleNetwork, Packet, PakFile, Paper2D, ParticleMem, Particles, ParticlesOverview, ParticleStats, Physics, PhysicsFields, Ping, PipelineStateCache, PlayerController, ProceduralMesh, PSCWorldMan, PSOPrecacheInFlight, PSOPrecacheInMemory, Python, Quick, RayTracingGeometry, RDG, RenderScaling, RenderTargetPool, RenderThreadCommands, RenderThreadProcessing, RHI, RHICMDLIST, RHITransientMemory, RigLogic, SceneCulling, SceneMemory, SceneRendering, SceneUpdate, SculptToolOctree, ServerCPU, SFC, ShaderCompiling, Shaders, ShadowRendering, SignificanceManager, SkinningSceneExtension, Slate, SlateMemory, SlateVerbose, SparseVolumeTextureMemory, StatSystem, Streaming, StreamingDetails, StreamingOverview, TargetPlatform, TaskGraphTasks, TedsAssetData, TedsCore, Text, TextureGroup, TexturePool, Thermal, Threading, ThreadPoolAsyncTasks, Threads, Tickables, TickGroups, TrailParticles, UI, UMG_Viewmodel, UObjectHash, UObjects, VectorVM, VectorVMBackend, VertexAttributePaintTool, VideoRecordingSystem, VirtualTextureMemory, VirtualTexturing, Voice, VTP, Water, WaterMesh, WeightMapPaintTool, WorldPartition"
+    }
+  }
+}

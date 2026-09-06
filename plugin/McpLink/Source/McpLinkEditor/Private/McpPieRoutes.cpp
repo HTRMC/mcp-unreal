@@ -11,6 +11,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "LevelEditorViewport.h"
 #include "McpJson.h"
+#include "PlayInEditorDataTypes.h"
+#include "Settings/LevelEditorPlayNetworkEmulationSettings.h"
 #include "Settings/LevelEditorPlaySettings.h"
 #include "McpLinkCoreModule.h"
 #include "McpLinkEditorRoutes.h"
@@ -172,9 +174,98 @@ namespace McpLink
 						Params.StartRotation = StartRotation;
 					}
 
-					// Multiplayer options live on the play settings, not on the
-					// request. Duplicating the defaults keeps a one-off net-mode
-					// run from rewriting the user's editor preferences.
+					// Multiplayer, preview and emulation options live on the play
+					// settings, not on the request. Duplicating the defaults keeps
+					// a one-off run from rewriting the user's editor preferences.
+					ULevelEditorPlaySettings* Settings = nullptr;
+					const auto EnsureSettings = [&Settings]() -> ULevelEditorPlaySettings*
+					{
+						if (Settings == nullptr)
+						{
+							Settings = DuplicateObject<ULevelEditorPlaySettings>(
+								GetDefault<ULevelEditorPlaySettings>(), GetTransientPackage());
+						}
+						return Settings;
+					};
+
+					// Preview modes: mobile renders the PIE viewport at the mobile
+					// feature level; VR needs a headset the editor can see.
+					FString Preview;
+					Body->TryGetStringField(TEXT("preview"), Preview);
+					if (!Preview.IsEmpty())
+					{
+						const FString Lower = Preview.ToLower();
+						if (Lower == TEXT("mobile"))
+						{
+							Params.SessionPreviewTypeOverride = EPlaySessionPreviewType::MobilePreview;
+						}
+						else if (Lower == TEXT("vr"))
+						{
+							Params.SessionPreviewTypeOverride = EPlaySessionPreviewType::VRPreview;
+						}
+						else if (Lower != TEXT("none"))
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_preview"),
+								FString::Printf(TEXT("unknown preview '%s' — use mobile, vr or none"), *Preview));
+							return;
+						}
+					}
+
+					// Network emulation: the Play settings' latency and loss,
+					// applied to every net driver the session creates.
+					const TSharedPtr<FJsonObject>* Emulation = nullptr;
+					if (Body->TryGetObjectField(TEXT("net_emulation"), Emulation) && Emulation->IsValid())
+					{
+						const TSharedRef<FJsonObject> Net = Emulation->ToSharedRef();
+						FLevelEditorPlayNetworkEmulationSettings& Emu = EnsureSettings()->NetworkEmulationSettings;
+						Emu.bIsNetworkEmulationEnabled = true;
+						Emu.CurrentProfile = TEXT("Custom");
+						FString Target = TEXT("any");
+						Net->TryGetStringField(TEXT("target"), Target);
+						const FString TargetLower = Target.ToLower();
+						if (TargetLower == TEXT("server"))
+						{
+							Emu.EmulationTarget = NetworkEmulationTarget::Server;
+						}
+						else if (TargetLower == TEXT("client") || TargetLower == TEXT("clients"))
+						{
+							Emu.EmulationTarget = NetworkEmulationTarget::Client;
+						}
+						else if (TargetLower == TEXT("any") || TargetLower == TEXT("everyone"))
+						{
+							Emu.EmulationTarget = NetworkEmulationTarget::Any;
+						}
+						else
+						{
+							Responder->Error(EHttpServerResponseCodes::BadRequest, TEXT("unknown_target"),
+								FString::Printf(
+									TEXT("unknown net_emulation target '%s' — use server, client or any"), *Target));
+							return;
+						}
+						const auto ReadPackets = [](const TSharedRef<FJsonObject>& Source,
+							FNetworkEmulationPacketSettings& Packets)
+						{
+							Packets.MinLatency = FMath::Clamp(IntOr(Source, TEXT("min_latency_ms"), Packets.MinLatency), 0, 5000);
+							Packets.MaxLatency = FMath::Clamp(IntOr(Source, TEXT("max_latency_ms"), Packets.MaxLatency), 0, 5000);
+							Packets.MaxLatency = FMath::Max(Packets.MaxLatency, Packets.MinLatency);
+							Packets.PacketLossPercentage =
+								FMath::Clamp(IntOr(Source, TEXT("packet_loss_percent"), Packets.PacketLossPercentage), 0, 100);
+						};
+						// The flat fields apply to both directions; incoming and
+						// outgoing override one side each.
+						ReadPackets(Net, Emu.OutPackets);
+						ReadPackets(Net, Emu.InPackets);
+						const TSharedPtr<FJsonObject>* Direction = nullptr;
+						if (Net->TryGetObjectField(TEXT("outgoing"), Direction) && Direction->IsValid())
+						{
+							ReadPackets(Direction->ToSharedRef(), Emu.OutPackets);
+						}
+						if (Net->TryGetObjectField(TEXT("incoming"), Direction) && Direction->IsValid())
+						{
+							ReadPackets(Direction->ToSharedRef(), Emu.InPackets);
+						}
+					}
+
 					const int32 Players = FMath::Clamp(IntOr(Body, TEXT("players"), 1), 1, 8);
 					FString NetModeSpec;
 					Body->TryGetStringField(TEXT("net_mode"), NetModeSpec);
@@ -188,8 +279,7 @@ namespace McpLink
 								TEXT("simulate has no players — drop 'simulate' to run a networked session"));
 							return;
 						}
-						ULevelEditorPlaySettings* Settings = DuplicateObject<ULevelEditorPlaySettings>(
-							GetDefault<ULevelEditorPlaySettings>(), GetTransientPackage());
+						EnsureSettings();
 						const FString NetMode = NetModeSpec.ToLower();
 						if (NetMode.IsEmpty() || NetMode == TEXT("standalone"))
 						{
@@ -217,6 +307,9 @@ namespace McpLink
 						// One process keeps every client inside this editor, which
 						// is what makes the other tools able to reach them.
 						Settings->SetRunUnderOneProcess(BoolOr(Body, TEXT("one_process"), true));
+					}
+					if (Settings != nullptr)
+					{
 						Params.EditorPlaySettings = Settings;
 					}
 

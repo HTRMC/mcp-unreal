@@ -1,0 +1,21 @@
+{
+  "name": "gameplay_camera_ops_create_rig",
+  "description": "gameplay_camera_ops create_rig: an empty camera rig",
+  "route": "/api/cameras/gameplay",
+  "tool": "gameplay_camera_ops",
+  "request": {
+    "operation": "create_rig",
+    "path": "/Game/Cameras/CR_Contract"
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "rig": "/Game/Cameras/CR_Contract.CR_Contract",
+      "build_status": "dirty",
+      "enter_transitions": 0,
+      "exit_transitions": 0,
+      "blendable_parameters": 0
+    }
+  }
+}

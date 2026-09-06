@@ -1,0 +1,27 @@
+{
+  "name": "landscape_ops_create_grass_type",
+  "description": "landscape_ops create_grass_type: a grass type with one variety",
+  "route": "/api/world/landscape",
+  "tool": "landscape_ops",
+  "request": {
+    "operation": "create_grass_type",
+    "path": "/Game/Landscape/LG_McpContract",
+    "varieties": [
+      {
+        "mesh": "/Engine/BasicShapes/Cube",
+        "density": 50,
+        "min_scale": 0.5,
+        "max_scale": 1.5
+      }
+    ]
+  },
+  "status": 200,
+  "response": {
+    "ok": true,
+    "data": {
+      "grass_type": "/Game/Landscape/LG_McpContract.LG_McpContract",
+      "varieties": 1,
+      "message": "created — the landscape material spawns it: material_graph add_expression MaterialExpressionLandscapeGrassOutput, set_property its GrassTypes to this asset, and feed the layer's weight into that input"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "niagara_author_set_module_input_ambiguous_error",
+  "description": "set_module_input refuses two ways of driving an input in one call",
+  "route": "/api/niagara/author",
+  "tool": "niagara_author",
+  "request": {
+    "operation": "set_module_input",
+    "system": "/Game/FX/NS_McpAuthored2",
+    "stage": "particle_update",
+    "emitter": "Sparks",
+    "module": "ScaleColor",
+    "input": "Scale Alpha",
+    "value": 0.5,
+    "link": "Particles.NormalizedAge"
+  },
+  "status": 400,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "ambiguous",
+      "message": "pass one of `value`, `dynamic_input`, `link`, `expression`, `data_interface`, `object_asset` or `reset` per call"
+    }
+  }
+}

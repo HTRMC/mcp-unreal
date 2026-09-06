@@ -1,0 +1,21 @@
+{
+  "name": "ik_rig_ops_add_chain_bad_bone_error",
+  "description": "ik_rig_ops add_chain with a bone the skeleton lacks: 409",
+  "route": "/api/anim/ik_rig",
+  "tool": "ik_rig_ops",
+  "request": {
+    "operation": "add_chain",
+    "rig": "/Game/Rigs/IK_McpContract",
+    "name": "Bad",
+    "start_bone": "nope",
+    "end_bone": "hand_l"
+  },
+  "status": 409,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "chain_refused",
+      "message": "the rig refused the chain — both bones must exist and the end must descend from the start"
+    }
+  }
+}

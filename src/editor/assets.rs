@@ -41,6 +41,12 @@ pub enum AssetOp {
         factory: Option<String>,
         /// Properties to set on that factory first.
         factory_properties: Option<Value>,
+        /// Import through the Interchange framework (FBX, glTF, OBJ, USD,
+        /// images, …) with the project's pipeline stack instead of the legacy
+        /// importer. Asynchronous under the hood; the reply waits.
+        interchange: Option<bool>,
+        /// Interchange pipeline assets to use instead of the project's stack.
+        pipelines: Option<Vec<String>>,
     },
     /// Re-run an asset's import from its recorded source file.
     Reimport {
@@ -114,7 +120,15 @@ pub enum AssetOp {
         paths: Vec<String>,
         /// Absolute directory to write into.
         directory: String,
+        /// File extension that picks the exporter — "gltf" or "glb" (static and
+        /// skeletal meshes, materials, levels), "fbx", "obj", "t3d", "png",
+        /// "wav", "copy" … Omit for each asset's first registered exporter.
+        /// `list_exporters` shows what an asset's class can be written as.
+        format: Option<String>,
     },
+    /// The exporter classes registered in this editor — every one, or only
+    /// those that take the asset at `path` — with their file extensions.
+    ListExporters { path: Option<String> },
     /// An asset's metadata tags.
     GetMetadata { path: String },
     /// Set one metadata tag, or remove it by omitting `value`.

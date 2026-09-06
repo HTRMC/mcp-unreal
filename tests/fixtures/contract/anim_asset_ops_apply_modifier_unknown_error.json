@@ -1,0 +1,19 @@
+{
+  "name": "anim_asset_ops_apply_modifier_unknown_error",
+  "description": "anim_asset_ops apply_modifier with a class that is not a modifier: 404",
+  "route": "/api/anim/assets",
+  "tool": "anim_asset_ops",
+  "request": {
+    "operation": "apply_modifier",
+    "asset": "/Game/Anim/A_McpContractWalk",
+    "modifier": "NoSuchModifier"
+  },
+  "status": 404,
+  "response": {
+    "ok": false,
+    "error": {
+      "code": "modifier_not_found",
+      "message": "'NoSuchModifier' is not an Animation Modifier class — list_modifiers shows them"
+    }
+  }
+}
