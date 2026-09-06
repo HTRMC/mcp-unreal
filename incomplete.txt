@@ -1,0 +1,1205 @@
+mcp-unreal — what UE 5.8 can do that the MCP cannot do yet
+==========================================================
+
+Written 2026-09-06 against v0.3.1 (116 tools, 99 McpLink routes) and the
+Launcher 5.8 engine on D:. Every "engine entry point" below was grepped in
+the installed engine source; anything not checked is marked (verify).
+
+Rule for everything in this file: python_exec, call_function/set_property on
+raw objects, run_console_command and toolset_ops (Epic's Toolset Registry
+bridge) are the absolute last fallback. Each item is meant to become its own
+McpLink route (game thread, FMcpResponder, FScopedTransaction, remediation
+text) plus a Rust tool with a validated vocabulary.
+
+Legend
+  UE can        what the editor or engine does today
+  McpLink today what the closest existing tool covers (partial coverage)
+  Entry points  engine API a native route would call
+  Home          which plugin module / route / Rust tool it belongs in
+  Headless      whether the E2E can run under -nullrhi
+
+
+======================================================================
+PART A — EDITOR WORKFLOWS WITH NO FIRST-CLASS TOOL (highest value)
+======================================================================
+
+A1. Scene / physics queries
+  UE can        Line trace, sweep (sphere/box/capsule) and overlap against the
+                editor world or the PIE world, by trace channel, object type
+                or collision profile, single or multi, with per-hit actor,
+                component, location, normal, distance, bone name and face
+                index. Also "what is under this screen point" and component
+                sweeps.
+  McpLink today Nothing exposed. Line traces exist only inside
+                editor_ops snap_to_floor and foliage_ops scatter.
+  Entry points  UWorld::LineTraceSingleByChannel / LineTraceMultiByChannel /
+                LineTraceSingleByObjectType / LineTraceSingleByProfile,
+                UWorld::SweepSingleByChannel / SweepMultiByChannel,
+                UWorld::OverlapMultiByChannel / OverlapMultiByObjectType,
+                UWorld::ComponentSweepMultiByChannel /
+                ComponentOverlapMultiByChannel (all UE_API on UWorld,
+                Engine/Classes/Engine/World.h), FCollisionShape::MakeSphere/
+                MakeBox/MakeCapsule, FCollisionQueryParams (ignore actors,
+                trace complex, return physical material).
+  Home          McpLinkEditor, /api/world/query, Rust tool physics_query
+                (operation: line_trace | sweep | overlap | under_cursor;
+                world: editor | pie).
+  Headless      Yes (collision does not need an RHI).
+
+A2. Blueprint refactoring
+  UE can        Rename a member variable, local variable or function graph
+                with every node and reference fixed up; set variable metadata
+                (category, tooltip, instance editable, Blueprint read-only,
+                expose on spawn, private, replication + RepNotify, save game,
+                config); reorder variables; set a variable's default in the
+                CDO; add a macro graph inside a normal Blueprint; move nodes;
+                duplicate nodes; promote a pin to a variable; collapse nodes
+                to a function or macro; add function metadata (pure, const,
+                category, access specifier, call in editor); set function
+                input defaults; convert a function to an event and back.
+  McpLink today blueprint_modify has create, set_parent_class, add/remove
+                variable, set_variable_type (with node fixup), add/remove
+                function, add/remove function parameter, add/remove local
+                variable, add/remove component, add/remove interface,
+                add/remove event dispatcher (+ parameters), add_node with
+                ~45 node kinds (position on add), delete_node, connect/
+                disconnect pins, set_pin_value, compile, save. No rename of
+                anything, no metadata, no node move, no macro graphs in a
+                regular Blueprint, no collapse/promote, no function flags.
+  Entry points  FBlueprintEditorUtils::RenameMemberVariable,
+                RenameLocalVariable (both UNREALED_API, Kismet2/
+                BlueprintEditorUtils.h), FBlueprintEditorUtils::RenameGraph,
+                SetBlueprintVariableMetaData / RemoveBlueprintVariableMetaData,
+                SetVariableTransientFlag / SetVariableSaveGameFlag /
+                SetBlueprintPropertyReplicationFlags ... (verify exact names),
+                FBlueprintEditorUtils::AddMacroGraph, UEdGraphNode::NodePosX/Y
+                + Modify, FEdGraphUtilities::CloneAndMergeGraphIn (duplicate),
+                FBlueprintEditorUtils::PromoteToVariable (verify),
+                FBlueprintEditorUtils::SetBlueprintFunctionOrMacroCategory,
+                UK2Node_FunctionEntry::SetExtraFlags (pure/const),
+                UK2Node_EditablePinBase::PinDefaultValue.
+  Home          McpLinkBlueprint, existing /api/blueprints/modify, new
+                operations on blueprint_modify.
+  Headless      Yes.
+
+A3. Find in Blueprints, Blueprint diff, graph diff
+  UE can        Search every Blueprint in the project for a string (node
+                titles, pin names, pin values, variable names, comments) —
+                "Find in Blueprints (all)". Diff two Blueprints or two
+                revisions of one (graphs, defaults, components, variables).
+                Diff two graphs and report added, removed, moved, retyped and
+                relinked nodes.
+  McpLink today blueprint_query list / inspect / get_graph (one asset at a
+                time). search_assets filters on class and name substring
+                only. reference_ops gives asset-level referencers.
+  Entry points  FFindInBlueprintSearchManager::Get() (Kismet module,
+                FindInBlueprintManager.h): FStreamSearch(SearchValue) over
+                the FiB cache (asynchronous; cache must be built first —
+                CacheAllBlueprintsOrUnindexedAssets, needs the editor to have
+                indexed the Blueprints); FGraphDiffControl::DiffGraphs
+                (GraphEditor/Public/GraphDiffControl.h, UE_API) →
+                TArray<FDiffSingleResult>; FBlueprintDifference /
+                FDiffUtils for CDO and SCS diffs (verify); asset revisions via
+                ISourceControlProvider::GetState → FGetFileHistory.
+  Home          McpLinkBlueprint: blueprint_query find (project-wide) and
+                blueprint_query diff.
+  Headless      Yes; FiB indexing under -nullrhi needs testing (the index is
+                built from asset registry tags + loading).
+
+A4. Asset housekeeping
+  UE can        Consolidate (replace all references to N assets with one and
+                delete the rest), migrate assets with dependencies to another
+                project's Content folder, bulk resave (ResavePackages
+                commandlet with -fixupredirects / -buildlighting etc.),
+                replace references in a selection, asset audit (cook/chunk
+                stats per asset), diff asset defaults, bulk-edit via the
+                property matrix, fix up all redirectors under a path (exists),
+                "Reference Viewer" (exists), delete with replace-references.
+  McpLink today asset_ops: create, import, reimport, rename, move, duplicate,
+                delete, save, save_all, folders, fixup_redirectors, export,
+                list_exporters, get/set metadata. reference_ops size_map.
+                No consolidate, migrate, resave, replace-on-delete, audit.
+  Entry points  ObjectTools::ConsolidateObjects (UNREALED_API, ObjectTools.h
+                line 225, bShowDeleteConfirmation=false),
+                IAssetTools::MigratePackages(PackageNames, DestinationPath,
+                FMigrationOptions) (IAssetTools.h:634 — the one-argument
+                overload at line 630 opens the dialog; the options struct
+                carries bPrompt and the conflict policy, and line 637 adds
+                explicit dependency include/exclude sets),
+                ObjectTools::DeleteObjects with
+                FForceReplaceInfo / ObjectTools::ForceReplaceReferences,
+                UResavePackagesCommandlet (Rust side: UnrealEditor-Cmd
+                -run=ResavePackages -PackageFolder= -fixupredirects),
+                UAssetManagerEditorModule / FAssetAuditView data (cook stats
+                from the asset registry's cooked state).
+  Home          McpLinkEditor /api/assets/ops (consolidate, migrate,
+                replace_references); Rust headless resave_packages.
+  Headless      Yes.
+
+A5. Level-editing conveniences
+  UE can        Editor layers (the Layers panel — distinct from World
+                Partition data layers): create, delete, rename, add/remove
+                actors, show/hide. Group / ungroup / lock groups. Convert a
+                selection into a new Blueprint class (harvest components or
+                child actors) and replace the actors with an instance.
+                Replace selected actors with another class, keeping
+                transforms. Editor bookmarks (0-9 camera positions per map).
+                Temporarily hide / show actors in editor, isolate selection.
+                Select all of class, select by matching material, invert
+                selection. Align to actor, snap to grid/rotation/scale
+                settings, set pivot / bake pivot. Attach to socket by name
+                (attach exists; socket param verify). Lock actor location.
+                Actor tags.
+  McpLink today editor_ops: undo/redo/history, selection get/set/clear,
+                attach/detach, add/remove component instance, duplicate,
+                set_folder, set_label, snap_to_floor. spawn_actor,
+                delete_actors, move_actor, get_actor_components. Level
+                Instances and MergeActors exist in level_instance_ops.
+  Entry points  ULayersSubsystem (UEditorSubsystem, UnrealEd/Public/Layers/
+                LayersSubsystem.h:46 — fetch with
+                GEditor->GetEditorSubsystem<ULayersSubsystem>():
+                CreateLayer, DeleteLayer, RenameLayer, AddActorToLayer,
+                RemoveActorFromLayer, SetLayerVisibility, GetLayers),
+                UActorGroupingUtils::GroupActors / UngroupActors /
+                LockSelectedGroups (UnrealEd), AGroupActor,
+                FKismetEditorUtilities::CreateBlueprintFromActors
+                (UNREALED_API, KismetEditorUtilities.h:355, with
+                FCreateBlueprintFromActorsParams: harvest vs child actors,
+                bReplaceActors), UEditorActorSubsystem::ReplaceSelectedActors
+                (EditorActorSubsystem.h:340, static) or
+                UEditorEngine::ReplaceSelectedActors(Factory, AssetData),
+                IBookmarkTypeTools::Get().CreateOrSetBookmark /
+                JumpToBookmark (UnrealEd, Bookmarks/IBookmarkTypeTools.h),
+                AActor::SetIsTemporarilyHiddenInEditor,
+                UEditorActorSubsystem::SetActorSelectionState / SelectAll /
+                InvertSelection, ULevelEditorViewportSettings grid snap.
+  Home          McpLinkEditor /api/editor/ops (new operations) plus a
+                /api/editor/layers route for editor layers.
+  Headless      Yes (bookmarks need a viewport client; under -nullrhi the
+                level viewport clients still exist).
+
+A6. World Partition extras
+  UE can        Convert a non-partitioned level to World Partition (with
+                OFPA), build HLOD layers as assets with settings, runtime
+                streaming sources and loading ranges, external data layer
+                assets, runtime vs editor data layer types, level streaming
+                volumes, "load all / unload all" in the editor, minimap
+                volume, cell debug draw, WP actor descriptor listing without
+                loading (the WP outliner), pin/unpin actors, HLOD preview.
+  McpLink today world_partition_ops: info, create/delete data layer, set
+                state, add/remove actors, load/unload region.
+                world_partition_build: HLOD (setup/build/delete/finalize),
+                minimap, navigation, resave actors (commandlet on the Rust
+                side). build_level Hlod. sublevel_ops for classic streaming.
+  Entry points  UWorldPartitionConvertCommandlet (UnrealEd/Classes/
+                Commandlets/WorldPartitionConvertCommandlet.h; run as
+                UnrealEditor-Cmd <proj> -run=WorldPartitionConvertCommandlet
+                <map> -ConversionSuffix -SCCProvider=None), UHLODLayer asset
+                (Engine/Classes/WorldPartition/HLOD/HLODLayer.h) + set via
+                AWorldPartitionHLOD, UWorldPartition::GetActorDescContainer
+                / FWorldPartitionActorDescInstance iteration for the
+                outliner listing, UWorldPartitionEditorLoaderAdapter,
+                ALevelStreamingVolume, UDataLayerInstance::SetIsLoadedInEditor
+                (exists), UExternalDataLayerAsset.
+  Home          Rust: world_partition_build convert; McpLinkWorld
+                /api/world/partition new operations (list_actor_descs,
+                create_hlod_layer, load_all/unload_all, streaming sources).
+  Headless      Yes.
+
+A7. Animation Sequence data (the keys themselves)
+  UE can        Edit bone tracks in an Animation Sequence: add/remove a bone
+                track, set positional/rotational/scale keys, set frame rate
+                and number of frames, crop, insert/remove frames, resample,
+                reverse, bake additive, set root motion settings (enable,
+                lock, root motion root lock type), set additive base pose,
+                compression settings, curve compression, rate scale, loop
+                settings; Animation Sequencer authoring (5.6+: keyframe a
+                skeletal mesh in Sequencer and bake back to an Anim
+                Sequence).
+  McpLink today anim_notify_ops (notifies, tracks, sync markers, float
+                curves + keys), anim_asset_ops (montages, composites, blend
+                spaces, aim offsets, modifiers), pose_asset_ops,
+                mirror_table_ops, control_rig_ops (Sequencer control rig
+                track keys). Nothing touches bone tracks.
+  Entry points  IAnimationDataController via
+                UAnimSequenceBase::GetController() (Engine/Classes/
+                Animation/AnimData/IAnimationDataController.h): OpenBracket /
+                CloseBracket, AddBoneCurve (AddBoneTrack is the old name),
+                RemoveBoneTrack, SetBoneTrackKeys (FVector3f/FQuat4f/FVector3f
+                arrays, one per frame), SetFrameRate, SetNumberOfFrames,
+                ResizeNumberOfFrames(NewLength, T0, T1) (crop/insert),
+                RemoveBoneTracksMissingFromSkeleton, UpdateCurveNamesFromSkeleton;
+                IAnimationDataModel::GetBoneTrackTransform for readback;
+                UAnimSequence::bEnableRootMotion / RootMotionRootLock /
+                bForceRootLock / AdditiveAnimType / RefPoseType /
+                RefPoseSeq (UPROPERTYs, set through the class so
+                PostEditChangeProperty runs), UAnimSequence::
+                CompressionErrorThresholdScale, BoneCompressionSettings,
+                CurveCompressionSettings. Resample = read every frame at the
+                new rate through UAnimSequence::GetBonePose /
+                FAnimExtractContext then SetBoneTrackKeys.
+  Home          McpLinkAnimation, new /api/anim/sequence route, Rust tool
+                anim_sequence_ops.
+  Headless      Yes.
+
+A8. Recording and Sequencer interchange
+  UE can        Take Recorder (record actors, the player, Live Link subjects,
+                audio and Niagara in PIE into a Level Sequence with takes,
+                slates and metadata), Sequence Recorder (legacy), export a
+                Level Sequence to FBX, import FBX onto bindings, bake a
+                Sequencer binding to an Anim Sequence, bake a Control Rig
+                track to keys, bake transforms, Template Sequences,
+                Actor Sequences (a Sequencer track owned by an actor
+                Blueprint), Sequencer Playlists, Cinematic Prestreaming,
+                Cine Assembly (5.6+), Sequence Navigator.
+  McpLink today sequence_ops (28 operations: create, inspect, ranges, bindings,
+                tracks, sections, keys, camera cuts, subsequences, shakes,
+                events, add to level, widget animations), control_rig_ops
+                add_track / set_control_key, movie_render (both pipelines,
+                windowed). replay_ops records network replays, not
+                Sequencer.
+  Entry points  Take Recorder: UTakeRecorderBlueprintLibrary::StartRecording
+                (TakesCore — takes UTakeRecorderSources + UTakeMetaData),
+                UTakeRecorderSources::AddSource(UTakeRecorderActorSource::
+                StaticClass()) + ULevelSequence target, UTakeRecorderSubsystem
+                (5.8, TakeRecorder module, verify whether it is the newer
+                front door), UTakePreset, UTakeRecorderBlueprintLibrary::
+                StopRecording / IsRecording / GetActiveRecorder.
+                Sequencer FBX / anim: USequencerToolsFunctionLibrary::
+                ExportLevelSequenceFBX(FSequencerExportFBXParams) (UE_API,
+                SequencerScripting plugin, SequencerTools.h:174),
+                ImportLevelSequenceFBX(World, Sequence, Bindings,
+                UMovieSceneUserImportFBXSettings, Filename) (line 246),
+                ExportAnimSequence(World, Sequence, AnimSequence,
+                UAnimSeqExportOption, Binding, bCreateLink) (line 190),
+                LinkAnimSequence / UnlinkAnimSequence,
+                BakeTransformsWithSettings (verify name). Template
+                Sequences: UTemplateSequence (+ UTemplateSequenceFactoryNew
+                does Initialize + BoundActorClass). Actor Sequences:
+                UActorSequenceComponent / UActorSequence.
+  Home          McpLinkEditor (Sequencer code already lives there):
+                sequence_ops export_fbx / import_fbx / bake_to_anim_sequence
+                / create_template; new take_recorder_ops route.
+                SequencerScripting.uplugin and Takes.uplugin carry no
+                "EnabledByDefault" key, which for engine plugins means
+                enabled unless the project sets
+                DisableEnginePluginsByDefault — McpLink.uplugin should still
+                list both as required, like DataValidation.
+                UTakeRecorderBlueprintLibrary lives in the TakeRecorder
+                module (Recorder/TakeRecorderBlueprintLibrary.h:25) and
+                UTakeRecorderSources in TakesCore (TakeRecorderSources.h:54).
+  Headless      FBX export/import and bake: yes. Take Recorder: recording
+                runs in PIE, should work under -nullrhi (verify).
+
+A9. Runtime debugging beyond Blueprints
+  UE can        Gameplay Debugger (per-category overlay: AI, BT, EQS, nav,
+                perception, GAS, Mass, Smart Objects — toggled per category,
+                data replicated to the local player), which Behavior Tree
+                node and task are active, State Tree active states and
+                instance data, State Tree trace (Rewind Debugger), Rewind
+                Debugger for animation (pose history, notifies, variables
+                over time), Network Profiler, `obj list` / `obj refs` /
+                `obj gc` output, ensure/crash context, `DumpTicks`, GPU
+                profiler (`ProfileGPU`), shader compilation state
+                (`r.ShaderCompiler.*`, remaining jobs), Live Coding console
+                output, Mass entity debugger, Chaos Visual Debugger (record
+                and inspect physics).
+  McpLink today blueprint_debug (breakpoints, stepping, watches, debug
+                object), visual_log_ops (UE_VLOG stream), perf_ops
+                (frame stats, memory, stat groups, memreport, trace and
+                CSV capture), mass_ops entity_stats, get_output_log,
+                run_console_command (raw text back).
+  Entry points  UBehaviorTreeComponent::DescribeActiveTasks /
+                DescribeActiveTrees (AIMODULE_API, BehaviorTreeComponent.h:
+                267-268), UBehaviorTreeComponent::GetActiveNode /
+                GetTreeInstanceDepth / GetCurrentTree,
+                UBrainComponent::GetDebugInfoString,
+                UStateTreeComponent::GetActiveStateNames (UE_API,
+                GameplayStateTree, StateTreeComponent.h:138),
+                FStateTreeExecutionContext::GetActiveStates,
+                AGameplayDebuggerCategoryReplicator (GameplayDebugger module,
+                GameplayDebuggerCategoryReplicator.h: SetCategoryEnabled(
+                CategoryId, bEnable) and IsCategoryEnabled are
+                GAMEPLAYDEBUGGER_API at lines 150/197, GetNumCategories /
+                GetCategory(Id) are inline, and 5.8 deprecates the id-based
+                server RPC in favour of ServerSetCategoryNameEnabled — so
+                address categories by name), FGameplayDebuggerCategory::
+                GetReplicatedLinesCopy() (GameplayDebuggerCategory.h:106 —
+                the exact text lines the overlay draws, one array per
+                category), UGameplayDebuggerLocalController,
+                GShaderCompilingManager->IsCompiling() /
+                GetNumRemainingJobs() / GetNumPendingJobs()
+                (extern ENGINE_API, ShaderCompiler.h:1371),
+                UEngine::Exec("ProfileGPU") + parse the log block it emits,
+                FReferenceChainSearch (obj refs), FTickTaskManagerInterface
+                dump. Rewind Debugger: FRewindDebugger and IRewindDebugger
+                are both in RewindDebugger/Private (only
+                RewindDebuggerSettings.h is public), so there is no C++ API
+                to call — its data is the Insights trace (TraceServices
+                IAnimationProvider / IGameplayProvider from the
+                GameplayInsights plugin), which trace_ops export could read
+                the way it reads timers. Deferred behind trace_ops.
+                Chaos::FChaosVDRecordingManager (ChaosVD plugin, verify).
+  Home          McpLinkAI: behavior_tree_ops / state_tree_ops runtime_state;
+                McpLinkEditor: new /api/debug/gameplay route (categories),
+                perf_ops shader_status / profile_gpu; a Rust parser for the
+                ProfileGPU block.
+  Headless      BT/ST state yes; Gameplay Debugger needs a local player
+                (PIE) — data yes, overlay no; ProfileGPU needs an RHI.
+
+A10. Editor-window screenshots and graph images
+  UE can        Screenshot any Slate window or widget (the whole editor,
+                one tab, a details panel, a graph editor) and export a
+                Blueprint graph as an image.
+  McpLink today capture_viewport: viewport / high_res / camera modes, PIE
+                UI overlays with include_ui. ui_query dumps the widget tree
+                as text. Nothing renders the editor chrome to an image.
+  Entry points  FSlateApplication::TakeScreenshot(Widget, OutColorData,
+                OutSize) and the InnerWidgetArea overload (SLATE_API,
+                SlateApplication.h:1074/1090) — pick the SWindow or a widget
+                found the way ui_query finds them; FImageUtils::
+                PNGCompressImageArray; for graphs SGraphEditor →
+                TakeScreenshot of the graph panel after
+                ZoomToFit (FGraphEditorModule / SGraphPanel::ZoomToFit).
+  Home          McpLinkEditor capture_viewport mode "window" / "widget"
+                (path from ui_query) and blueprint_query graph_image.
+  Headless      No — Slate does not rasterise under -nullrhi.
+
+A11. Project scaffolding and deployment
+  UE can        Create a new project from a template (Blank, First Person,
+                Third Person, ...) with settings (Blueprint/C++, starter
+                content, raytracing, target platform), create a plugin from
+                a template (Blank, Content Only, Editor Toolbar Button,
+                Third Party Library, ...), switch engine association, Project
+                Launcher profiles (build+cook+deploy+launch, custom
+                roles), Turnkey (install/verify platform SDKs, device
+                listing and flashing), device manager (list, connect, deploy,
+                launch on device), UnrealPak / IoStore listing and
+                extraction, package plugins (RunUAT BuildPlugin), DLC /
+                chunk packaging, Zen server status, Horde/UBA distributed
+                build settings.
+  McpLink today build_project, cook_project, package_project (with a
+                `device` deploy-and-run and server / distribution / iostore
+                options), generate_project_files, code_ops (list modules,
+                create class, create module), project_ops (plugins on/off,
+                info), config_ops, ddc_ops stats, live_coding_ops.
+                No new project, no create plugin, no launcher profiles, no
+                Turnkey, no device listing, no pak inspection, no
+                BuildPlugin.
+  Entry points  GameProjectUtils::CreateProject(FProjectInformation, ...)
+                (GameProjectGeneration, UE_API, GameProjectUtils.h:127;
+                templates enumerated from FTemplateCategory /
+                GameProjectUtils::GetTemplateProjects (verify)),
+                FPluginUtils::CreateAndLoadNewPlugin(Name, Location,
+                FNewPluginParams / FNewPluginParamsWithDescriptor,
+                FLoadPluginParams) (PLUGINUTILS_API, PluginUtils.h:221/233;
+                templates are the folders under
+                Engine/Plugins/Developer/PluginTemplateTool? no — under
+                Engine/Content/PluginTemplates? verify path), Rust side:
+                Turnkey is a UAT command
+                (Engine/Source/Programs/AutomationTool/Turnkey):
+                RunUAT.bat Turnkey -command=VerifySdk -platform=Win64
+                -UpdateIfNeeded, -command=ListDevices / -command=InstallSdk
+                (verify verbs against TurnkeyCommand.cs),
+                RunUAT.bat BuildPlugin -Plugin= -Package=
+                -TargetPlatforms=, UnrealPak.exe <pak> -List /
+                -Extract, Project Launcher profiles are
+                Saved/Config/.../*.ulp2 JSON files driven by
+                ILauncherProfileManager (verify).
+  Home          Rust headless: project_ops create (new project), plugin_ops
+                create/package, turnkey_ops, pak_ops; the in-editor
+                PluginUtils call as a McpLinkEditor route.
+  Headless      Yes (project and plugin creation do not need the editor at
+                all when done from templates on disk).
+
+A12. Landscape and foliage edges
+  UE can        Export the heightmap (PNG16/raw/r16) and each weightmap to
+                files, import weightmaps per layer from files, resize /
+                change component size / retopologize an existing landscape,
+                sculpt with brushes (smooth, flatten, ramp, erosion,
+                hydro-erosion, noise, retopologize, visibility, mirror),
+                paint with brushes and falloffs, landscape material layer
+                info assets and blend modes, Nanite landscape build, grass
+                map build, physical material assignment per layer, landscape
+                streaming proxies, landscape edit layer procedural (Landmass
+                Blueprint brushes, 5.8 "landscape patches"), water brushes.
+                Foliage: Procedural Foliage Spawner assets (species
+                ecosystem simulation over Procedural Foliage Volumes,
+                resimulate), paint foliage with density brushes, erase by
+                brush, foliage type settings (exists via set_property),
+                select/move/scale existing instances by brush, reapply
+                settings, convert to Static Mesh actors.
+  McpLink today landscape_ops (24 operations: create flat or from a
+                heightmap file, import heightmap, get/set raw heights,
+                add/paint layers, edit layers, splines, grass types),
+                foliage_ops (types, explicit instances, area scatter with
+                collision drop, list/remove). No export, no weightmap
+                import, no resize, no brushes, no procedural spawner.
+  Entry points  FLandscapeEditDataInterface::GetHeightData /
+                GetWeightData (exists) + ILandscapeHeightmapFileFormat /
+                ILandscapeWeightmapFileFormat Export (LandscapeEditor,
+                registered formats: PNG, raw, r16 — verify the export
+                interface names), FLandscapeImportHelper::
+                GetWeightmapImportDescriptor / GetWeightmapImportData /
+                TransformWeightmapImportData (LandscapeEditor, exported —
+                the height twins are already used by landscape_ops),
+                FLandscapeConfigHelper::ChangeGridSize /
+                ResizeLandscape (LandscapeEditor, verify exported), the
+                brushes are FLandscapeToolStrokeBase subclasses inside
+                LandscapeEdModeTools.h — private to the mode, so brush
+                shapes have to be reimplemented on top of Get/SetHeightData
+                (falloff kernels are simple), ULandscapeLayerInfoObject
+                (PhysMaterial, bNoWeightBlend), ALandscape::
+                BuildNaniteData / UpdateNaniteData, ALandscapeProxy::
+                BuildGrassMaps (verify names).
+                Procedural foliage: UProceduralFoliageSpawner::Simulate(
+                NumSteps) (FOLIAGE_API, ProceduralFoliageSpawner.h:57),
+                UProceduralFoliageComponent::ResimulateProceduralFoliage(
+                AddInstancesFunc) (FOLIAGE_API, ProceduralFoliageComponent.h:
+                111), FProceduralFoliageEditorLibrary::
+                ResimulateProceduralFoliageVolumes (FoliageEdit,
+                ProceduralFoliageEditorLibrary.h:29), AProceduralFoliageVolume.
+  Home          McpLinkWorld landscape_ops export_heightmap /
+                export_weightmap / import_weightmap / resize / brush_stroke;
+                foliage_ops create_spawner / add_species / simulate /
+                add_volume / resimulate / paint / erase.
+  Headless      Export/import/resize yes. Edit-layer writes are GPU-merged,
+                so anything that goes through an edit layer is invisible to
+                get_heights under -nullrhi (already documented).
+
+A13. Painting and skeletal mesh editing
+  UE can        Vertex color painting on static and skeletal mesh instances
+                and assets (per LOD, per channel, fill, propagate to asset,
+                import from FBX, remove), texture painting onto a mesh's
+                textures, Skeletal Mesh Modeling Tools (add / remove /
+                rename / reparent / orient bones in the skeleton editor,
+                edit the reference pose, mirror bones, "skin weights" tool
+                with relax/smooth/prune — raw weights exist), skin weight
+                profiles, retarget base pose / retarget source per mesh,
+                blend profiles on the skeleton, curve metadata (morph vs
+                material curves), LOD settings assets, "bake pose to
+                mesh", merge skeletal meshes at runtime (SkeletalMerging
+                plugin), reduction settings per LOD (regenerate exists).
+  McpLink today skeleton_ops (sockets, virtual bones, slots, preview mesh),
+                skeletal_mesh_ops (LODs, materials, sockets, physics asset,
+                morph targets, clothing, skin weights), static_mesh_ops
+                (LODs, collision, Nanite, lightmap UVs, sockets,
+                materials), geometry_script_ops. No painting, no bone
+                editing, no profiles.
+  Entry points  Mesh paint: UMeshPaintingSubsystem is MinimalAPI
+                (MeshPaintHelpers.h:142) — only its UFUNCTIONs are
+                reachable, through reflection; the free helpers are
+                exported: MeshPaintingToolset::
+                ApplyVertexColorsToAllLODs(IMeshPaintComponentAdapter&,
+                UStaticMeshComponent*) (UE_API, MeshPaintHelpers.h:205/208),
+                FStaticMeshComponentLODInfo::OverrideVertexColors +
+                UStaticMeshComponent::SetLODDataCount / CachePaintedDataIfNecessary,
+                pushing to the asset via FMeshDescription vertex-instance
+                colors (FStaticMeshAttributes::GetVertexInstanceColors +
+                CommitMeshDescription) — no adapter needed for a whole-mesh
+                fill/bake. Texture paint: FMeshPaintingToolset texture
+                targets (verify).
+                Skeleton editing: USkeletonModifier (SkeletalMeshModelingTools
+                plugin, SkeletalMeshModifiers module — the tools module only
+                forward-declares it; SkeletonModifier.h: AddBone, RemoveBone,
+                RenameBone, ParentBone, SetBoneTransform, MirrorBones,
+                CommitSkeletonToSkeletalMesh — verify the header's module
+                and export), USkeletalMesh::GetSkinWeightProfiles /
+                AddSkinWeightProfile, USkeleton::GetBlendProfile /
+                CreateNewBlendProfile / FBlendProfile::SetBoneBlendScale,
+                USkeleton::AccumulateCurveMetaData / GetCurveMetaData,
+                FSkeletalMeshLODSettings, USkeletalMergingLibrary::MergeMeshes.
+  Home          McpLinkContent static_mesh_ops paint_vertex_colors;
+                McpLinkAnimation skeletal_mesh_ops paint / skin_weight_profile,
+                skeleton_ops add_bone / rename_bone / reparent_bone /
+                blend_profile / curve_metadata.
+  Headless      Yes for asset-side writes.
+
+A14. Materials and shaders readback
+  UE can        Material stats (instruction counts per shader, samplers,
+                shader map size, "shader complexity"), Material Analyzer
+                (which instances override what), Material Validation
+                plugin checks, shader compile errors per platform,
+                Substrate slab inspection (5.8 default), material
+                instance dynamic edits at runtime, post process material
+                chain, decal / light function / UI domains (generic), texture
+                sampler usage, material usage flags (bUsedWithSkeletalMesh
+                — set_property works but recompilation control does not),
+                "Apply" with a compile wait and error list.
+  McpLink today material_ops, material_graph (expressions, connections,
+                layout, recompile), material_function, material_layers,
+                material_parameter_collection_ops. Recompile reports
+                success but not stats.
+  Entry points  FMaterialResource::GetMaterialExpressionSource /
+                UMaterialEditingLibrary::GetStatistics(Material) →
+                FMaterialStatistics (NumVertexShaderInstructions,
+                NumPixelShaderInstructions, NumSamplers, NumVertexTextureSamples,
+                NumPixelTextureSamples, NumVirtualTextureSamples,
+                NumUVScalars, NumInterpolatorScalars — exported, MaterialEditingLibrary.h),
+                FMaterial::GetCompileErrors / FMaterialShaderMap
+                GetCompileErrors, IMaterialAnalyzer? (the Material Analyzer
+                plugin is Slate only — replicate: iterate instances,
+                compare overridden parameters vs parent), UMaterialInterface
+                ::GetShaderMap → FShaderMapContent stats.
+  Home          material_ops stats / errors / analyze.
+  Headless      Stats yes (shaders compile with -nullrhi via the null
+                shader platform? verify; ShaderCompileWorker still runs).
+
+A15. Audio at runtime and audio assets
+  UE can        Sound Class / Sound Mix / Submix / Attenuation / Concurrency /
+                Reverb / Source Effect chain assets (generic create +
+                set_property today, by design), push/pop sound mixes and
+                set class volumes at runtime, record the audio output or a
+                submix to a WAV, play a sound at a location / 2D in PIE,
+                audio analysis (Audio Synesthesia: loudness, spectrum,
+                onsets as assets), Audio Modulation (control buses, patches,
+                parameter modulation), Quartz clocks and quantized playback,
+                Waveform Editor transformations (trim, fade, normalize,
+                markers), Soundscape, Harmonix / Music Environment, Audio
+                Insights, MIDI device input, OSC, Audio Capture component.
+  McpLink today sound_cue_ops, metasound_ops, media_ops, asset import of
+                WAV through import. No runtime audio control, no recording,
+                no modulation, no Quartz, no waveform transformations.
+  Entry points  UAudioMixerBlueprintLibrary::StartRecordingOutput /
+                StopRecordingOutput (to USoundWave asset or WAV file),
+                StartAnalyzingOutput, UGameplayStatics::PlaySoundAtLocation /
+                SpawnSound2D / PushSoundMixModifier / SetSoundMixClassOverride,
+                USoundControlBus / USoundModulationPatch /
+                USoundControlBusMix (AudioModulation), UQuartzSubsystem::
+                CreateNewClock (AudioMixer, QuartzSubsystem.h:46) +
+                UQuartzClockHandle, UWaveformTransformationTrimFade
+                (WaveformTransformations, WaveformTransformationTrimFade.h:142)
+                on USoundWave::Transformations + UpdateTransformations,
+                UAudioSynesthesiaNRT assets, UAudioCaptureComponent.
+  Home          McpLinkContent audio_ops (runtime play/mix/record/analyze),
+                sound_wave_ops (transformations, markers), a McpLinkAudioModulation
+                interop plugin, quartz via audio_ops.
+  Headless      -nosound gives no mixer device: playback and recording need
+                a windowed editor or a null audio device that still mixes
+                (verify -AudioMixer with NullAudio).
+
+A16. Niagara extras
+  UE can        Sim Cache create / record / read (UNiagaraSimCache), Niagara
+                Baker (flipbook / volume bake), Niagara Data Channels
+                (UNiagaraDataChannelAsset write / read), Niagara Parameter
+                Collections (UNiagaraParameterCollection + instances),
+                Niagara Fluids templates, Niagara Nanite / UI renderer
+                setup, Cascade legacy systems and the Cascade→Niagara
+                converter, Niagara debugger (`Niagara` debug HUD, spawn info
+                per emitter, particle attribute readback), Niagara Insights.
+  McpLink today niagara_ops (spawn, parameters, activate, pause, destroy,
+                component info), niagara_author (systems, emitters, stack
+                modules and inputs, renderers, compile, save).
+  Entry points  UNiagaraSimCacheFunctionLibrary::CaptureNiagaraSimCache*
+                (Niagara, BlueprintCallable), UNiagaraSimCache::
+                ReadIntAttribute / ReadFloatAttribute..., UNiagaraBakerSettings
+                + FNiagaraBakerRenderer (NiagaraEditor private — verify),
+                UNiagaraDataChannelLibrary::WriteToNiagaraDataChannel /
+                ReadFromNiagaraDataChannel, UNiagaraParameterCollection
+                (edit ParameterStorage via the collection's own API),
+                FNiagaraDebugHud / UNiagaraComponent::GetSystemInstance()
+                → FNiagaraEmitterInstance particle data (FNiagaraDataSet
+                readback for attribute dumps), the Cascade converter is
+                Engine/Plugins/FX/CascadeToNiagaraConverter — implemented
+                in Python (no C++ class exists), so a native tool would
+                have to shell Epic's own script.
+  Home          McpLinkNiagara niagara_ops sim_cache_* / read_particles /
+                data_channel_*; niagara_author parameter_collection.
+  Headless      Particle readback needs simulation; Niagara does not spawn
+                under -nullrhi (documented), so windowed.
+
+A17. Movie Render without the editor window
+  UE can        Render a queue from the command line in a separate process
+                (the "Render (Remote)" executor / `-MoviePipelineConfig`
+                launch), which needs a GPU but no interactive editor.
+  McpLink today movie_render renders through the PIE executor, windowed
+                only.
+  Entry points  Rust side: UnrealEditor-Cmd <proj> <map> -game
+                -MoviePipelineLocalExecutorClass=/Script/MovieRenderPipelineCore.MoviePipelineInProcessExecutor
+                -MoviePipelineConfig=<UMoviePipelineQueue asset or manifest>
+                -windowed -ResX=1280 -ResY=720 -NoLoadingScreen
+                -NoScreenMessages -log; queue manifest written by
+                UMoviePipelineEditorBlueprintLibrary::SaveQueueToManifestFile
+                (verify) or a saved UMoviePipelineQueue asset;
+                UMoviePipelineNewProcessExecutor is the editor-side twin.
+  Home          Rust headless movie_render render_external + progress from
+                the log.
+  Headless      Needs a GPU, not an editor window.
+
+A18. Data assets and structured data extras
+  UE can        Composite Data Tables, Data Table row struct change, Data
+                Registries, Curve Table interpolation modes (exists), Primary
+                Data Asset creation with typed defaults (generic today),
+                Data Assets bulk edit, string table CSV (exists), Gameplay
+                Tag source files and restricted tags, Asset Manager rules
+                edit (label creation exists; project settings rules edit
+                through config_ops), Common UI input action tables.
+  McpLink today data_table_ops, curve_table_ops, string_table_ops,
+                user_type_ops (structs, enums), gameplay_tag_ops,
+                asset_manager_ops, asset_ops create for any asset class.
+  Entry points  UCompositeDataTable::ParentTables + UpdateCachedRowMap,
+                UDataTable::RowStruct change via FDataTableEditorUtils::
+                ChangeRowStruct? (verify), UGameplayTagsManager::
+                AddNewGameplayTagSource / restricted tags (exists partially),
+                UDataRegistry (see B1).
+  Home          data_table_ops create_composite / set_row_struct.
+  Headless      Yes.
+
+
+======================================================================
+PART B — ENGINE SYSTEMS WITH NO INTEROP AT ALL
+======================================================================
+Each one is a sibling plugin in plugin/McpLink<Name> (one Editor module,
+depends on McpLink + the engine plugin, registers its routes through
+FMcpLinkCoreModule::Get().RegisterRoute) plus a Rust src/editor/<name>.rs.
+"Off by default" means the interop's .uplugin must list the engine plugin
+so enabling the interop enables it, the way McpLinkGeometryScript does.
+
+B1. Gameplay frameworks
+  Smart Objects (Runtime/SmartObjects, off by default)
+    UE can: Smart Object Definition assets (slots with transforms, tags,
+    activity tags, behavior definitions — Gameplay Behavior, State Tree),
+    Smart Object components on actors, collection actors, runtime queries
+    (find, claim, use, release), Mass integration.
+    Classes: USmartObjectDefinition (+ FSmartObjectSlotDefinition,
+    USmartObjectBehaviorDefinition subclasses), USmartObjectComponent,
+    USmartObjectSubsystem::FindSmartObjects(FSmartObjectRequest, Results,
+    UserData) (SMARTOBJECTSMODULE_API, SmartObjectSubsystem.h:473),
+    MarkSlotAsClaimed / MarkSlotAsOccupied / Release.
+    Tool: smart_object_ops (create_definition, add_slot, set_slot,
+    add_behavior, add_component, find, claim, release, info).
+  Zone Graph (Runtime/ZoneGraph, off by default; Mass Traffic/Crowd need it)
+    UE can: Zone Shape actors with points, lane profiles and tags
+    (UZoneGraphSettings), build the graph, query lanes (nearest lane, lane
+    location, find path along lanes), annotations.
+    Classes: UZoneShapeComponent (ZoneShapeComponent.h:39, on AZoneShape),
+    UZoneGraphSettings (UDeveloperSettings: lane profiles, tags),
+    UZoneGraphSubsystem::GetBuilder() → FZoneGraphBuilder::BuildAll /
+    RequestRebuild, UZoneGraphSubsystem::FindNearestLane /
+    CalculateLocationAlongLane, UZoneGraphAnnotationSubsystem.
+    Tool: zone_graph_ops (add_shape, set_points, set_lane_profile,
+    add_lane_profile, add_tag, build, nearest_lane, lane_location, info).
+  Game Features / Modular Gameplay (Runtime/GameFeatures, ModularGameplay)
+    UE can: Game Feature plugins with a UGameFeatureData listing actions
+    (add components, add cheats, add data registry, add input mapping,
+    add world system), load / activate / deactivate / unload by name,
+    state observation, UGameFrameworkComponentManager receivers.
+    Classes: UGameFeaturesSubsystem (GameFeaturesSubsystem.h:466:
+    LoadGameFeaturePlugin / LoadAndActivateGameFeaturePlugin /
+    DeactivateGameFeaturePlugin / UnloadGameFeaturePlugin, GetPluginURLByName,
+    GetPluginState), UGameFeatureData::Actions (UGameFeatureAction
+    subclasses), UGameFrameworkComponentManager.
+    Tool: game_feature_ops (list, state, create_plugin (uses PluginUtils +
+    GameFeatureData factory), add_action, set_action, load, activate,
+    deactivate, unload).
+  Data Registry (Runtime/DataRegistry)
+    UE can: registry assets that aggregate Data Tables / Curve Tables /
+    custom sources by type, cached lookups by FDataRegistryId, async
+    acquire.
+    Classes: UDataRegistry (ItemStruct, DataSources: UMetaDataRegistrySource
+    subclasses), UDataRegistrySubsystem::GetCachedItemRaw / AcquireItem /
+    RegistryForType / RefreshRegistry.
+    Tool: data_registry_ops (create, add_source, info, lookup, refresh).
+  Gameplay Interactions / Gameplay Behaviors / World Conditions
+    (GameplayInteractions, GameplayBehaviors, WorldConditions): the State
+    Tree tasks and Smart Object behaviors used by the two above; covered by
+    state_tree_ops node structs once the plugins are enabled — no separate
+    tool, but the E2E must prove the structs register.
+  Common UI (Runtime/CommonUI)
+    UE can: Common Activatable Widget stacks, Common Button styles / text
+    styles / border styles as assets, input action data tables and
+    per-platform input, Common Input settings, action bars, nav bars.
+    Classes: UCommonButtonBase (+ UCommonButtonStyle), UCommonTextStyle,
+    UCommonBorderStyle, UCommonActivatableWidget / Container (push/pop),
+    UCommonInputSettings, UCommonInputActionDataBase rows.
+    Tool: common_ui_ops (create_style assets typed, set_style, push/pop
+    activatable in PIE, input action table rows); widget_blueprint_modify
+    already places any widget class, so the missing piece is styles and
+    runtime stack control.
+  UMG ViewModel / MVVM (Runtime/ModelViewViewModel)
+    UE can: ViewModel classes (UMVVMViewModelBase Blueprints with
+    FieldNotify properties), a Blueprint View on a Widget Blueprint with
+    view models and bindings (source path → destination path, conversion
+    functions, one-way / two-way, execution mode), creation type
+    (manual / create instance / global / property path / resolver).
+    Classes: UMVVMEditorSubsystem (MVVMEditorSubsystem.h: GetView /
+    RequestView, AddViewModel, RemoveViewModel, AddBinding, RemoveBinding,
+    SetSourceToDestinationConversionFunction ... — the whole editor API,
+    exported), UMVVMBlueprintView, FMVVMBlueprintViewModelContext,
+    FMVVMBlueprintViewBinding, UMVVMViewModelBase.
+    Tool: mvvm_ops (add_viewmodel, remove_viewmodel, add_binding,
+    set_binding, remove_binding, list, compile via blueprint_modify).
+  Mover 2.0 (Experimental/Mover, ChaosMover)
+    UE can: UMoverComponent on a pawn with movement modes (walking,
+    falling, flying, swimming as UBaseMovementMode subclasses), layered
+    moves, movement modifiers, network prediction backends.
+    Classes: UMoverComponent (Mover plugin; MovementModes map,
+    QueueLayeredMove, QueueNextMode), UCommonLegacyMovementSettings.
+    Tool: mover_ops (info, set_modes, queue_mode, queue_layered_move,
+    inspect_state in PIE).
+  Chaos Vehicles (Experimental/ChaosVehiclesPlugin)
+    UE can: wheeled vehicle setup (wheel classes, engine/transmission/
+    steering curves, torque curve), vehicle animation instance, runtime
+    throttle/steer/brake input and state readback.
+    Classes: UChaosWheeledVehicleMovementComponent (CHAOSVEHICLES_API,
+    ChaosWheeledVehicleMovementComponent.h:633), UChaosVehicleWheel,
+    UChaosVehicleMovementComponent::SetThrottleInput / SetSteeringInput /
+    SetBrakeInput / GetForwardSpeed / GetCurrentGear.
+    Tool: vehicle_ops (configure_wheels, set_engine, set_transmission,
+    drive (input), state) — the input half could also be input_inject.
+  Physics Control (Animation/PhysicsControl)
+    UE can: physics-driven animation controls on a skeletal mesh (control
+    per bone with strength/damping targets, body modifiers, profiles in a
+    UPhysicsControlAsset).
+    Classes: UPhysicsControlComponent (CreateControl, SetControlTarget,
+    CreateBodyModifier, ApplyControlProfile), UPhysicsControlAsset.
+    Tool: physics_control_ops.
+  Learning Agents (Experimental/LearningAgents)
+    UE can: RL / imitation training loops in PIE with observation / action
+    schemas, trainer processes.
+    Classes: ULearningAgentsManager, ULearningAgentsInteractor,
+    ULearningAgentsPPOTrainer (verify 5.8 names).
+    Tool: deferred — training needs the external trainer process.
+  Network Prediction / Replication Graph / Iris
+    Configuration is ini + C++; a native tool would only read and edit
+    config, which config_ops already does. pie_control's net modes and
+    network emulation cover the testing side. Iris: `net.Iris.*` cvars
+    (run_console_command). Nothing planned.
+  Online Services / OSS / EOS / Steam
+    Out of scope for an editor tool.
+
+B2. Content pipelines
+  USD (Importers/USDImporter)
+    UE can: USD Stage actor (open a stage, live edit, layer stack, prim
+    tree, set prim attributes, payload loading, variants), import a stage
+    into assets (legacy USD importer with UUsdStageImportOptions, or
+    Interchange), export a level / selected actors / assets to USD,
+    USD Multi-User.
+    McpLink today: asset_ops import with interchange=true handles .usd
+    files.
+    Classes: AUsdStageActor (USDStage module: SetRootLayer, GetUsdStage,
+    GetGeneratedAssets / GetGeneratedComponents, layer and prim delegates),
+    UUsdStageImportOptions (USDStageImporter, USDStageImportOptions.h:49),
+    UUsdStageImporter, UsdUtils::* (USDUtilities), ULevelExporterUSD /
+    UStaticMeshExporterUsd / USkeletalMeshExporterUsd /
+    UAnimSequenceExporterUsd (USDExporter module — exporters, so
+    asset_ops export already reaches them by extension: verify).
+    Tool: usd_ops (open_stage, stage_info (prims), set_prim_attribute,
+    set_variant, import_stage, export_level, export_actors).
+  Datasmith (Enterprise/DatasmithImporter, DatasmithContent, DataprepEditor)
+    UE can: import CAD / Revit / 3ds Max / Sketchup / glTF Datasmith scenes
+    with tessellation options, reimport with change detection, Dataprep
+    recipes (graph of operations run on import), Variant Manager.
+    Classes: UDatasmithImportFactory (DATASMITHIMPORTER_API,
+    DatasmithImportFactory.h:35), UDatasmithImportOptions,
+    UDatasmithScene, UDataprepAsset / UDataprepAssetInstance +
+    FDataprepCoreUtils::ExecuteDataprep (verify), UVariantManagerBlueprintLibrary
+    (VariantManager: CreateLevelVariantSetsAsset, AddVariantSet, AddVariant,
+    CaptureProperty, SwitchOnVariant).
+    Tool: datasmith_ops (import with options, reimport, dataprep_run);
+    variant_manager_ops separately (variant sets are a general workflow
+    tool, not Enterprise-only).
+  Alembic / Geometry Cache (Importers/AlembicImporter, Runtime/GeometryCache)
+    UE can: import .abc as Static Mesh, Geometry Cache or Skeletal Mesh
+    (with import settings: sampling, compression, normals), Geometry Cache
+    tracks in Sequencer, Geometry Cache Abc File (stream from disk), bake a
+    Level Sequence to a Geometry Cache.
+    McpLink today: asset_ops import presumably picks UAlembicImportFactory
+    by extension (the legacy path), but the UAbcImportSettings
+    (AbcImportSettings.h:310) choices are not exposed as a vocabulary and
+    Interchange has a GeometryCache factory node too.
+    Tool: geometry_cache_ops (import with typed settings, info, add_track
+    in sequence_ops, bake_from_sequence via GeometryCacheLevelSequenceBaker).
+  Groom / hair (Runtime/HairStrands, HairCardGenerator, HairModelingToolset)
+    UE can: import .abc grooms, Groom assets (LODs, physics, cards/meshes
+    LOD, interpolation), Groom Binding assets to a skeletal mesh, groom
+    components on actors, hair card generation, groom cache import.
+    Classes: UGroomAsset, UGroomBindingAsset (+
+    UGroomBindingAssetFactory / FGroomBindingBuilder), UGroomComponent,
+    UGroomImportOptions, UGroomCache.
+    Tool: groom_ops (import, info, create_binding, set_lod, attach).
+  Texture Graph (TextureGraph)
+    UE can: node graphs that generate textures procedurally (noise,
+    blends, filters, material bakes) with exported outputs, Texture Graph
+    Instances with parameters.
+    Classes: UTextureGraph, UTextureGraphInstance, UTG_Graph / UTG_Node
+    (node classes UTG_Expression_*), UTG_Exporter (TG_Exporter.h) for the
+    outputs.
+    Tool: texture_graph_ops (create, list_node_types, add_node, connect,
+    set_param, export).
+  Dataflow (Dataflow, GeometryDataflow, ChaosDataflowSolver)
+    UE can: generic node graphs that build content — used by Chaos Cloth
+    Asset, Chaos Flesh, Chaos Outfit, Geometry Collections (5.8 authoring
+    path), Mutable, Skeletal Mesh dataflows; evaluate a graph to produce an
+    asset.
+    Classes: UDataflow (graph asset; UDataflowEdNode nodes wrapping
+    FDataflowNode structs registered in FNodeFactory), UDataflowBaseContent,
+    UE::Dataflow::FEngineContext + FContextEvaluator for evaluation,
+    UDataflowBlueprintLibrary::EvaluateTerminalNodeByName (verify).
+    Tool: dataflow_ops (create, list_node_types, add_node, connect,
+    set_input, evaluate, assign_to_asset).
+  Chaos Cloth Asset / Outfit / Flesh (ChaosClothAsset, ChaosOutfitAsset,
+  Experimental/ChaosFlesh)
+    UE can: the new cloth pipeline (Cloth Asset built from a Dataflow: sim
+    mesh, render mesh, weight maps, constraints, collisions), Outfit
+    assets, Flesh assets (tetrahedral soft bodies) — all Dataflow driven.
+    McpLink today: skeletal_mesh_ops covers only the legacy clothing
+    (UClothingAssetCommon) path.
+    Classes: UChaosClothAsset, UChaosClothComponent, UFleshAsset,
+    UChaosOutfitAsset.
+    Tool: cloth_asset_ops on top of dataflow_ops.
+  Mutable (Mutable)
+    UE can: Customizable Objects (runtime character customization:
+    mesh sections, materials, textures composed from a node graph),
+    instances with parameter values, compile.
+    Classes: UCustomizableObject, UCustomizableObjectInstance
+    (SetIntParameter / SetFloatParameter / UpdateSkeletalMeshAsync),
+    UCustomizableObjectNode* (graph nodes), FCustomizableObjectCompiler.
+    Tool: mutable_ops (create, add_node, connect, compile, create_instance,
+    set_parameter, update).
+  MetaHuman (MetaHuman/*)
+    UE can: MetaHuman Character assets built in-editor (5.6+ MetaHuman
+    Creator: body, face, skin, grooms, outfits), assemble into a Blueprint,
+    MetaHuman Animator (performance capture from video/iPhone to animation),
+    MetaHuman SDK import, MetaHuman Crowd.
+    Classes: UMetaHumanCharacter (METAHUMANCHARACTER_API,
+    MetaHumanCharacter.h:206), UMetaHumanCharacterEditorSubsystem
+    (verify), FMetaHumanImport (MetaHumanSDKEditor).
+    Tool: metahuman_ops — large; after the rest of Part B.
+  Paper2D (2D/Paper2D)
+    UE can: Sprites from textures (with extraction / slicing), Flipbooks,
+    Tile Sets and Tile Maps, sprite actors, Paper character.
+    Classes: UPaperSprite (+ UPaperSpriteFactory, extraction via
+    FSpriteGeometryCollection / FPaperSpriteAtlas), UPaperFlipbook (+
+    key frames), UPaperTileSet, UPaperTileMap (+ layers, cells),
+    APaperSpriteActor / APaperFlipbookActor / APaperTileMapActor.
+    Tool: paper2d_ops (create_sprite, extract_sprites, create_flipbook,
+    add_flipbook_frame, create_tileset, create_tilemap, set_tile).
+  Anim To Texture (Experimental/AnimToTexture)
+    UE can: bake vertex animation / bone animation to textures for
+    instanced crowds.
+    Classes: UAnimToTextureDataAsset + UAnimToTextureBPLibrary::
+    AnimationToTexture (BlueprintCallable, exported).
+    Tool: anim_asset_ops bake_to_texture.
+  Nanite Displaced Mesh, Sparse Volume Textures, Heterogeneous Volumes
+    UE can: Nanite Displaced Mesh assets (base mesh + displacement
+    textures), import OpenVDB as Sparse Volume Textures (Interchange has a
+    factory), Heterogeneous Volume actors driven by SVT or Niagara.
+    Classes: UNaniteDisplacedMesh (+ UNaniteDisplacedMeshFactory),
+    USparseVolumeTexture (import through Interchange — asset_ops import
+    with interchange=true may already handle .vdb: verify),
+    UHeterogeneousVolumeComponent.
+    Tool: static_mesh_ops create_displaced; volume_ops (import_vdb, spawn
+    volume, set_frame).
+  Impostor Baker, Hair Card Generator, Proxy LOD, Skeletal Reduction,
+  Mesh LOD Toolset
+    UE can: bake impostor sprites for distant LODs, proxy meshes for
+    actors, skeletal reduction settings per LOD (regenerate exists).
+    Tool: static_mesh_ops bake_impostor (the Impostor Baker is a
+    Blueprint-driven editor utility — reachable through editor_utility_ops
+    today, so low priority), level_instance_ops proxy (IMeshMergeUtilities
+    ::CreateProxyMesh, exported — sibling of the merge that exists).
+  Lidar Point Cloud, PSD Importer, SVG Importer, AxF/MDL importers
+    Import paths; asset_ops import reaches them by extension once the
+    plugins are on. Point cloud editing (crop, align, classify) would be a
+    lidar_ops; not planned.
+  Interchange pipelines
+    UE can: custom Interchange pipeline stacks (per-asset-type settings,
+    material import method, skeleton reuse, scene import as actors),
+    scene import (a whole glTF/FBX scene becomes actors + assets),
+    Interchange export (5.8: glTF/FBX via Interchange, verify).
+    McpLink today: import with the project's pipeline stack and factory
+    properties. No per-call pipeline overrides, no scene import to actors,
+    no pipeline asset authoring.
+    Classes: UInterchangePipelineBase subclasses (UInterchangeGenericAssetsPipeline
+    ...), FImportAssetParameters::OverridePipelines,
+    UInterchangeManager::ImportScene.
+    Tool: asset_ops import gains pipeline overrides + import_scene.
+
+B3. World building
+  Water (Experimental/Water, WaterAdvanced, WaterExtras)
+    UE can: Water Body Lake / River / Ocean / Custom actors with splines,
+    water zone, waves assets (Gerstner), water material and underwater post
+    process, buoyancy components, shallow water simulation (WaterAdvanced),
+    landscape integration (terrain carving via the water brush).
+    Classes: AWaterBodyLake / AWaterBodyRiver / AWaterBodyOcean /
+    AWaterBodyCustom (+ UWaterBodyComponent, the spline is
+    UWaterSplineComponent), AWaterZone, UWaterWavesAsset
+    (WaterWaves.h:55: UGerstnerWaterWaves), UBuoyancyComponent.
+    Tool: water_ops (spawn_body, set_spline, set_waves, create_waves_asset,
+    set_zone, query_height, info).
+  Landmass (Experimental/Landmass)
+    UE can: Blueprint landscape brushes (ALandmassActor) that carve /
+    stamp terrain into an edit layer, custom brush Blueprints.
+    Classes: ALandmassActor (LandmassActor.h:28; the brushes are
+    Blueprint assets in the plugin's Content), ALandscapeBlueprintBrushBase
+    on the landscape's edit layer (ALandscape::AddBrushToLayer).
+    Tool: landscape_ops add_brush / set_brush / remove_brush (brush is any
+    ALandscapeBlueprintBrushBase subclass: Landmass or the 5.8 Landscape
+    Patch plugin's ALandscapePatch actors).
+  Day Sequence (Experimental/DaySequence) and Sun Position
+    UE can: a Day Sequence actor driving time-of-day through a Level
+    Sequence with overrides / modifiers, Sun Position calculator by
+    lat/long/date.
+    Classes: ADaySequenceActor (SetTimeOfDay, SetTimePerCycle, day
+    sequences list), UDaySequence (a ULevelSequence subclass — sequence_ops
+    authoring applies), USunPositionFunctionLibrary::GetSunPosition.
+    Tool: day_sequence_ops (spawn, set_time, add_sequence, info).
+  HDRI Backdrop, Celestial Vault, Sky Creator-style setups
+    Generic spawn_actor + set_property already works; the missing piece
+    is a "lighting preset" helper, not an interop. Nothing planned.
+  Procedural Vegetation Editor, Wave Function Collapse, Mesh Terrain Mode
+    Experimental; skip until they leave Experimental.
+  Level Streaming Persistence, Fast Geo Streaming, Instanced Actors,
+  Light Weight Instances
+    Runtime systems configured through properties; nothing planned.
+  Geo Referencing
+    AGeoReferencingSystem (ECEF / projected CRS conversions): a small
+    geo_ops if a project needs it.
+
+B4. Audio systems
+  Audio Modulation (Runtime/AudioModulation)
+    Classes: USoundControlBus, USoundControlBusMix, USoundModulationPatch
+    (SoundModulationPatch.h), USoundModulationParameter,
+    UAudioModulationStatics::ActivateBusMix / SetGlobalBusMixValue.
+    Tool: audio_modulation_ops.
+  Quartz (in AudioMixer, no plugin)
+    UQuartzSubsystem::CreateNewClock (QuartzSubsystem.h:46),
+    UQuartzClockHandle::StartClock / SetMetronomeQuantizedEvent /
+    ResumeClock; UAudioComponent::PlayQuantized.
+    Tool: audio_ops quartz_*.
+  Waveform Editor (Editor/WaveformEditor)
+    UWaveformTransformationTrimFade (WaveformTransformationTrimFade.h:142)
+    and siblings (Normalize, Markers) on USoundWave::Transformations,
+    then USoundWave::UpdateTransformations.
+    Tool: sound_wave_ops (trim, fade, normalize, markers, info).
+  Soundscape, Harmonix / Music Environment, Audio Synesthesia, Audio
+  Insights, MIDI Device, OSC, Audio Capture
+    See A15; individual small tools after audio_ops exists.
+
+B5. FX
+  Cascade (FX/Cascade, legacy): UParticleSystem editing — deprecated;
+  only the converter matters (Python-implemented, see A16).
+  Niagara Fluids, Niagara Sim Caching, Niagara Baker, Niagara Nanite /
+  UI renderers, Chaos Niagara (see A16).
+  Chaos Caching (Experimental/ChaosCaching): AChaosCacheManager records
+  and plays back Chaos simulations (UChaosCacheCollection); a
+  chaos_ops record_cache / play_cache.
+  Field System (Experimental/FieldSystemPlugin): AFieldSystemActor +
+  UFieldSystemComponent with field nodes (radial falloff, uniform vector,
+  ...) — spawn_actor + set_property covers the actor; the field node
+  objects are UFieldNodeBase instances built by Blueprint; a
+  chaos_ops add_field would build them natively.
+  Chaos Visual Debugger (ChaosVD): record physics to a .cvd and read it
+  back (see A9).
+
+B6. Virtual production
+  nDisplay (Runtime/nDisplay): ADisplayClusterRootActor
+  (DISPLAYCLUSTER_API, DisplayClusterRootActor.h:52) + UDisplayClusterConfigurationData
+  (cluster nodes, viewports, projection policies), ICVFX cameras,
+  Switchboard launch. Tool: ndisplay_ops (config authoring + validation).
+  Composure (Compositing/Composure): ACompositingElement (COMPOSURE_API,
+  CompositingElement.h:76) layers, passes, outputs.
+  OpenColorIO (Compositing/OpenColorIO): UOpenColorIOConfiguration
+  (config file, color spaces), viewport display settings.
+  Color Correct Regions / Color Grading plugin: actors with properties —
+  generic today.
+  DMX (VirtualProduction/DMX): UDMXLibrary (DMXRUNTIME_API,
+  DMXLibrary.h:50) fixture types / patches, ports, send/receive.
+  OSC (Runtime/OSC): UOSCServer (OSC_API, OSCServer.h:146) / UOSCClient,
+  message send/receive — could double as a test harness.
+  MIDI (Runtime/MIDIDevice): UMIDIDeviceManager (MIDIDeviceManager.h:72).
+  Virtual Camera (VirtualCamera, VirtualCameraCore): VCam actor and
+  component (class name in 5.8: AVCamActor? — grep for AVirtualCameraActor
+  found nothing; verify), output providers (Pixel Streaming, Remote
+  Session), modifiers.
+  Switchboard / Multi-User (Concert): session creation, join, sync —
+  mostly external processes; deferred.
+  Motion Design / Avalanche (VirtualProduction/Avalanche): Motion Design
+  scenes, UAvaSequence (AVALANCHESEQUENCE_API, AvaSequence.h:32, a
+  ULevelSequence subclass), Cloner / Effector actors, Text3D, Property
+  Animators, Ava Playback graphs, Rundowns. Tool: motion_design_ops.
+  Camera Calibration / Lens: ULensFile assets, calibration steps —
+  need hardware; deferred.
+  Live Link extras: LiveLinkHub, LiveLinkCamera / FreeD / VRPN / XR
+  sources — live_link_ops add_source by factory already reaches them.
+  Remote Control extras: RC protocols (DMX, MIDI, OSC bindings), RC
+  Web Interface, RC Components — remote_control_ops does presets only.
+  Stage Monitoring, Timed Data Monitor, Texture Share, Rivermax,
+  Sequencer Playlists, Cinematic Assembly Tools: deferred.
+
+B7. Media
+  Media Plate (Media/MediaPlate): AMediaPlate actor (plane / sphere /
+  custom mesh + media player + texture), UMediaPlateComponent::Open /
+  Play; media_ops could spawn and drive it.
+  Img Media (Media/ImgMedia): UImgMediaSource (image sequences, EXR,
+  frame rate, mip/tile streaming) — media_ops create_image_sequence.
+  Media IO (AJA, Blackmagic, NDI, Rivermax): capture/output devices —
+  hardware; deferred. Media Profile / Timecode Synchronizer: deferred.
+  Pixel Streaming (PixelStreaming2): streaming the PIE / packaged output
+  to a browser — a pixel_streaming_ops (start/stop streamer, signalling
+  URL) would let a remote agent see the game; windowed only.
+  Hardware Encoders / AV codecs: internal.
+
+B8. ML and neural
+  NNE (NNE, NNERuntimeORT): UNNEModelData assets from ONNX, runtime
+  inference (CPU/GPU/RDG) — nne_ops (import_model, info, run).
+  ML Deformer (Animation/MLDeformer): UMLDeformerAsset (+ Neural Morph
+  / Vertex Delta models), training data (geometry cache + anim),
+  training runs (Python/Torch under the hood — Epic's), inference
+  component. ml_deformer_ops for asset setup; training is external.
+  Deformer Graph / Optimus (Animation/DeformerGraph): UOptimusDeformer
+  (compute graph asset: kernels, resources, bindings), UOptimusDeformerInstance
+  on a skeletal mesh component. deformer_graph_ops (create, add_node,
+  connect, compile, assign).
+  Learning Agents: see B1.
+  Neural Rendering, NFOR / OpenImageDenoise / OptiX denoisers: settings
+  only (config_ops).
+
+B9. XR
+  OpenXR, VR editor, XR Creative Framework, hand tracking: hardware bound;
+  pie_control's "vr" preview exists. Nothing planned.
+
+B10. 5.8 experimental editor systems
+  AI Assistant (Experimental/AIAssistant): Epic's in-editor assistant —
+  not a target.
+  Model Context Protocol (Experimental/ModelContextProtocol) and
+  Toolsets / Toolset Registry: bridged by toolset_ops; last-resort only.
+  Semantic Search (Experimental/SemanticSearch): asset search by meaning
+  — a search_assets semantic=true if it exposes a query API (verify).
+  Editor Data Storage / TEDS, Workspace, Object Mixer: editor internals.
+  Blueprint Header View, Blueprint Stats, Blueprint Snap Nodes: small
+  editor utilities; blueprint_query header_view (C++ header preview of a
+  Blueprint) is cheap and useful — FBlueprintHeaderViewModule? (verify).
+
+
+======================================================================
+PART C — LIMITS OF MODALITY (routes cannot fix these)
+======================================================================
+C1. Interactive brush tools: Modeling Mode sculpt / cube grid / poly
+    edit, landscape sculpt and paint brushes, foliage paint, mesh paint
+    brushes. Their *results* are reachable (Geometry Script, raw height
+    arrays, vertex colors); the strokes are not. A12 and A13 reimplement
+    the useful kernels as operations rather than driving the modes.
+C2. Modal dialogs on the game thread wedge a headless editor. Known
+    ones: level instance create (Save As), IAssetTools::RenameAssets when
+    CDOs reference the asset, IAssetTools::MigratePackages default path,
+    some importers' option dialogs. GIsRunningUnattendedScript is set for
+    every handler; anything that still prompts must be routed through the
+    non-prompting overload or refused when FApp::CanEverRender() is false.
+C3. Needs an RHI: capture_viewport, movie_render (both pipelines), Niagara
+    spawning, widget animation playback, Slate rasterisation
+    (screenshots, AutomationDriver clicks), landscape edit-layer merges,
+    ProfileGPU, texture baking through render targets. The E2E for those
+    runs on UnrealEditor.exe -unattended, never -nullrhi.
+C4. Needs hardware or an external process: Live Link real sources,
+    Media IO, Virtual Camera, DMX, MIDI, Multi-User, Switchboard, Learning
+    Agents and ML Deformer training, Pixel Streaming clients, device
+    deploys, Turnkey installs.
+C5. Compile-time changes: Blueprint nativization is gone; C++ edits still
+    need a rebuild (build_project / live_coding_ops), and a plugin change
+    in the .uproject needs an editor restart (project_ops says so).
+
+
+======================================================================
+PART D — SMALLER GAPS INSIDE EXISTING TOOLS
+======================================================================
+D1. input_asset_ops map_key: no modifiers (negate, swizzle, dead zone,
+    scalar) or triggers (pressed, hold, tap, chorded) on a mapping, no
+    player-mappable key settings, no Input Modifier / Trigger Blueprints.
+    UEnhancedInputLibrary / FEnhancedActionKeyMapping::Modifiers /
+    Triggers (instanced UObjects on the mapping).
+D2. sequence_ops: no key tangent / interpolation edits after add_key, no
+    curve-editor operations (flatten, straighten, weights), no level
+    visibility / audio / fade / material parameter track helpers (generic
+    add_track by class may cover them — the E2E has not proved it), no
+    spawnable ↔ possessable conversion, no camera rig rail / crane
+    attach helper, no "bake transform".
+D3. anim_blueprint_modify: no general AnimGraph nodes (blend by bool /
+    int / enum, slot, layered blend per bone, two-bone IK, control rig
+    node, aim offset, blend space player, sequence player outside a
+    state, cached pose / use cached pose, root motion nodes) — only state
+    machines, states, transitions and linked layers. add_node on the
+    AnimGraph with UAnimGraphNode_* classes is the missing vocabulary;
+    the Blueprint add_node vocabulary does not reach AnimGraph node
+    classes.
+D4. widget_blueprint_modify: no widget style assets, no animation
+    curves beyond sequence_ops keys, no named slots on user widgets,
+    no property bindings (function bindings on Text/Visibility), no
+    Editor Utility Widget-specific bits (run button), no CommonUI.
+D5. static_mesh_ops: no UV channel edits (Geometry Script only), no
+    vertex color bake, no Nanite settings beyond on/off (position
+    precision, fallback percent, trim relative error — set_property on
+    NaniteSettings works but unvalidated), no simple collision box/
+    sphere/capsule from bounds (add_collision covers simple types? verify
+    which), no distance field settings, no ray tracing settings.
+D6. texture_ops: no 2D array textures, no source re-import from memory
+    for cube faces, no mip generation settings vocabulary, no texture
+    group / LOD bias validation.
+D7. material_ops: no material usage flags helper with recompile wait, no
+    static switch overrides on instances (FStaticParameterSet edits —
+    UMaterialEditingLibrary::SetMaterialInstanceStaticSwitchParameterValue
+    exists), no MID runtime edits in PIE (UMaterialInstanceDynamic::
+    Create + SetScalarParameterValue on a component).
+D8. perf_ops: no `stat unit` breakdown as fields (game / draw / GPU /
+    RHIT), no `stat startfile` / `stat stopfile` (.ue4stats capture), no
+    ProfileGPU parse, no memory class breakdown per LLM tag (`stat LLM`
+    exists as a group? verify), no shader compile status.
+D9. get_output_log: no structured category / verbosity filter with
+    counts, no "since last call" cursor (verify), no crash / ensure
+    extraction (callstack block parse).
+D10. run_tests: no Gauntlet, no functional-test map runs with PIE inside
+    the live editor (only the headless commandlet), no screenshot
+    comparison result readback beyond pass/fail (run_visual_tests).
+D11. source_control_ops: no changelist management (create / describe /
+    move files / delete), no file history / diff against depot, no
+    shelve, no Changelist Review plugin.
+D12. localization_ops: no Localization Dashboard "word count" report,
+    no culture-specific compile of one target only? (verify), no string
+    table gather toggle per target, no Localizable Message assets.
+D13. level_ops: no bookmarks, no level Blueprint access helper (the
+    level script Blueprint is addressable through blueprint_modify by
+    path but nothing lists it), no world settings helper (Game Mode
+    override, default pawn — set_property on WorldSettings works), no
+    "New level from template" (levels are created empty; the template
+    maps under Engine/Content/Maps/Templates exist).
+D14. nav_ops: no nav modifier volumes / nav link proxies helper (spawn +
+    set_property), no agent-specific nav data selection on queries
+    (verify), no nav mesh export / debug draw readback, no crowd manager
+    stats.
+D15. gas_ops: no Gameplay Effect asset creation with modifiers (Blueprint
+    of UGameplayEffect + Modifiers array via set_property today), no
+    Gameplay Cue notify assets, no Ability Task list, no attribute set
+    Blueprint creation, no GAS debugger (`showdebug abilitysystem` parse).
+D16. pcg_ops: no PCG graph parameters (user parameters on the graph),
+    no subgraph nodes helper, no PCG biome core setup, no "generate on
+    load" / partition settings, no PCG Python / External data interops.
+D17. chaos_ops: no Chaos Destruction fields, anchors, damage thresholds
+    tuning validation, no Geometry Collection cache, no Dataflow path
+    (5.8 authors Geometry Collections through Dataflow as well).
+D18. mass_ops: no Zone Graph / Smart Object traits until B1 lands, no
+    Mass processor list / enable, no Mass debugger readback beyond
+    counts.
+D19. metasound_ops: no presets (UMetaSoundSourcePreset? verify), no
+    interfaces (add / remove interface on a source), no variables, no
+    graph pages (5.5+ pages), no MetaSound Builder runtime auditioning
+    in PIE.
+D20. replay_ops: no HTTP streamer, no replay metadata / events
+    (FReplayHelper AddEvent), no checkpoint control.
+
+
+======================================================================
+PART E — VERIFICATION DEBTS BEFORE BUILDING
+======================================================================
+E1. Every "(verify)" above: grep the exact symbol and its export macro in
+    D:\Program Files\Epic Games\UE_5.8\Engine\Source and Engine\Plugins
+    before writing a route; MinimalAPI classes need the reflection or
+    virtual-dispatch tricks already documented in CLAUDE.md.
+E2. Plugins off by default in 5.8 that Part B depends on (grepped):
+    SmartObjects, ZoneGraph. Check each other engine plugin's
+    "EnabledByDefault" before wiring an interop; the interop's .uplugin
+    must list it under "Plugins" with "Enabled": true.
+E3. Run `Build.bat ... -DisableUnity` after adding any module (release
+    packaging compiles each file standalone).
+E4. Add a contract fixture per new route (`py -3 tools/capture_contract.py`)
+    and an automation test under the module's Private/Tests.
