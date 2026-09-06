@@ -1,4 +1,5 @@
 # mcp-unreal
+project is vibecoded
 
 MCP server giving AI coding agents autonomous control of **Unreal Engine 5.8** — headless builds and tests, live editor manipulation, viewport capture, and the headline feature: **playing the game in PIE via injected input** (keys, mouse look, gamepad axes, Enhanced Input actions).
 
