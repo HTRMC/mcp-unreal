@@ -10,6 +10,19 @@ installed as a pair.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-06
+
+### Fixed
+
+- **`status` no longer reports a finished update as pending.** After the
+  updater had swapped the binary and the plugin, the next start kept
+  reporting "installed, takes effect on the next start" — and a release
+  reported as available stayed reported after being installed by hand —
+  until the next daily check. A recorded state naming a version the running
+  server already is now settles to `up_to_date` at startup.
+- **The updater leaves no empty `staged/` folder behind** once an install is
+  done.
+
 ## [0.3.0] - 2026-09-06
 
 ### Added
@@ -532,7 +545,8 @@ versions is planned.
   systems or play widget animations; `status` and the affected tools say so.
 - One editor at a time — a second instance cannot bind port 8091.
 
-[Unreleased]: https://github.com/HTRMC/mcp-unreal/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/HTRMC/mcp-unreal/compare/v0.3.1...HEAD
 [0.1.0]: https://github.com/HTRMC/mcp-unreal/releases/tag/v0.1.0
 [0.2.0]: https://github.com/HTRMC/mcp-unreal/releases/tag/v0.2.0
 [0.3.0]: https://github.com/HTRMC/mcp-unreal/releases/tag/v0.3.0
+[0.3.1]: https://github.com/HTRMC/mcp-unreal/releases/tag/v0.3.1

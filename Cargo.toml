@@ -1,6 +1,6 @@
 [package]
 name = "mcp-unreal"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024"
 description = "MCP server giving AI agents full control of Unreal Engine 5.8 — headless builds/tests, editor manipulation via the McpLink plugin, PIE input injection, and engine-source API lookup"
 license = "MIT"

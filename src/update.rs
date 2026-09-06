@@ -250,6 +250,11 @@ async fn run(env: &UpdateEnv, editor: &EditorClient) -> Result<()> {
         return finish(env, editor, &staged).await;
     }
 
+    // The last run may describe a version that has since arrived: the swap it
+    // applied is what produced this binary, or the release it reported was
+    // installed by hand. Either way that state is finished, not pending.
+    let previous = previous.map(|state| settle(env, state, current));
+
     if let Some(checked) = previous.as_ref().and_then(|s| s.checked_at)
         && now_secs().is_some_and(|now| now.saturating_sub(checked) < CHECK_INTERVAL.as_secs())
     {
@@ -320,6 +325,43 @@ async fn run(env: &UpdateEnv, editor: &EditorClient) -> Result<()> {
 
     download(&http, env, &release, &latest_raw, &plugin).await?;
     finish(env, editor, &latest_raw).await
+}
+
+/// Rewrite a recorded state that names a version this binary already is (or
+/// is past) as `up_to_date`, keeping the check time so the daily pacing holds.
+///
+/// Without this the state lingers for up to a day: `status` keeps saying
+/// "installed, takes effect on the next start" after that start has happened,
+/// and keeps hinting at a release the user has meanwhile installed by hand.
+fn settle(env: &UpdateEnv, state: UpdateState, current: (u64, u64, u64)) -> UpdateState {
+    let pending = matches!(
+        state.state.as_str(),
+        "applied" | "staged" | "update_available" | "blocked"
+    );
+    let arrived = state
+        .latest
+        .as_deref()
+        .and_then(parse_version)
+        .is_some_and(|named| named <= current);
+    if !pending || !arrived {
+        return state;
+    }
+    if let Some(version) = &state.latest {
+        // A stage for a version this binary already is has nothing to install.
+        discard_stage(env, version);
+    }
+    let settled = UpdateState {
+        checked_at: state.checked_at,
+        latest: state.latest,
+        state: "up_to_date".to_string(),
+        detail: None,
+    };
+    write_state(env, &settled);
+    tracing::debug!(
+        "update: {} is the version the last run installed or reported",
+        env.current
+    );
+    settled
 }
 
 async fn fetch_latest(
@@ -594,7 +636,7 @@ async fn finish(env: &UpdateEnv, editor: &EditorClient, version: &str) -> Result
             for swap in &swapped_plugins {
                 let _ = std::fs::remove_dir_all(&swap.backup);
             }
-            let _ = std::fs::remove_dir_all(&staged);
+            discard_stage(env, version);
             let mut state = UpdateState::new(
                 "applied",
                 Some(format!(
@@ -616,6 +658,13 @@ async fn finish(env: &UpdateEnv, editor: &EditorClient, version: &str) -> Result
             Err(e)
         }
     }
+}
+
+/// Remove a version's stage, and the `staged/` folder with it once nothing
+/// else is in there, so a finished update leaves no empty directory behind.
+fn discard_stage(env: &UpdateEnv, version: &str) {
+    let _ = std::fs::remove_dir_all(env.staged_dir(version));
+    let _ = std::fs::remove_dir(env.dir.join("staged"));
 }
 
 /// A plugin folder that has been replaced, and where its predecessor went.
@@ -1288,6 +1337,89 @@ mod tests {
         run(&env, &offline_editor()).await.unwrap();
 
         assert_eq!(read_state(&env).unwrap().state, "up_to_date");
+    }
+
+    #[tokio::test]
+    async fn an_applied_state_settles_once_the_running_binary_is_that_version() {
+        let tmp = tempfile::tempdir().unwrap();
+        let server = mock_release(serde_json::json!([])).await;
+        let mut env = test_env(tmp.path(), server.uri(), Channel::Apply);
+        env.current = "0.2.0".to_string();
+        // What the previous start wrote after swapping 0.1.0 for 0.2.0: a
+        // check recent enough to skip, and an empty stage folder left behind.
+        let mut applied = UpdateState::new(
+            "applied",
+            Some("0.2.0 is installed and takes effect the next time this server and the editor start".to_string()),
+        );
+        applied.latest = Some("0.2.0".to_string());
+        write_state(&env, &applied);
+        std::fs::create_dir_all(env.staged_dir("0.2.0")).unwrap();
+
+        run(&env, &offline_editor()).await.unwrap();
+
+        let state = read_state(&env).unwrap();
+        assert_eq!(state.state, "up_to_date");
+        assert_eq!(state.latest.as_deref(), Some("0.2.0"));
+        assert!(state.detail.is_none());
+        // Settling is bookkeeping, not a check: the time is kept and GitHub
+        // is not asked again.
+        assert_eq!(state.checked_at, applied.checked_at);
+        assert!(server.received_requests().await.unwrap().is_empty());
+        assert!(!tmp.path().join("staged").exists());
+    }
+
+    #[tokio::test]
+    async fn a_reported_release_settles_once_it_is_installed_by_hand() {
+        let tmp = tempfile::tempdir().unwrap();
+        let server = mock_release(serde_json::json!([])).await;
+        let mut env = test_env(tmp.path(), server.uri(), Channel::Check);
+        env.current = "0.2.0".to_string();
+        let mut reported = UpdateState::new(
+            "update_available",
+            Some("0.2.0 is published; this server is 0.1.0".to_string()),
+        );
+        reported.latest = Some("0.2.0".to_string());
+        write_state(&env, &reported);
+
+        run(&env, &offline_editor()).await.unwrap();
+
+        let state = read_state(&env).unwrap();
+        assert_eq!(state.state, "up_to_date");
+        assert!(state.detail.is_none());
+    }
+
+    #[tokio::test]
+    async fn a_release_still_ahead_of_this_binary_stays_reported() {
+        let tmp = tempfile::tempdir().unwrap();
+        let server = mock_release(serde_json::json!([])).await;
+        let env = test_env(tmp.path(), server.uri(), Channel::Check);
+        let mut reported =
+            UpdateState::new("update_available", Some("0.2.0 is published".to_string()));
+        reported.latest = Some("0.2.0".to_string());
+        write_state(&env, &reported);
+
+        run(&env, &offline_editor()).await.unwrap();
+
+        let state = read_state(&env).unwrap();
+        assert_eq!(state.state, "update_available");
+        assert!(state.detail.is_some());
+    }
+
+    #[test]
+    fn discarding_a_stage_removes_the_staged_folder_with_it() {
+        let tmp = tempfile::tempdir().unwrap();
+        let env = test_env(tmp.path(), String::new(), Channel::Apply);
+        std::fs::create_dir_all(env.staged_dir("0.2.0")).unwrap();
+        std::fs::write(env.staged_dir("0.2.0").join("a.zip"), b"x").unwrap();
+        std::fs::create_dir_all(env.staged_dir("0.3.0")).unwrap();
+
+        discard_stage(&env, "0.2.0");
+        // Another version's stage keeps the folder alive.
+        assert!(!env.staged_dir("0.2.0").exists());
+        assert!(tmp.path().join("staged").is_dir());
+
+        discard_stage(&env, "0.3.0");
+        assert!(!tmp.path().join("staged").exists());
     }
 
     #[tokio::test]

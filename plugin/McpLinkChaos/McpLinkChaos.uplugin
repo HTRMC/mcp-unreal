@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.3.0",
+	"VersionName": "0.3.1",
 	"EngineVersion": "5.8.0",
 	"FriendlyName": "McpLink Chaos",
 	"Description": "McpLink interop for Chaos destruction: build Geometry Collections from meshes and fracture them from the mcp-unreal MCP server.",

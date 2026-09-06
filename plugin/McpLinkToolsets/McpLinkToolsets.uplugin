@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.3.0",
+	"VersionName": "0.3.1",
 	"EngineVersion": "5.8.0",
 	"FriendlyName": "McpLink Toolsets",
 	"Description": "McpLink interop for the engine's Toolset Registry: list, describe and execute every AI-callable toolset the editor has registered (Epic's *Toolset plugins, project toolsets, Agent Skills) from the mcp-unreal MCP server.",

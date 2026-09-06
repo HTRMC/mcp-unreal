@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.3.0",
+	"VersionName": "0.3.1",
 	"EngineVersion": "5.8.0",
 	"FriendlyName": "McpLink Python",
 	"Description": "McpLink interop for the Python Editor Script Plugin: run Python in the editor from the mcp-unreal MCP server.",

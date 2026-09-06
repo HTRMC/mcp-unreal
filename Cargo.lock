@@ -966,7 +966,7 @@ dependencies = [
 
 [[package]]
 name = "mcp-unreal"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "base64 0.22.1",
  "dirs",
